@@ -4,6 +4,7 @@ import { api } from "../../services/api";
 import { formatCurrency, formatPercentage } from "../../utils/formatters";
 import type { HoldingDto } from "../../types/api";
 import { CalculationErrorBoundary } from "../layout/CalculationErrorBoundary";
+import { HoldingsCompositionChart } from "../charts";
 
 interface HoldingsExplorerProps {
   accountId: string;
@@ -261,6 +262,24 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Holdings Composition Chart */}
+        {holdings.length > 0 && (
+          <div className="mb-6">
+            <HoldingsCompositionChart
+              holdings={holdings.map(h => ({
+                ticker: h.ticker,
+                name: h.name,
+                value: h.valueGBP,
+                units: h.units,
+                type: h.instrumentType as 'Cash' | 'Security'
+              }))}
+              title="Portfolio Composition"
+              height={300}
+              showLegend={true}
+            />
+          </div>
+        )}
 
         {/* Filters and Search */}
         <div className="flex flex-col sm:flex-row gap-4">

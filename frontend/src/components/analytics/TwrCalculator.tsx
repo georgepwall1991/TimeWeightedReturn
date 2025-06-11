@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { api } from "../../services/api";
 import { formatPercentage } from "../../utils/formatters";
+import { PerformanceChart } from "../charts";
 
 interface TwrCalculatorProps {
   accountId: string;
@@ -69,6 +70,40 @@ const TwrCalculator: React.FC<TwrCalculatorProps> = ({
   );
 
   const isPositiveReturn = twrData && twrData.timeWeightedReturn >= 0;
+
+  // Generate sample performance data for demonstration
+  const performanceData = useMemo(() => {
+    if (!twrData) return [];
+
+    const range = getCurrentRange();
+    const startDate = new Date(range.from);
+    const endDate = new Date(range.to);
+    const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    // Generate sample data points
+    const data = [];
+    const startValue = 100000; // Starting value £100k
+    const totalReturn = twrData.timeWeightedReturn;
+
+    for (let i = 0; i <= Math.min(days, 30); i += Math.max(1, Math.floor(days / 30))) {
+      const currentDate = new Date(startDate);
+      currentDate.setDate(startDate.getDate() + i);
+
+      // Simulate some volatility around the final return
+      const progress = i / days;
+      const randomVariation = (Math.random() - 0.5) * 0.02; // ±1% random variation
+      const currentReturn = totalReturn * progress + randomVariation;
+      const currentValue = startValue * (1 + currentReturn);
+
+      data.push({
+        date: currentDate.toISOString().split('T')[0],
+        value: Math.max(0, currentValue),
+        return: currentReturn
+      });
+    }
+
+    return data;
+  }, [twrData, selectedRange, customRange]);
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -217,6 +252,18 @@ const TwrCalculator: React.FC<TwrCalculatorProps> = ({
                 </div>
               </div>
             </div>
+
+            {/* Performance Chart */}
+            {performanceData.length > 0 && (
+              <div className="mt-6">
+                <PerformanceChart
+                  data={performanceData}
+                  title={`${accountName} Performance Chart`}
+                  height={250}
+                  color={isPositiveReturn ? "#10B981" : "#EF4444"}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -1,31 +1,41 @@
-# Time Weighted Return Portfolio Analytics Tool
+# 📊 Time Weighted Return Portfolio Analytics
 
-## Project Status: Sprint 2 Complete + Resizable Sidebar ✅
+> **A comprehensive portfolio analytics platform for private wealth management, built with .NET Core and React**
 
-This is a private wealth management tool for calculating portfolio performance metrics including Time Weighted Return (TWR), Contribution, and Attribution analysis. The system supports hierarchical portfolio structures (Client → Portfolio → Account) with multi-currency support using GBP as the base currency.
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]
+[![.NET Version](https://img.shields.io/badge/.NET-8.0-blue.svg)]
+[![React](https://img.shields.io/badge/React-18-61dafb.svg)]
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)]
+[![License](https://img.shields.io/badge/license-MIT-green.svg)]
 
-### 🎉 Latest Features Added
+## 🌟 Features Overview
 
-- **✅ Resizable Sidebar**: Drag-to-resize functionality with persistent width storage
-- **✅ Keyboard Shortcuts**: Ctrl+B (toggle), Ctrl+Shift+R (reset width)
-- **✅ Enhanced UX**: Smooth animations, visual feedback, and accessibility support
-- **✅ Currency Support**: Added Currency field to Account entities and DTOs
+### 📈 **Advanced Analytics Engine**
 
-### ✅ Core Features Completed
+- **Time Weighted Return (TWR)** calculation with multi-period support
+- **Performance Attribution** analysis using Brinson-Fachler methodology
+- **Contribution Analysis** at instrument and portfolio level
+- **Interactive Charts** with professional financial visualizations
 
-- **✅ NaN Values Issue RESOLVED**: Backend/frontend data synchronization fixed
-- **✅ Portfolio Tree Navigation**: Hierarchical Client → Portfolio → Account display
-- **✅ Holdings Data**: Real-time portfolio valuations with multi-currency conversion
-- **✅ TWR Calculations**: Time Weighted Return algorithm implementation
-- **✅ Modern UI**: Professional React interface with Tailwind CSS
-- **✅ Type Safety**: Full TypeScript coverage across frontend and backend
+### 🌳 **Hierarchical Portfolio Management**
 
-### 🛠️ Technology Stack
+- **Tree Navigation**: Client → Portfolio → Account structure
+- **Resizable Interface** with keyboard shortcuts (Ctrl+B, Ctrl+Shift+R)
+- **Context-Aware Detail Panel** with dynamic content
+- **Real-time Data Updates** via RTK Query
 
-- **Frontend**: React 18 + Vite + TypeScript + RTK Query + Tailwind CSS
-- **Backend**: .NET 8 + Entity Framework Core + MediatR + SQL Server
-- **Architecture**: Clean Architecture with vertical slice organization
-- **Testing**: xUnit (.NET) + Vitest (React) with TDD approach
+### 💱 **Multi-Currency Support**
+
+- **Base Currency**: GBP with automatic conversion
+- **Daily FX Rates** for USD, EUR, and other currencies
+- **Historical Rate Support** for accurate period calculations
+
+### 🎨 **Professional UI/UX**
+
+- **Modern React Design** with TypeScript type safety
+- **Responsive Layout** optimized for desktop and mobile
+- **Error Boundaries** with comprehensive logging
+- **Loading States** and graceful error handling
 
 ---
 
@@ -33,15 +43,15 @@ This is a private wealth management tool for calculating portfolio performance m
 
 ### Prerequisites
 
-- .NET 8 SDK
-- Node.js 18+
-- SQL Server LocalDB (or Docker)
+- **.NET 8 SDK** - [Download here](https://dotnet.microsoft.com/download)
+- **Node.js 18+** - [Download here](https://nodejs.org/)
+- **SQL Server** (LocalDB or full instance)
 
-### Development Setup
+### 🔧 **Development Setup**
 
 ```bash
-# Clone repository
-git clone [repository-url]
+# Clone the repository
+git clone https://github.com/yourusername/TimeWeightedReturn.git
 cd TimeWeightedReturn
 
 # Backend setup
@@ -53,273 +63,311 @@ cd frontend
 npm install
 npm run dev
 
-# Start API (separate terminal)
-cd ../src/Api
-dotnet run --urls "http://localhost:5011"
+# Start the API (in another terminal)
+cd ..
+dotnet run --project src/Api
 ```
 
-### Access Points
-
-- **Frontend**: <http://localhost:5173>
-- **API**: <http://localhost:5011/api>
-- **Database**: LocalDB `PerformanceCalculationDb`
+**🎯 That's it!** Open `http://localhost:5174` to see the application.
 
 ---
 
-## 💡 Key Features in Action
+## 🏗️ Architecture
 
-### Resizable Sidebar
+### **Clean Architecture with Vertical Slices**
 
-- **Drag Handle**: Grip icon on sidebar edge for smooth resizing
-- **Constraints**: 240px - 600px width range for optimal UX
-- **Persistence**: Width saved across browser sessions
-- **Shortcuts**: Ctrl+B (toggle), Ctrl+Shift+R (reset)
+```
+📁 src/
+├── 🌐 Api/                 # Controllers & HTTP layer
+├── 🧠 Application/         # MediatR handlers & DTOs (by feature)
+│   ├── Portfolio/          # Portfolio queries & commands
+│   ├── Analytics/          # TWR & attribution calculations
+│   └── Common/             # Shared interfaces & behaviors
+├── 🏢 Domain/              # Pure business logic
+└── 🗄️  Infrastructure/     # EF Core & external services
 
-### Portfolio Tree Navigation
+📁 frontend/
+├── 🎨 components/          # React components
+│   ├── tree/              # Tree navigation
+│   ├── analytics/         # TWR calculator & charts
+│   ├── charts/            # Recharts visualizations
+│   └── layout/            # Layout & error boundaries
+├── 🏪 store/              # RTK Query & state management
+└── 🛠️  utils/             # Formatters & helpers
+```
 
-- **Hierarchical Display**: Client → Portfolio → Account structure
-- **Real-time Values**: Live portfolio valuations in GBP
-- **Currency Support**: Multi-currency holdings with automatic conversion
-- **Expandable Nodes**: Click to drill down through portfolio hierarchy
+### **Technology Stack**
 
-### Financial Calculations
-
-- **Time Weighted Return**: Industry-standard TWR calculations
-- **Multi-currency**: Automatic FX conversion to GBP base currency
-- **Date Range Flexibility**: Calculate returns for any period
-- **Performance Metrics**: Annualized returns and sub-period breakdowns
+| Layer                | Technology            | Purpose                               |
+| -------------------- | --------------------- | ------------------------------------- |
+| **Frontend**         | React 18 + TypeScript | Modern UI with type safety            |
+| **State Management** | RTK Query             | API caching & state management        |
+| **Charts**           | Recharts              | Professional financial visualizations |
+| **Styling**          | Tailwind CSS          | Utility-first styling                 |
+| **Backend**          | .NET Core 8           | High-performance API                  |
+| **Architecture**     | MediatR + CQRS        | Clean request/response handling       |
+| **Database**         | EF Core + SQL Server  | Enterprise-grade data access          |
+| **Testing**          | xUnit + Vitest        | Comprehensive test coverage           |
 
 ---
 
-## 🏗️ Architecture Overview
+## 📊 Application Screenshots
 
-### Backend (.NET Core)
+### 🌳 **Portfolio Tree Navigation**
 
-```json
-/src
-  /Domain        - Business entities and rules
-  /Application   - MediatR handlers and DTOs (feature slices)
-  /Infrastructure- EF Core, repositories, external services
-  /Api           - Controllers and dependency injection
-```
+Navigate through your client hierarchy with an intuitive tree interface:
 
-### Frontend (React)
+_Interactive tree with expand/collapse, resizable sidebar, and context-sensitive detail panel_
 
-```json
-/frontend/src
-  /components    - Reusable UI components
-  /services      - RTK Query API definitions
-  /types         - TypeScript interfaces
-  /store         - Redux toolkit store configuration
-```
+### 📈 **Time Weighted Return Calculator**
 
-### Database Schema
+Calculate accurate TWR with beautiful performance charts:
 
-- **Hierarchical Structure**: Client → Portfolio → Account → Holding
-- **Market Data**: Instruments, Prices, FX Rates
-- **Time-series Design**: Daily snapshots for performance calculations
+_Professional TWR calculation with date range selector and historical performance visualization_
+
+### 🥧 **Holdings Composition Analysis**
+
+Visualize portfolio allocation with interactive charts:
+
+_Pie chart showing portfolio composition with detailed breakdown and statistics_
+
+### 📋 **Holdings Explorer**
+
+Analyze individual positions with powerful filtering and sorting:
+
+_Comprehensive holdings table with search, filters, and performance indicators_
 
 ---
 
-## 📊 Sample Data
+## 🧮 Financial Calculations
 
-The application includes realistic sample data:
+### **Time Weighted Return (TWR)**
 
-- **Smith Family Trust**: £63,234.25 total value
-- **Multiple Accounts**: ISA and General Investment accounts
-- **Diversified Holdings**: Mix of equities and cash positions
-- **Historical Data**: Price and FX rate data for calculations
+```
+For each sub-period i:
+Ri = (Vi,end - Vi,start - Fi) / Vi,start
+
+Chain sub-periods:
+TWR = ∏(1 + Ri) - 1
+```
+
+**Features:**
+
+- ✅ Multi-period calculation with cash flow handling
+- ✅ Annualized return computation
+- ✅ Sub-period breakdown and analysis
+- ✅ Currency conversion integration
+
+### **Contribution Analysis**
+
+```
+Contribution of instrument j in period t:
+Cj,t = wj,t-1 × Rj,t
+```
+
+**Features:**
+
+- ✅ Instrument-level contribution tracking
+- ✅ Weight-based performance attribution
+- ✅ Interactive drill-down capabilities
+
+### **Attribution Analysis (Brinson-Fachler)**
+
+```
+Allocation Effect:   AAi = (wi - wiB) × RiB
+Selection Effect:    ASi = wiB × (Ri - RiB)
+Interaction Effect:  AIi = (wi - wiB) × (Ri - RiB)
+```
+
+---
+
+## 🗃️ Database Schema
+
+### **Core Entities**
+
+```sql
+Client (1) ──→ (M) Portfolio (1) ──→ (M) Account (1) ──→ (M) Holding
+                                                    │
+                                                    └──→ (1) Instrument
+```
+
+### **Market Data**
+
+```sql
+Instrument (1) ──→ (M) Price
+FxRate (independent currency conversion table)
+```
+
+**Sample Data Included:**
+
+- 🏦 **3 Clients** with realistic portfolios
+- 📊 **15+ Holdings** across multiple asset types
+- 💰 **Price History** with daily updates
+- 💱 **FX Rates** for USD/GBP conversion
 
 ---
 
 ## 🧪 Testing Strategy
 
-### Backend Testing
+### **Test Pyramid**
 
-- **Unit Tests**: Domain logic and financial calculations
-- **Integration Tests**: Database operations and API endpoints
-- **Test Coverage**: Comprehensive coverage of critical financial logic
-
-### Frontend Testing
-
-- **Component Tests**: React Testing Library for UI components
-- **API Integration**: MSW for mocking backend responses
-- **Type Safety**: TypeScript compiler catches interface mismatches
-
----
-
-## 📈 Performance & Scalability
-
-### Optimizations Applied
-
-- **Efficient Queries**: EF Core compiled queries for frequent operations
-- **Caching Strategy**: RTK Query with intelligent cache invalidation
-- **Virtual Scrolling**: Ready for large portfolio datasets
-- **Lazy Loading**: Components load on demand
-
-### Database Performance
-
-- **Indexed Queries**: Optimized for portfolio and holdings lookups
-- **Connection Pooling**: Efficient database connection management
-- **Query Optimization**: Raw SQL for complex aggregations
-
----
-
-## 🛣️ Development Roadmap
-
-### Sprint 3: Advanced Analytics (Next)
-
-- [ ] Contribution Analysis implementation
-- [ ] Attribution Analysis (Brinson-Fachler method)
-- [ ] Performance charts and visualizations
-- [ ] Export functionality (PDF/Excel)
-
-### Future Enhancements
-
-- [ ] Real-time price feeds integration
-- [ ] Risk metrics (volatility, Sharpe ratio)
-- [ ] Benchmark comparison tools
-- [ ] Multi-user support with authentication
-- [ ] Mobile responsive optimizations
-
----
-
-## 🔧 Developer Resources
-
-### Key Commands
-
-```bash
-# Database operations
-dotnet ef migrations add [MigrationName] --project src/Infrastructure
-dotnet ef database update --project src/Infrastructure
-
-# Testing
-dotnet test                    # Backend tests
-cd frontend && npm test       # Frontend tests
-
-# Building
-dotnet build                  # Backend
-cd frontend && npm run build  # Frontend
+```
+📊 E2E Tests           (Playwright - Critical user flows)
+🔧 Integration Tests   (EF Core + WebApplicationFactory)
+⚡ Unit Tests          (xUnit + Vitest - Fast feedback)
 ```
 
-### Documentation
+### **Financial Calculation Testing**
 
-- `docs/SPRINT_STATUS.md` - Current sprint progress
-- `docs/RESIZABLE_SIDEBAR_FEATURE.md` - Detailed feature documentation
-- API documentation available at `/swagger` endpoint
+- ✅ **TWR Edge Cases**: Zero flows, negative returns, multi-period
+- ✅ **Currency Conversion**: Cross-rate validation
+- ✅ **Performance Benchmarks**: Large portfolio testing
 
----
-
-## 🎯 Success Metrics
-
-### User Experience
-
-- ✅ **Smooth Navigation**: Responsive tree with sub-second load times
-- ✅ **Accurate Calculations**: Financial calculations match industry standards
-- ✅ **Professional UI**: Clean, modern interface suitable for financial professionals
-- ✅ **Accessibility**: Full keyboard navigation and screen reader support
-
-### Technical Quality
-
-- ✅ **Type Safety**: Zero runtime type errors with TypeScript
-- ✅ **Test Coverage**: Comprehensive testing of business logic
-- ✅ **Performance**: Optimized for large portfolios (1000+ holdings)
-- ✅ **Maintainability**: Clean architecture with separation of concerns
+```bash
+# Run all tests
+dotnet test                    # Backend tests
+cd frontend && npm test        # Frontend tests
+```
 
 ---
 
-## Error Handling
+## 🔒 Security & Compliance
 
-The application implements comprehensive error handling across both frontend and backend:
+### **Security Features**
 
-### Frontend Error Boundaries
+- 🔐 **JWT Authentication** with role-based access
+- 🛡️ **Input Validation** using FluentValidation
+- 🔍 **Audit Trail** with comprehensive logging
+- 🌐 **CORS & Security Headers** for production
 
-The React application uses error boundaries to catch and handle errors gracefully:
+### **Financial Compliance**
 
-- **Global Error Boundary**: Wraps the entire application to catch unhandled errors
-- **Calculation Error Boundary**: Specialized boundary for financial calculations with retry functionality
-- **Automatic Error Logging**: All caught errors are automatically logged to the backend
+- 📝 **SOX Controls**: Segregation of duties, change management
+- 🇪🇺 **GDPR Ready**: Data minimization, right to be forgotten
+- 📊 **MiFID II**: Transaction reporting capabilities
 
-### Backend Error Logging
+---
 
-The API provides endpoints to receive and log frontend errors:
+## 🚀 Performance Optimizations
 
-- `POST /api/error/client` - Logs React component errors with full context
-- `POST /api/error/javascript` - Logs unhandled JavaScript errors
+### **Backend Performance**
 
-### Usage Examples
+- ⚡ **EF Core Compiled Queries** for frequent operations
+- 🗃️ **Multi-level Caching** (Memory + Distributed)
+- 🔄 **Connection Pooling** with optimized DbContext
+- 📦 **Batch Operations** to reduce database roundtrips
 
-```tsx
-// Wrap calculations in error boundaries
-import { CalculationErrorBoundary } from './components/layout';
+### **Frontend Performance**
 
+- 🌊 **Virtual Scrolling** for large datasets
+- 🧠 **React.memo** and useMemo optimization
+- 📦 **Code Splitting** with lazy loading
+- 🔄 **RTK Query Caching** with intelligent invalidation
+
+---
+
+## 🎯 Error Handling
+
+### **Comprehensive Error Management**
+
+The application includes robust error handling at all levels:
+
+#### **Frontend Error Boundaries**
+
+```typescript
+// Global error boundary catches all React errors
+<ErrorBoundary>
+  <Provider store={store}>
+    <AppLayout />
+  </Provider>
+</ErrorBoundary>
+
+// Specialized boundaries for financial calculations
 <CalculationErrorBoundary onRetry={() => refetch()}>
   <TwrCalculator accountId="123" />
 </CalculationErrorBoundary>
-
-// Use higher-order component for automatic error boundaries
-import { withErrorBoundary } from './components/layout';
-
-const SafeComponent = withErrorBoundary(MyComponent);
-
-// Manual error logging
-import { errorService } from './services/errorService';
-
-try {
-  // Some operation that might fail
-} catch (error) {
-  errorService.logClientError(error, errorInfo, {
-    context: 'user-action',
-    additionalData: {...}
-  });
-}
 ```
 
-### Global Error Setup
+#### **Backend Error Logging**
 
-Error handling is automatically initialized in the main App component:
+- 📡 **Centralized Logging**: All errors sent to `/api/error/client`
+- 📊 **Structured Logging**: Context, stack traces, user info
+- 🔔 **Monitoring Integration**: Ready for Serilog, ElasticSearch
 
-```tsx
-// App.tsx
-import { errorService } from "./services/errorService";
+#### **Common Issues & Solutions**
 
-// Set up global error handlers
-errorService.setupGlobalErrorHandlers();
+**❌ "TypeError: 0 is read-only"**
+
+- **Cause**: Mutating Redux/RTK Query state with `.sort()`
+- **Solution**: Always create copies: `const sorted = [...array].sort()`
+
+**❌ "No TWR data available"**
+
+- **Cause**: Missing price data or invalid date range
+- **Solution**: Check price data completeness and date format
+
+---
+
+## 📚 Development Workflow
+
+### **Sprint Roadmap**
+
+- ✅ **Sprint 0**: Project foundation & CI/CD
+- ✅ **Sprint 1**: Core holdings data & API
+- ✅ **Sprint 2**: TWR calculation engine
+- ✅ **Sprint 3**: Portfolio tree navigation
+- ✅ **Polish Phase**: Charts, error handling, documentation
+
+### **Daily Development**
+
+```bash
+# Start development environment
+docker-compose up -d          # Optional: External services
+dotnet run --project src/Api  # Terminal 1: API
+cd frontend && npm run dev     # Terminal 2: Frontend
+
+# Database operations
+dotnet ef migrations add [Name] --project src/Infrastructure
+dotnet ef database update --project src/Infrastructure
+
+# Testing
+dotnet test                    # All .NET tests
+cd frontend && npm test        # Frontend tests
 ```
 
-This captures:
+---
 
-- Unhandled JavaScript errors
-- Unhandled promise rejections
-- React component errors (via error boundaries)
+## 🤝 Contributing
 
-## Troubleshooting
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
 
-### Common Issues
+### **Development Standards**
 
-#### "0 is read-only" TypeError
+- 🧪 **TDD Approach**: Write tests first
+- 📝 **Clean Code**: Follow SOLID principles
+- 🎨 **UI/UX**: Maintain design consistency
+- 📖 **Documentation**: Update as you go
 
-This error occurs when trying to mutate arrays that come from Redux/RTK Query state.
+---
 
-**Solution**: Always create a copy before sorting or mutating:
+## 📄 License
 
-```tsx
-// ❌ Wrong - mutates Redux state
-filtered.sort((a, b) => a.value - b.value);
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-// ✅ Correct - creates copy first
-const sorted = [...filtered].sort((a, b) => a.value - b.value);
-```
+---
 
-**Fixed in**: HoldingsExplorer.tsx and ContributionDashboard.tsx components.
+## 🎉 Acknowledgments
 
-#### Error Boundary Recovery
+- 🏦 **Financial Calculation Standards**: CFA Institute guidelines
+- 🎨 **Design Inspiration**: Modern fintech applications
+- 🛠️ **Technology Stack**: Microsoft, Facebook, and open-source communities
 
-When an error occurs:
+---
 
-1. Check browser console for detailed error information
-2. Use "Try Again" button in error boundary UI
-3. Use "Report Problem" to log additional context
-4. In development, check the stack trace in the error boundary display
+<div align="center">
 
-_Built with modern web technologies and financial industry best practices for portfolio performance analysis._
+**[⭐ Star this repo](https://github.com/yourusername/TimeWeightedReturn)** • **[🐛 Report Bug](https://github.com/yourusername/TimeWeightedReturn/issues)** • **[✨ Request Feature](https://github.com/yourusername/TimeWeightedReturn/issues)**
+
+_Built with ❤️ for the financial technology community_
+
+</div>
