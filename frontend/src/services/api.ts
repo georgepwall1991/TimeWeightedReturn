@@ -4,8 +4,10 @@ import type {
   GetPortfolioHoldingsResponse,
   TwrResult,
   ContributionAnalysisResult,
+  RiskMetricsAnalysisResult,
   HoldingsRequest,
   ContributionRequest,
+  RiskRequest,
   HoldingDto,
 } from '../types/api';
 
@@ -30,7 +32,7 @@ export const api = createApi({
       return headers;
     },
   }),
-  tagTypes: ['PortfolioTree', 'Holdings', 'AccountHoldings', 'TWR', 'Contribution'],
+  tagTypes: ['PortfolioTree', 'Holdings', 'AccountHoldings', 'TWR', 'Contribution', 'RiskMetrics'],
   endpoints: (builder) => ({
     // Portfolio Tree Navigation
     getPortfolioTree: builder.query<PortfolioTreeResponse, { clientId?: string }>({
@@ -127,6 +129,25 @@ export const api = createApi({
       ],
       keepUnusedDataFor: 300, // Cache for 5 minutes
     }),
+
+    // Risk Metrics Analysis
+    calculateRiskMetrics: builder.query<RiskMetricsAnalysisResult, RiskRequest>({
+      query: ({ accountId, startDate, endDate, riskFreeRate }) => {
+        const params = new URLSearchParams({
+          from: startDate,
+          to: endDate,
+        });
+        if (riskFreeRate !== undefined) {
+          params.append('riskFreeRate', riskFreeRate.toString());
+        }
+        return `account/${accountId}/risk?${params.toString()}`;
+      },
+      providesTags: (_result, _error, { accountId }) => [
+        { type: 'RiskMetrics', id: accountId },
+        'RiskMetrics',
+      ],
+      keepUnusedDataFor: 600, // Cache for 10 minutes
+    }),
   }),
 });
 
@@ -137,6 +158,7 @@ export const {
   useGetAccountHoldingsQuery,
   useCalculateTWRQuery,
   useCalculateContributionQuery,
+  useCalculateRiskMetricsQuery,
   useGetAccountQuery,
   useGetAccountValueQuery,
 } = api;

@@ -29,6 +29,7 @@ builder.Services.AddScoped<DataSeeder>();
 // Register domain services
 builder.Services.AddScoped<Domain.Services.TimeWeightedReturnService>();
 builder.Services.AddScoped<Domain.Services.ContributionAnalysisService>();
+builder.Services.AddScoped<Domain.Services.RiskMetricsService>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

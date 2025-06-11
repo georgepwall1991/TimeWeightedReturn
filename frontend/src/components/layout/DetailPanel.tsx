@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { X, User, Briefcase, Building, Calculator, TrendingUp, BarChart3, DollarSign } from "lucide-react";
 import { formatCurrency } from "../../utils/formatters";
-import TwrCalculator from "../analytics/TwrCalculator";
 import HoldingsExplorer from "../holdings/HoldingsExplorer";
+import AdvancedAnalyticsDashboard from "../analytics/AdvancedAnalyticsDashboard";
+import RiskAnalyticsDashboard from "../analytics/RiskAnalyticsDashboard";
 import type { ClientNodeDto, PortfolioNodeDto, AccountNodeDto } from "../../types/api";
 
 interface NodeSelection {
@@ -22,7 +23,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
   nodeData,
   onClose,
 }) => {
-  const [activeTab, setActiveTab] = useState<"overview" | "analytics" | "holdings">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "analytics" | "holdings" | "risk">("overview");
   if (!selectedNode || !nodeData) {
     return (
       <div className="h-full flex items-center justify-center bg-gray-50">
@@ -218,6 +219,19 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
                       Analytics
                     </div>
                   </button>
+                  <button
+                    onClick={() => setActiveTab("risk")}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                      activeTab === "risk"
+                        ? "border-purple-500 text-purple-600"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <TrendingUp className="w-4 h-4 mr-2" />
+                      Risk
+                    </div>
+                  </button>
                 </nav>
               </div>
 
@@ -253,7 +267,14 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
               )}
 
               {activeTab === "analytics" && (
-                <TwrCalculator
+                <AdvancedAnalyticsDashboard
+                  accountId={selectedNode.id}
+                  accountName={selectedNode.name}
+                />
+              )}
+
+              {activeTab === "risk" && (
+                <RiskAnalyticsDashboard
                   accountId={selectedNode.id}
                   accountName={selectedNode.name}
                 />

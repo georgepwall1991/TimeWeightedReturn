@@ -106,19 +106,35 @@ export interface ContributionData {
   instrumentId: string;
   ticker: string;
   name: string;
-  startWeight: number;
-  endWeight: number;
+  currency: string;
+  type: 'Cash' | 'Security';
+  units: number;
+  startPrice: number;
+  endPrice: number;
+  startValueGBP: number;
+  endValueGBP: number;
+  weight: number;
   instrumentReturn: number;
   contribution: number;
-  valueGBP: number;
+  absoluteContribution: number;
+  percentageContribution: number;
 }
 
 export interface ContributionAnalysisResult {
-  totalReturn: number;
-  totalContribution: number;
-  contributions: ContributionData[];
-  analysisDate: string;
   accountId: string;
+  accountName: string;
+  startDate: string;
+  endDate: string;
+  days: number;
+  totalPortfolioReturn: number;
+  annualizedReturn: number;
+  startValueGBP: number;
+  endValueGBP: number;
+  instrumentContributions: ContributionData[];
+  topContributorReturn: number;
+  worstContributorReturn: number;
+  topContributorTicker: string;
+  worstContributorTicker: string;
 }
 
 // API Request types
@@ -159,4 +175,54 @@ export interface AccountValue {
   accountId: string;
   date: string;
   valueGBP: number;
+}
+
+// Risk Metrics Analysis
+export interface RiskMetricsAnalysisResult {
+  accountId: string;
+  accountName: string;
+  startDate: string;
+  endDate: string;
+  days: number;
+  annualizedVolatility: number;
+  sharpeRatio: number;
+  maximumDrawdown: number;
+  currentDrawdown: number;
+  valueAtRisk95: number;
+  annualizedReturn: number;
+  riskFreeRate: number;
+  riskProfile: string;
+  drawdownPeriods: DrawdownPeriodData[];
+  rollingVolatility: RollingVolatilityData[];
+  riskAssessment: RiskAssessment;
+}
+
+export interface DrawdownPeriodData {
+  startDate: string;
+  endDate: string;
+  maxDrawdown: number;
+  durationDays: number;
+  isRecovered: boolean;
+}
+
+export interface RollingVolatilityData {
+  date: string;
+  annualizedVolatility: number;
+}
+
+export interface RiskAssessment {
+  volatilityCategory: string;
+  sharpeCategory: string;
+  drawdownCategory: string;
+  riskScore: number;
+  overallAssessment: string;
+  riskWarnings: string[];
+  positiveFactors: string[];
+}
+
+export interface RiskRequest {
+  accountId: string;
+  startDate: string;
+  endDate: string;
+  riskFreeRate?: number;
 }
