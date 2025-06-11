@@ -1,0 +1,213 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# Data Model & Database Schema
+
+## Entity Relationships
+
+### Hierarchical Structure
+```
+Client (1) ──→ (M) Portfolio (1) ──→ (M) Account (1) ──→ (M) Holding
+                                                    │
+                                                    └──→ (1) Instrument
+```
+
+### Market Data Structure
+```
+Instrument (1) ──→ (M) Price
+FxRate (independent currency conversion table)
+```
+
+## Core Entities
+
+### Portfolio Hierarchy
+```csharp
+public class Client
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+    public virtual ICollection<Portfolio> Portfolios { get; set; } = new List<Portfolio>();
+}
+
+public class Portfolio
+{
+    public Guid Id { get; set; }
+    public Guid ClientId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+    public virtual Client Client { get; set; } = null!;
+    public virtual ICollection<Account> Accounts { get; set; } = new List<Account>();
+}
+
+public class Account
+{
+    public Guid Id { get; set; }
+    public Guid PortfolioId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Currency { get; set; } = "GBP"; // Base currency
+    public DateTime CreatedAt { get; set; }
+    public virtual Portfolio Portfolio { get; set; } = null!;
+    public virtual ICollection<Holding> Holdings { get; set; } = new List<Holding>();
+}
+```
+
+### Holdings & Positions
+```csharp
+public class Holding
+{
+    public Guid Id { get; set; }
+    public Guid AccountId { get; set; }
+    public Guid InstrumentId { get; set; }
+    public DateOnly Date { get; set; }
+    public decimal Units { get; set; }
+    public DateTime CreatedAt { get; set; }
+
+    public virtual Account Account { get; set; } = null!;
+    public virtual Instrument Instrument { get; set; } = null!;
+}
+
+public class Instrument
+{
+    public Guid Id { get; set; }
+    public string Ticker { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public InstrumentType Type { get; set; }
+    public string Currency { get; set; } = "GBP";
+    public DateTime CreatedAt { get; set; }
+
+    public virtual ICollection<Price> Prices { get; set; } = new List<Price>();
+    public virtual ICollection<Holding> Holdings { get; set; } = new List<Holding>();
+}
+
+public enum InstrumentType
+{
+    Cash = 0,
+    Security = 1
+}
+```
+
+### Market Data
+```csharp
+public class Price
+{
+    public Guid Id { get; set; }
+    public Guid InstrumentId { get; set; }
+    public DateOnly Date { get; set; }
+    public decimal Price { get; set; }
+    public DateTime CreatedAt { get; set; }
+
+    public virtual Instrument Instrument { get; set; } = null!;
+}
+
+public class FxRate
+{
+    public Guid Id { get; set; }
+    public string BaseCurrency { get; set; } = "GBP"; // Always GBP for this system
+    public string QuoteCurrency { get; set; } = string.Empty; // USD, EUR, etc.
+    public DateOnly Date { get; set; }
+    public decimal Rate { get; set; } // How many quote currency units per base currency
+    public DateTime CreatedAt { get; set; }
+}
+```
+
+## EF Core Configuration
+
+### DbContext Setup
+```csharp
+public class PortfolioContext : DbContext
+{
+    public DbSet<Client> Clients { get; set; }
+    public DbSet<Portfolio> Portfolios { get; set; }
+    public DbSet<Account> Accounts { get; set; }
+    public DbSet<Holding> Holdings { get; set; }
+    public DbSet<Instrument> Instruments { get; set; }
+    public DbSet<Price> Prices { get; set; }
+    public DbSet<FxRate> FxRates { get; set; }
+
+    public PortfolioContext(DbContextOptions<PortfolioContext> options) : base(options) { }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(PortfolioContext).Assembly);
+    }
+}
+```
+
+### Entity Configurations
+```csharp
+public class HoldingConfiguration : IEntityTypeConfiguration<Holding>
+{
+    public void Configure(EntityTypeBuilder<Holding> builder)
+    {
+        builder.HasKey(h => h.Id);
+
+        builder.Property(h => h.Units)
+               .HasPrecision(18, 6);
+
+        builder.HasIndex(h => new { h.AccountId, h.InstrumentId, h.Date })
+               .IsUnique()
+               .HasDatabaseName("IX_Holding_Account_Instrument_Date");
+
+        builder.HasOne(h => h.Account)
+               .WithMany(a => a.Holdings)
+               .HasForeignKey(h => h.AccountId)
+               .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+```
+
+## Key Database Patterns
+
+### Indexes for Performance
+- **Holdings**: `(AccountId, InstrumentId, Date)` - Fast position lookups
+- **Prices**: `(InstrumentId, Date)` - Fast price lookups
+- **FxRates**: `(BaseCurrency, QuoteCurrency, Date)` - Currency conversion
+
+### Calculated Columns
+```sql
+-- Portfolio value calculation view
+CREATE VIEW PortfolioValuesView AS
+SELECT
+    h.AccountId,
+    h.Date,
+    SUM(h.Units * p.Price * ISNULL(fx.Rate, 1)) as ValueGBP
+FROM Holdings h
+INNER JOIN Prices p ON h.InstrumentId = p.InstrumentId AND h.Date = p.Date
+LEFT JOIN FxRates fx ON i.Currency = fx.QuoteCurrency AND h.Date = fx.Date
+GROUP BY h.AccountId, h.Date;
+```
+
+### Data Integrity
+- Foreign key constraints on all relationships
+- Check constraints on Units (must be >= 0 for securities)
+- Unique constraints on natural keys (Ticker, Currency pairs + Date)
+- Soft deletes for audit trail (add IsDeleted column if needed)
+
+## Migration Strategy
+- Use EF Core migrations for schema changes
+- Seed data for common currencies and instrument types
+- Consider temporal tables for audit history
+- Separate read/write models if performance requires (CQRS)
+
+### Connection String Configuration
+```json
+// appsettings.Development.json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=PerformanceCalculationDb;Trusted_Connection=true;MultipleActiveResultSets=true"
+  }
+}
+```
+
+### Program.cs Configuration
+```csharp
+builder.Services.AddDbContext<PortfolioContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+```
+
+
+
+

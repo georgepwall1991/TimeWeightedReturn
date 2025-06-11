@@ -1,0 +1,213 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Sprint Implementation Roadmap
+
+## Development Approach
+Build in thin vertical slices that touch all layers (DB → API → UI) to deliver working features incrementally. Each sprint should result in a deployable, demonstrable feature.
+
+## Sprint 0: Project Foundation (1-2 weeks)
+
+### Goals
+- Set up development environment and CI/CD
+- Create project scaffolds
+- Establish "walking skeleton" architecture
+
+### Backend Tasks
+- [ ] Create .NET Core Web API project with folder structure
+- [ ] Set up EF Core with MS SQL connection
+- [ ] Add MediatR and basic DI configuration
+- [ ] Create simple `/ping` health check endpoint
+- [ ] Set up xUnit test project with basic test
+
+### Frontend Tasks  
+- [ ] Create Vite + React + TypeScript project
+- [ ] Set up RTK Query with basic API slice
+- [ ] Add Tailwind CSS or chosen UI library
+- [ ] Create basic layout with header/sidebar
+- [ ] Test API connectivity with ping endpoint
+
+### DevOps Tasks
+- [ ] GitHub Actions for CI (build + test)
+- [ ] Docker containers for local development
+- [ ] Database migration scripts
+- [ ] Environment configuration
+
+### Acceptance Criteria
+- Empty React page successfully calls .NET API `/ping` endpoint
+- All tests pass in CI pipeline
+- Local development environment runs with single command
+
+## Sprint 1: Core Holdings Data (2 weeks)
+
+### Goals
+- Implement basic data model and holdings endpoint
+- Display holdings in simple table format
+
+### Backend Tasks
+- [ ] Create Client, Portfolio, Account, Holding entities
+- [ ] Create Instrument, Price, FxRate entities  
+- [ ] Add EF Core configurations and migrations
+- [ ] Implement `GetHoldingsQuery` with MediatR
+- [ ] Create holdings endpoint: `GET /portfolios/{id}/holdings?date=YYYY-MM-DD`
+- [ ] Add currency conversion logic (convert to GBP)
+- [ ] Seed test data for development
+
+### Frontend Tasks
+- [ ] Create TypeScript types for domain models
+- [ ] Add RTK Query endpoints for holdings
+- [ ] Build simple data table component
+- [ ] Display holdings with proper formatting
+- [ ] Add loading and error states
+
+### Testing
+- [ ] Unit tests for currency conversion
+- [ ] Integration tests for holdings endpoint
+- [ ] Component tests for holdings table
+
+### Acceptance Criteria
+- Holdings display with Units × Price × FX Rate = Value (GBP)
+- Data refreshes when date parameter changes
+- Error handling for missing prices/FX rates
+- LocalDB database `PerformanceCalculationDb` created with all tables
+- EF Core migrations applied successfully
+
+## Sprint 2: Time Weighted Return Calculation (2 weeks)
+
+### Goals
+- Implement TWR calculation engine
+- Display TWR for single account
+
+### Backend Tasks
+- [ ] Create `SubPeriod` and `TimeWeightedReturnService`
+- [ ] Implement TWR calculation algorithm
+- [ ] Add `CalculateTwrQuery` handler
+- [ ] Create endpoint: `GET /accounts/{id}/twr?from=YYYY-MM-DD&to=YYYY-MM-DD`
+- [ ] Handle cash flows and portfolio valuation
+
+### Frontend Tasks
+- [ ] Add TWR calculation component
+- [ ] Create date range picker
+- [ ] Display TWR as percentage with color coding
+- [ ] Add period selection shortcuts (1M, 3M, 6M, 1Y)
+
+### Testing
+- [ ] Comprehensive TWR calculation tests with various scenarios
+- [ ] Test edge cases: no flows, multiple flows, negative returns
+- [ ] Component tests for TWR display
+
+### Acceptance Criteria
+- Accurate TWR calculation matching manual verification
+- Handles multiple sub-periods correctly
+- Clear display of calculation period and result
+
+## Sprint 3: Portfolio Tree Navigation (2 weeks)
+
+### Goals
+- Build hierarchical tree view
+- Navigate Client → Portfolio → Account structure
+
+### Backend Tasks
+- [ ] Create `GetPortfolioTreeQuery`
+- [ ] Return nested structure with basic metrics
+- [ ] Add aggregation logic for portfolio-level values
+- [ ] Endpoint: `GET /clients/{id}/tree`
+
+### Frontend Tasks
+- [ ] Build recursive tree component
+- [ ] Add expand/collapse functionality
+- [ ] Implement node selection and highlighting
+- [ ] Show basic metrics (value, count) per node
+- [ ] Add icons for different node types
+
+### Testing
+- [ ] Test tree expansion/collapse behavior
+- [ ] Test aggregation calculations
+- [ ] Accessibility testing for tree navigation
+
+### Acceptance Criteria
+- Smooth tree navigation with persistent state
+- Accurate aggregation of values up the hierarchy
+- Keyboard navigation support
+
+## Sprint 4: Contribution & Attribution Analysis (2-3 weeks)
+
+### Goals
+- Add contribution analysis
+- Implement basic attribution (Brinson-Fachler)
+
+### Backend Tasks
+- [ ] Create `ContributionAnalysisService`
+- [ ] Implement position-level contribution calculation
+- [ ] Add `AttributionAnalysisService` with allocation/selection effects
+- [ ] Create endpoints for contribution and attribution data
+- [ ] Add benchmark data model and comparison logic
+
+### Frontend Tasks
+- [ ] Build contribution breakdown table
+- [ ] Create attribution analysis component
+- [ ] Add charts for visual representation
+- [ ] Implement drill-down capabilities
+
+### Testing
+- [ ] Test contribution calculations
+- [ ] Verify attribution analysis accuracy
+- [ ] Test UI interactions and data flow
+
+### Acceptance Criteria
+- Contribution analysis shows instrument-level impact
+- Attribution analysis breaks down allocation vs selection effects
+- Visual charts enhance understanding of performance drivers
+
+## Sprint 5: Cash vs Security Types & Polish (1-2 weeks)
+
+### Goals
+- Distinguish cash and security holdings
+- Add filtering and final UI polish
+
+### Backend Tasks
+- [ ] Enhance instrument type handling
+- [ ] Add filtering by asset type
+- [ ] Performance optimizations
+- [ ] Additional validation and error handling
+
+### Frontend Tasks
+- [ ] Add asset type filters (Cash/Security/All)
+- [ ] Visual distinction between cash and securities
+- [ ] Performance optimizations (memoization, virtual scrolling)
+- [ ] Final UI/UX polish and responsiveness
+- [ ] Add export functionality
+
+### Testing
+- [ ] End-to-end testing of complete workflows
+- [ ] Performance testing with large datasets
+- [ ] Cross-browser and mobile testing
+
+### Acceptance Criteria
+- Clear visual distinction between asset types
+- Smooth performance with large portfolios
+- Professional, polished user interface
+- Mobile-responsive design
+
+## Future Sprints (Optional Extensions)
+
+### Advanced Features
+- [ ] Historical performance charts
+- [ ] Risk metrics (volatility, Sharpe ratio)
+- [ ] Sector/geographic attribution
+- [ ] Benchmark comparison tools
+- [ ] PDF/Excel reporting
+- [ ] Multi-user support with authentication
+- [ ] Real-time price feeds integration
+
+### Technical Improvements
+- [ ] CQRS implementation for complex queries
+- [ ] Event sourcing for audit trail
+- [ ] Microservices architecture
+- [ ] Advanced caching strategies
+- [ ] API versioning and documentation
+
+
+

@@ -1,0 +1,301 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Financial Calculations Reference
+
+## Time Weighted Return (TWR)
+
+### Mathematical Formula
+For each sub-period `i`:
+```
+Ri = (Vi,end - Vi,start - Fi) / Vi,start
+```
+
+Where:
+- `Vi,end` = Portfolio value at end of period
+- `Vi,start` = Portfolio value at start of period  
+- `Fi` = Net cash flow during period
+
+Chain sub-periods:
+```
+TWR = ∏(i=1 to n)(1 + Ri) - 1
+```
+
+### Implementation Pattern
+```csharp
+public class SubPeriod
+{
+    public decimal StartValue { get; set; }
+    public decimal EndValue { get; set; }
+    public decimal NetFlow { get; set; }
+    
+    public decimal Return => (EndValue - StartValue - NetFlow) / StartValue;
+}
+
+public class TimeWeightedReturnService
+{
+    public decimal Calculate(IEnumerable<SubPeriod> periods)
+    {
+        return periods.Aggregate(1m, (acc, period) => 
+            acc * (1 + period.Return)) - 1;
+    }
+}
+```
+
+### Test Cases
+```csharp
+[Theory]
+[InlineData(100, 110, 0, 0.10)]     // Simple 10% return
+[InlineData(100, 120, 10, 0.10)]    // 10% return with £10 inflow
+[InlineData(100, 90, -5, 0.05)]     // 5% return with £5 outflow
+[InlineData(100, 80, 0, -0.20)]     // -20% return, no flows
+public void TimeWeightedReturn_SinglePeriod_ReturnsExpected(
+    decimal start, decimal end, decimal flow, decimal expected)
+{
+    var period = new SubPeriod 
+    { 
+        StartValue = start, 
+        EndValue = end, 
+        NetFlow = flow 
+    };
+    
+    var result = _service.Calculate(new[] { period });
+    result.Should().BeApproximately(expected, precision: 0.0001m);
+}
+```
+
+## Contribution Analysis
+
+### Mathematical Formula
+Contribution of instrument `j` in period `t`:
+```
+Cj,t = wj,t-1 × Rj,t
+```
+
+Where:
+- `wj,t-1` = Weight of instrument j at start of period
+- `Rj,t` = Return of instrument j during period
+
+### Implementation Pattern
+```csharp
+public class ContributionData
+{
+    public string InstrumentId { get; set; }
+    public string Ticker { get; set; }
+    public decimal Weight { get; set; }        // Start weight
+    public decimal Return { get; set; }        // Instrument return
+    public decimal Contribution { get; set; }  // Weight × Return
+}
+
+public class ContributionAnalysisService
+{
+    public IEnumerable<ContributionData> Calculate(
+        IEnumerable<Holding> startHoldings,
+        IEnumerable<Holding> endHoldings,
+        IEnumerable<Price> startPrices,
+        IEnumerable<Price> endPrices)
+    {
+        var totalStartValue = CalculatePortfolioValue(startHoldings, startPrices);
+        
+        return startHoldings.Select(holding =>
+        {
+            var startPrice = startPrices.Single(p => p.InstrumentId == holding.InstrumentId);
+            var endPrice = endPrices.Single(p => p.InstrumentId == holding.InstrumentId);
+            
+            var instrumentValue = holding.Units * startPrice.Value;
+            var weight = instrumentValue / totalStartValue;
+            var instrumentReturn = (endPrice.Value - startPrice.Value) / startPrice.Value;
+            
+            return new ContributionData
+            {
+                InstrumentId = holding.InstrumentId,
+                Weight = weight,
+                Return = instrumentReturn,
+                Contribution = weight * instrumentReturn
+            };
+        });
+    }
+}
+```
+
+## Attribution Analysis (Brinson-Fachler)
+
+### Mathematical Formulas
+
+#### Allocation Effect
+```
+AAi = (wi - wiB) × RiB
+```
+
+#### Selection Effect  
+```
+ASi = wiB × (Ri - RiB)
+```
+
+#### Interaction Effect
+```
+AIi = (wi - wiB) × (Ri - RiB)
+```
+
+Where:
+- `wi` = Portfolio weight in sector i
+- `wiB` = Benchmark weight in sector i
+- `Ri` = Portfolio return in sector i
+- `RiB` = Benchmark return in sector i
+
+### Implementation Pattern
+```csharp
+public class AttributionData
+{
+    public string Sector { get; set; }
+    public decimal PortfolioWeight { get; set; }
+    public decimal BenchmarkWeight { get; set; }
+    public decimal PortfolioReturn { get; set; }
+    public decimal BenchmarkReturn { get; set; }
+    public decimal AllocationEffect { get; set; }
+    public decimal SelectionEffect { get; set; }
+    public decimal InteractionEffect { get; set; }
+    public decimal TotalEffect => AllocationEffect + SelectionEffect + InteractionEffect;
+}
+
+public class AttributionAnalysisService
+{
+    public AttributionData CalculateSectorAttribution(
+        SectorData portfolio, 
+        SectorData benchmark)
+    {
+        var weightDiff = portfolio.Weight - benchmark.Weight;
+        var returnDiff = portfolio.Return - benchmark.Return;
+        
+        return new AttributionData
+        {
+            Sector = portfolio.Sector,
+            PortfolioWeight = portfolio.Weight,
+            BenchmarkWeight = benchmark.Weight,
+            PortfolioReturn = portfolio.Return,
+            BenchmarkReturn = benchmark.Return,
+            AllocationEffect = weightDiff * benchmark.Return,
+            SelectionEffect = benchmark.Weight * returnDiff,
+            InteractionEffect = weightDiff * returnDiff
+        };
+    }
+}
+```
+
+## Currency Conversion
+
+### Daily FX Rate Application
+```csharp
+public class CurrencyConversionService
+{
+    public decimal ConvertToGBP(
+        decimal amount, 
+        string fromCurrency, 
+        DateOnly date,
+        IEnumerable<FxRate> fxRates)
+    {
+        if (fromCurrency == "GBP")
+            return amount;
+            
+        var fxRate = fxRates.SingleOrDefault(fx => 
+            fx.QuoteCurrency == fromCurrency && 
+            fx.Date == date);
+            
+        if (fxRate == null)
+            throw new InvalidOperationException($"No FX rate found for {fromCurrency} on {date}");
+            
+        return amount / fxRate.Rate; // Rate is quote per base, so divide
+    }
+}
+```
+
+### Portfolio Valuation
+```csharp
+public class PortfolioValuationService
+{
+    public decimal CalculateValue(
+        IEnumerable<Holding> holdings,
+        IEnumerable<Price> prices,
+        IEnumerable<FxRate> fxRates,
+        DateOnly date)
+    {
+        return holdings.Sum(holding =>
+        {
+            var price = prices.Single(p => 
+                p.InstrumentId == holding.InstrumentId && 
+                p.Date == date);
+                
+            var localValue = holding.Units * price.Value;
+            
+            return _currencyService.ConvertToGBP(
+                localValue, 
+                holding.Instrument.Currency, 
+                date, 
+                fxRates);
+        });
+    }
+}
+```
+
+## Performance Calculation Helpers
+
+### Annualized Return
+```csharp
+public static decimal AnnualizeReturn(decimal totalReturn, int days)
+{
+    var years = days / 365.25m;
+    return (decimal)Math.Pow((double)(1 + totalReturn), (double)(1 / years)) - 1;
+}
+```
+
+### Volatility (Standard Deviation)
+```csharp
+public static decimal CalculateVolatility(IEnumerable<decimal> returns)
+{
+    var mean = returns.Average();
+    var squaredDifferences = returns.Select(r => (r - mean) * (r - mean));
+    var variance = squaredDifferences.Average();
+    return (decimal)Math.Sqrt((double)variance);
+}
+```
+
+### Sharpe Ratio
+```csharp
+public static decimal CalculateSharpeRatio(
+    decimal portfolioReturn, 
+    decimal riskFreeRate, 
+    decimal volatility)
+{
+    return (portfolioReturn - riskFreeRate) / volatility;
+}
+```
+
+## Edge Cases & Validation
+
+### Common Edge Cases
+- **Zero Portfolio Value**: Handle division by zero
+- **Missing Prices**: Graceful degradation or interpolation
+- **Currency Rate Gaps**: Use previous rate or fail gracefully
+- **Negative Holdings**: Short positions in securities
+- **Cash Flows on Weekend**: Attribute to next business day
+
+### Validation Rules
+```csharp
+public class CalculationValidator
+{
+    public void ValidateTimeWeightedReturn(IEnumerable<SubPeriod> periods)
+    {
+        if (!periods.Any())
+            throw new ArgumentException("At least one period required");
+            
+        foreach (var period in periods)
+        {
+            if (period.StartValue <= 0)
+                throw new ArgumentException("Start value must be positive");
+        }
+    }
+}
+```
+

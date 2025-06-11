@@ -1,0 +1,229 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# UI/UX Guidelines
+
+## Design System Principles
+
+### Visual Hierarchy
+- **Financial Data**: Use consistent number formatting and color coding
+- **Performance Metrics**: Green for positive returns, red for negative, neutral gray
+- **Typography**: Clear hierarchy with proper font weights and sizes
+- **Spacing**: Generous whitespace for data-heavy interfaces
+
+### Color Palette
+```css
+:root {
+  /* Performance Colors */
+  --color-positive: #16a34a;     /* Green for positive returns */
+  --color-negative: #dc2626;     /* Red for negative returns */
+  --color-neutral: #6b7280;      /* Gray for neutral/unchanged */
+
+  /* UI Colors */
+  --color-primary: #2563eb;      /* Primary brand blue */
+  --color-secondary: #64748b;    /* Secondary gray-blue */
+  --color-background: #f8fafc;   /* Light background */
+  --color-surface: #ffffff;      /* Card/surface white */
+  --color-border: #e2e8f0;       /* Border gray */
+}
+```
+
+## Tree Navigation Component
+
+### Tree Structure Design
+- **Expandable Nodes**: Clear chevron indicators (▶ ▼)
+- **Hierarchy Levels**: Indentation + connecting lines
+- **Node Content**: Icon + Name + Key Metrics
+- **Loading States**: Skeleton placeholders for async data
+
+### Tree Node Layout
+```typescript
+interface TreeNodeProps {
+  level: number;
+  isExpanded: boolean;
+  hasChildren: boolean;
+  nodeData: ClientVM | PortfolioVM | AccountVM;
+  onToggle: () => void;
+  onSelect: () => void;
+}
+```
+
+### Visual Indicators
+- **Client**: 👤 User icon + client name
+- **Portfolio**: 📁 Folder icon + portfolio name
+- **Account**: 💼 Briefcase icon + account name
+- **Cash Holdings**: 💵 Cash icon
+- **Security Holdings**: 📈 Chart icon
+
+## Financial Data Display
+
+### Number Formatting
+```typescript
+const formatters = {
+  currency: new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: 'GBP',
+    minimumFractionDigits: 2,
+  }),
+  percentage: new Intl.NumberFormat('en-GB', {
+    style: 'percent',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+  }),
+  decimal: new Intl.NumberFormat('en-GB', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 6,
+  }),
+};
+```
+
+### Performance Metrics Cards
+```tsx
+interface MetricsCardProps {
+  title: string;
+  value: number;
+  type: 'currency' | 'percentage' | 'decimal';
+  period?: string;
+  trend?: 'up' | 'down' | 'flat';
+}
+```
+
+### Data Tables
+- **Sortable Columns**: Clear sort indicators
+- **Responsive Design**: Horizontal scroll on mobile
+- **Row Hover**: Subtle background highlight
+- **Pagination**: For large datasets
+
+## Interactive Components
+
+### Date Range Picker
+- **Quick Presets**: 1M, 3M, 6M, 1Y, YTD, All Time
+- **Custom Range**: Calendar picker for specific dates
+- **Validation**: Ensure end date after start date
+
+### Filters & Controls
+- **Asset Type Filter**: Cash / Securities / All
+- **Currency Toggle**: Show original vs. GBP converted
+- **Grouping Options**: By asset class, geography, sector
+
+### Loading & Error States
+```tsx
+// Loading skeleton for metrics
+<div className="animate-pulse">
+  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+  <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+</div>
+
+// Error boundary for failed calculations
+<CalculationErrorBoundary onRetry={refetch}>
+  <TwrCalculator />
+</CalculationErrorBoundary>
+
+// Global error boundary at app level
+<ErrorBoundary>
+  <Provider store={store}>
+    <AppLayout />
+  </Provider>
+</ErrorBoundary>
+```
+
+### Error Handling & Logging
+The application includes comprehensive error handling:
+
+#### Frontend Error Boundaries
+- **Global Error Boundary**: Catches unhandled React errors across the entire app
+- **Calculation Error Boundary**: Specific boundary for financial calculations with retry functionality
+- **Automatic Error Logging**: All errors are logged to the backend API for monitoring
+
+#### Backend Error Logging
+- **Client Error Endpoint**: `POST /api/error/client` - Logs React component errors
+- **JavaScript Error Endpoint**: `POST /api/error/javascript` - Logs unhandled JS errors
+- **Structured Logging**: All errors include context like URL, user agent, stack traces
+
+#### Usage Examples
+```tsx
+// Wrap calculations in error boundaries
+<CalculationErrorBoundary onRetry={() => refetch()}>
+  <TwrCalculator accountId="123" />
+</CalculationErrorBoundary>
+
+// Use higher-order component
+const SafeComponent = withErrorBoundary(MyComponent);
+
+// Manual error logging
+errorService.logClientError(error, errorInfo, { context: 'user-action' });
+```
+
+## Responsive Design
+
+### Breakpoints
+```css
+/* Mobile First Approach */
+.container {
+  padding: 1rem;
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+}
+```
+
+### Mobile Adaptations
+- **Tree View**: Collapsible sidebar on mobile
+- **Tables**: Horizontal scroll with sticky first column
+- **Charts**: Simplified views with drill-down capability
+
+## Accessibility
+
+### Keyboard Navigation
+- **Tab Order**: Logical flow through tree nodes
+- **Arrow Keys**: Navigate tree structure
+- **Enter/Space**: Expand/collapse nodes
+- **Escape**: Close modals/dropdowns
+
+### Screen Reader Support
+```tsx
+<TreeNode
+  role="treeitem"
+  aria-expanded={isExpanded}
+  aria-level={level}
+  aria-label={`${nodeType} ${name}, ${formattedValue}`}
+>
+```
+
+### Color Accessibility
+- Ensure sufficient contrast ratios (4.5:1 minimum)
+- Don't rely solely on color for status (use icons + text)
+- Test with color blindness simulators
+
+## Performance Optimizations
+
+### Virtual Scrolling
+- For large portfolios with 1000+ holdings
+- Render only visible tree nodes
+- Use libraries like `react-window` or `@tanstack/react-virtual`
+
+### Memoization
+```tsx
+const TreeNode = memo(({ nodeData, ...props }) => {
+  // Only re-render if nodeData actually changed
+});
+
+const MemoizedMetrics = useMemo(() =>
+  calculateMetrics(holdings, prices),
+  [holdings, prices]
+);
+```
+
+### Progressive Loading
+- Load tree structure first
+- Fetch metrics on node expansion
+- Cache calculated results in RTK Query
+- Use Suspense boundaries for smooth UX
+

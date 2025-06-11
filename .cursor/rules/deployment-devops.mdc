@@ -1,0 +1,499 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Deployment & DevOps
+
+## CI/CD Pipeline Strategy
+
+### GitHub Actions Workflow
+```yaml
+# .github/workflows/ci-cd.yml
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  DOTNET_VERSION: '8.0'
+  NODE_VERSION: '20'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          SA_PASSWORD: YourStrong@Passw0rd
+          ACCEPT_EULA: Y
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourStrong@Passw0rd -Q 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          
+      - name: Install pnpm
+        run: npm install -g pnpm
+        
+      - name: Restore .NET dependencies
+        run: dotnet restore
+        
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: pnpm install
+        
+      - name: Run .NET tests
+        run: dotnet test --no-restore --verbosity normal --collect:"XPlat Code Coverage"
+        
+      - name: Run frontend tests
+        working-directory: ./frontend
+        run: pnpm test:ci
+        
+      - name: SonarCloud analysis
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Snyk security scan
+        uses: snyk/actions/dotnet@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          
+      - name: Run npm audit
+        working-directory: ./frontend
+        run: pnpm audit --audit-level high
+
+  build-and-deploy:
+    needs: [test, security-scan]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Build Docker images
+        run: |
+          docker build -f Dockerfile.api -t portfolio-api:${{ github.sha }} .
+          docker build -f Dockerfile.frontend -t portfolio-frontend:${{ github.sha }} ./frontend
+          
+      - name: Push to registry
+        run: |
+          echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          docker push portfolio-api:${{ github.sha }}
+          docker push portfolio-frontend:${{ github.sha }}
+          
+      - name: Deploy to staging
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: portfolio-api-staging
+          images: portfolio-api:${{ github.sha }}
+          
+      - name: Run smoke tests
+        run: |
+          curl -f https://portfolio-api-staging.azurewebsites.net/health || exit 1
+          
+      - name: Deploy to production
+        if: success()
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: portfolio-api-production
+          images: portfolio-api:${{ github.sha }}
+```
+
+### Feature Flag Strategy
+```csharp
+public class FeatureFlags
+{
+    public const string NewTwrCalculation = "new-twr-calculation";
+    public const string AdvancedAttribution = "advanced-attribution";
+    public const string RealTimePricing = "real-time-pricing";
+}
+
+public class PortfolioService
+{
+    private readonly IFeatureManager _featureManager;
+    
+    public async Task<decimal> CalculateTimeWeightedReturn(Guid accountId, DateRange period)
+    {
+        if (await _featureManager.IsEnabledAsync(FeatureFlags.NewTwrCalculation))
+        {
+            return await _newTwrService.Calculate(accountId, period);
+        }
+        
+        return await _legacyTwrService.Calculate(accountId, period);
+    }
+}
+```
+
+## Docker Containerization
+
+### Multi-stage API Dockerfile
+```dockerfile
+# Dockerfile.api
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copy csproj files and restore dependencies
+COPY ["src/Api/Api.csproj", "src/Api/"]
+COPY ["src/Application/Application.csproj", "src/Application/"]
+COPY ["src/Domain/Domain.csproj", "src/Domain/"]
+COPY ["src/Infrastructure/Infrastructure.csproj", "src/Infrastructure/"]
+RUN dotnet restore "src/Api/Api.csproj"
+
+# Copy source code and build
+COPY . .
+RUN dotnet build "src/Api/Api.csproj" -c Release -o /app/build
+
+FROM build AS test
+RUN dotnet test --no-build --verbosity normal
+
+FROM build AS publish
+RUN dotnet publish "src/Api/Api.csproj" -c Release -o /app/publish --no-restore
+
+# Runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+WORKDIR /app
+
+# Create non-root user
+RUN groupadd -r portfolio && useradd -r -g portfolio portfolio
+USER portfolio
+
+COPY --from=publish /app/publish .
+
+EXPOSE 8080
+ENTRYPOINT ["dotnet", "Api.dll"]
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+```
+
+### Frontend Dockerfile
+```dockerfile
+# Dockerfile.frontend
+FROM node:20-alpine AS build
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Copy package files
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
+# Copy source and build
+COPY . .
+RUN pnpm build
+
+# Production image with nginx
+FROM nginx:alpine AS runtime
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/nginx.conf
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+## Infrastructure as Code
+
+### Azure Resource Manager Template
+```json
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": {
+      "type": "string",
+      "allowedValues": ["dev", "staging", "production"]
+    }
+  },
+  "variables": {
+    "appServicePlanName": "[concat('asp-portfolio-', parameters('environmentName'))]",
+    "webAppName": "[concat('app-portfolio-', parameters('environmentName'))]",
+    "sqlServerName": "[concat('sql-portfolio-', parameters('environmentName'))]",
+    "keyVaultName": "[concat('kv-portfolio-', parameters('environmentName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2022-03-01",
+      "name": "[variables('appServicePlanName')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "P1v3",
+        "capacity": 2
+      },
+      "properties": {
+        "reserved": true
+      }
+    },
+    {
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2022-05-01-preview",
+      "name": "[variables('sqlServerName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "administratorLogin": "sqladmin",
+        "administratorLoginPassword": "[parameters('sqlAdminPassword')]",
+        "minimalTlsVersion": "1.2",
+        "publicNetworkAccess": "Disabled"
+      }
+    }
+  ]
+}
+```
+
+### Terraform Configuration
+```hcl
+# main.tf
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~>3.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+}
+
+resource "azurerm_resource_group" "portfolio" {
+  name     = "rg-portfolio-${var.environment}"
+  location = var.location
+}
+
+resource "azurerm_app_service_plan" "portfolio" {
+  name                = "asp-portfolio-${var.environment}"
+  location            = azurerm_resource_group.portfolio.location
+  resource_group_name = azurerm_resource_group.portfolio.name
+  kind                = "Linux"
+  reserved            = true
+
+  sku {
+    tier = "PremiumV3"
+    size = "P1v3"
+  }
+}
+
+resource "azurerm_app_service" "portfolio_api" {
+  name                = "app-portfolio-api-${var.environment}"
+  location            = azurerm_resource_group.portfolio.location
+  resource_group_name = azurerm_resource_group.portfolio.name
+  app_service_plan_id = azurerm_app_service_plan.portfolio.id
+
+  site_config {
+    linux_fx_version = "DOCKER|portfolio-api:latest"
+    always_on        = true
+  }
+
+  app_settings = {
+    "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "false"
+    "ConnectionStrings__DefaultConnection" = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.db_connection.id})"
+  }
+}
+```
+
+## Environment Management
+
+### Configuration Per Environment
+```json
+// appsettings.Development.json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=PerformanceCalculationDb;Trusted_Connection=true;MultipleActiveResultSets=true"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Debug",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "FeatureManagement": {
+    "NewTwrCalculation": true,
+    "AdvancedAttribution": false
+  }
+}
+
+// appsettings.Production.json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=${SQL_SERVER};Database=PerformanceCalculationDb;Authentication=Active Directory Managed Identity;"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "FeatureManagement": {
+    "NewTwrCalculation": true,
+    "AdvancedAttribution": true
+  }
+}
+```
+
+### Environment Variables
+```bash
+# .env.example
+ASPNETCORE_ENVIRONMENT=Development
+SQL_SERVER=(localdb)\MSSQLLocalDB
+SQL_DATABASE=PerformanceCalculationDb
+REDIS_CONNECTION_STRING=localhost:6379
+ELASTICSEARCH_URL=http://localhost:9200
+JWT_SECRET=your-secret-key
+CORS_ORIGINS=http://localhost:3000,https://localhost:5001
+```
+
+## Database Migration Strategy
+
+### Zero-Downtime Deployments
+```csharp
+public class MigrationService
+{
+    public async Task<bool> CanMigrateAsync()
+    {
+        var pendingMigrations = await _context.Database.GetPendingMigrationsAsync();
+        
+        // Check if migrations are backward compatible
+        foreach (var migration in pendingMigrations)
+        {
+            if (await IsBreakingChange(migration))
+            {
+                return false; // Requires maintenance window
+            }
+        }
+        
+        return true;
+    }
+    
+    public async Task MigrateAsync()
+    {
+        // Apply migrations in transaction
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        
+        try
+        {
+            await _context.Database.MigrateAsync();
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+}
+```
+
+### Blue-Green Deployment
+```yaml
+# kubernetes/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portfolio-api
+  labels:
+    app: portfolio-api
+    version: blue
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: portfolio-api
+      version: blue
+  template:
+    metadata:
+      labels:
+        app: portfolio-api
+        version: blue
+    spec:
+      containers:
+      - name: api
+        image: portfolio-api:latest
+        ports:
+        - containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+```
+
+## Backup & Disaster Recovery
+
+### Automated Backup Strategy
+```csharp
+public class BackupService
+{
+    public async Task CreateBackup()
+    {
+        var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
+        var backupName = $"portfolio-backup-{timestamp}";
+        
+        // Database backup
+        await _sqlService.CreateBackup(backupName);
+        
+        // File storage backup
+        await _blobService.CreateSnapshot();
+        
+        // Verify backup integrity
+        await ValidateBackup(backupName);
+        
+        // Cleanup old backups (keep last 30 days)
+        await CleanupOldBackups(TimeSpan.FromDays(30));
+    }
+}
+```
+
+### Recovery Procedures
+1. **RTO (Recovery Time Objective)**: 4 hours
+2. **RPO (Recovery Point Objective)**: 1 hour  
+3. **Backup Schedule**: Daily full, hourly incremental
+4. **Geo-redundancy**: Multi-region replication
+5. **Testing**: Monthly disaster recovery drills
+
+
+
+
+
+
+

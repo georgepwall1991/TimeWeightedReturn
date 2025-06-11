@@ -1,0 +1,634 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Project Setup Foundation
+
+## Project Structure Overview
+```
+TimeWeightedReturn/
+├── .cursor/                    # Cursor IDE settings
+│   ├── rules/                 # Cursor rules (already created)
+│   └── settings.json          # Cursor-specific settings
+├── .github/                   # GitHub configuration
+│   ├── workflows/             # CI/CD pipelines
+│   ├── ISSUE_TEMPLATE/        # Issue templates
+│   └── pull_request_template.md
+├── .vscode/                   # VS Code settings (for team consistency)
+│   ├── settings.json
+│   ├── launch.json            # Debug configurations
+│   ├── tasks.json             # Build tasks
+│   └── extensions.json        # Recommended extensions
+├── docs/                      # Documentation
+│   ├── api/                   # API documentation
+│   ├── architecture/          # Architecture diagrams
+│   └── user-guide/           # User documentation
+├── scripts/                   # Development scripts
+│   ├── setup.ps1             # Windows setup script
+│   ├── setup.sh              # Linux/Mac setup script
+│   └── seed-data.sql         # Sample data for development
+├── src/                      # Source code
+│   ├── Api/                  # Web API project
+│   ├── Application/          # Application layer (MediatR handlers)
+│   ├── Domain/               # Domain models and services
+│   └── Infrastructure/       # Data access and external services
+├── tests/                    # Test projects
+│   ├── Domain.Tests/         # Unit tests
+│   ├── Application.Tests/    # Integration tests
+│   └── Api.Tests/           # API tests
+├── frontend/                 # React frontend
+│   ├── src/
+│   ├── public/
+│   ├── package.json
+│   └── vite.config.ts
+├── .gitignore               # Git ignore rules
+├── .editorconfig           # Code formatting consistency
+├── docker-compose.yml      # Local development environment
+├── README.md               # Project documentation
+├── CONTRIBUTING.md         # Contribution guidelines
+└── TimeWeightedReturn.sln  # Visual Studio solution file
+```
+
+## Essential Configuration Files
+
+### `.gitignore`
+```gitignore
+# Visual Studio / .NET
+bin/
+obj/
+*.user
+*.suo
+*.cache
+.vs/
+.vscode/settings.json
+*.log
+
+# Rider
+.idea/
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+
+# MSTest test Results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# NUnit
+*.VisualState.xml
+TestResult.xml
+nunit-*.xml
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Entity Framework
+*.Cache
+ClientBin/
+[Ss]tyle[Cc]op.*
+~$*
+*~
+*.dbmdl
+*.dbproj.schemaview
+*.jfm
+*.pfx
+*.publishsettings
+
+# Node.js / Frontend
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.eslintcache
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs
+dist/
+build/
+*.tgz
+*.tar.gz
+
+# IDE files
+.DS_Store
+Thumbs.db
+
+# Database
+*.mdf
+*.ldf
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+
+# Environment variables
+.env
+.env.production
+!.env.example
+
+# Coverage reports
+coverage/
+*.coverage
+*.coveragexml
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+```
+
+### `.editorconfig`
+```ini
+# EditorConfig is awesome: https://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+# All files
+[*]
+indent_style = space
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# Code files
+[*.{cs,csx,vb,vbx}]
+indent_size = 4
+end_of_line = crlf
+
+# XML project files
+[*.{csproj,vbproj,vcxproj,vcxproj.filters,proj,projitems,shproj}]
+indent_size = 2
+
+# XML config files
+[*.{props,targets,ruleset,config,nuspec,resx,vsixmanifest,vsct}]
+indent_size = 2
+
+# JSON files
+[*.{json,json5,webmanifest}]
+indent_size = 2
+
+# YAML files
+[*.{yml,yaml}]
+indent_size = 2
+
+# Markdown files
+[*.{md,mdx}]
+trim_trailing_whitespace = false
+
+# Web files
+[*.{htm,html,js,jsm,ts,tsx,css,sass,scss,less,svg,vue}]
+indent_size = 2
+
+# Batch files
+[*.{cmd,bat}]
+end_of_line = crlf
+
+# Bash files
+[*.sh]
+end_of_line = lf
+```
+
+### `.cursor/settings.json` (Cursor IDE Settings)
+```json
+{
+  "cursor.cpp.disableErrorSquiggles": false,
+  "cursor.chat.defaultModel": "claude-3.5-sonnet",
+  "cursor.general.enableShellIntegration": true,
+  
+  // File associations
+  "files.associations": {
+    "*.cs": "csharp",
+    "*.csproj": "xml",
+    "*.props": "xml",
+    "*.targets": "xml"
+  },
+  
+  // Formatting
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  
+  // C# specific
+  "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
+  "dotnet.enableXamlTools": false,
+  "omnisharp.enableEditorConfigSupport": true,
+  "omnisharp.enableRoslynAnalyzers": true,
+  
+  // TypeScript/React
+  "typescript.preferences.includePackageJsonAutoImports": "auto",
+  "typescript.suggest.autoImports": true,
+  "emmet.includeLanguages": {
+    "typescript": "typescriptreact",
+    "javascript": "javascriptreact"
+  },
+  
+  // File exclusions
+  "files.exclude": {
+    "**/bin": true,
+    "**/obj": true,
+    "**/node_modules": true,
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true
+  },
+  
+  // Search exclusions
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bin": true,
+    "**/obj": true,
+    "**/*.min.js": true
+  }
+}
+```
+
+### `.vscode/settings.json` (VS Code Team Settings)
+```json
+{
+  "dotnet.defaultSolution": "TimeWeightedReturn.sln",
+  "files.exclude": {
+    "**/bin": true,
+    "**/obj": true,
+    "**/node_modules": true
+  },
+  "omnisharp.enableEditorConfigSupport": true,
+  "omnisharp.enableRoslynAnalyzers": true,
+  "editor.formatOnSave": true,
+  "csharp.format.enable": true,
+  "typescript.preferences.includePackageJsonAutoImports": "auto",
+  "eslint.workingDirectories": ["frontend"],
+  "prettier.configPath": "./frontend/.prettierrc"
+}
+```
+
+### `.vscode/extensions.json` (Recommended Extensions)
+```json
+{
+  "recommendations": [
+    "ms-dotnettools.csharp",
+    "ms-dotnettools.vscode-dotnet-runtime",
+    "bradlc.vscode-tailwindcss",
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "ms-vscode.vscode-typescript-next",
+    "formulahendry.auto-rename-tag",
+    "christian-kohler.path-intellisense",
+    "ms-vscode.powershell",
+    "humao.rest-client",
+    "ms-mssql.mssql",
+    "GitHub.copilot",
+    "GitHub.copilot-chat"
+  ],
+  "unwantedRecommendations": [
+    "ms-vscode.vscode-json"
+  ]
+}
+```
+
+### `.vscode/launch.json` (Debug Configuration)
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch API",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/src/Api/bin/Debug/net8.0/Api.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Api",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "sourceFileMap": {
+        "/Views": "${workspaceFolder}/Views"
+      }
+    },
+    {
+      "name": "Launch Frontend",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"]
+    },
+    {
+      "name": "Attach to API",
+      "type": "coreclr",
+      "request": "attach",
+      "processId": "${command:pickProcess}"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Launch Full Stack",
+      "configurations": ["Launch API", "Launch Frontend"]
+    }
+  ]
+}
+```
+
+### `.vscode/tasks.json` (Build Tasks)
+```json
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["build", "${workspaceFolder}/TimeWeightedReturn.sln"],
+      "problemMatcher": "$msCompile",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "test",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["test", "${workspaceFolder}/TimeWeightedReturn.sln"],
+      "problemMatcher": "$msCompile",
+      "group": "test"
+    },
+    {
+      "label": "clean",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["clean", "${workspaceFolder}/TimeWeightedReturn.sln"],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "restore",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["restore", "${workspaceFolder}/TimeWeightedReturn.sln"],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "ef-migration",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["ef", "migrations", "add", "${input:migrationName}", "--project", "src/Infrastructure"],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "ef-update",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["ef", "database", "update", "--project", "src/Infrastructure"],
+      "problemMatcher": "$msCompile"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "migrationName",
+      "description": "Enter migration name",
+      "default": "Migration",
+      "type": "promptString"
+    }
+  ]
+}
+```
+
+## Development Scripts
+
+### `scripts/setup.ps1` (Windows Setup)
+```powershell
+# PowerShell setup script for Windows
+
+Write-Host "Setting up TimeWeightedReturn development environment..." -ForegroundColor Green
+
+# Check if .NET 8 is installed
+Write-Host "Checking .NET 8 installation..." -ForegroundColor Yellow
+$dotnetVersion = dotnet --version 2>$null
+if ($LASTEXITCODE -ne 0 -or -not $dotnetVersion.StartsWith("8.")) {
+    Write-Host "Please install .NET 8 SDK from https://dotnet.microsoft.com/download" -ForegroundColor Red
+    exit 1
+}
+Write-Host ".NET version: $dotnetVersion" -ForegroundColor Green
+
+# Check if Node.js is installed
+Write-Host "Checking Node.js installation..." -ForegroundColor Yellow
+$nodeVersion = node --version 2>$null
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Please install Node.js from https://nodejs.org/" -ForegroundColor Red
+    exit 1
+}
+Write-Host "Node.js version: $nodeVersion" -ForegroundColor Green
+
+# Install EF Core tools
+Write-Host "Installing EF Core tools..." -ForegroundColor Yellow
+dotnet tool install --global dotnet-ef 2>$null
+
+# Install pnpm globally
+Write-Host "Installing pnpm..." -ForegroundColor Yellow
+npm install -g pnpm
+
+# Restore .NET packages
+Write-Host "Restoring .NET packages..." -ForegroundColor Yellow
+dotnet restore
+
+# Install frontend dependencies
+Write-Host "Installing frontend dependencies..." -ForegroundColor Yellow
+Set-Location frontend
+pnpm install
+Set-Location ..
+
+# Create initial database migration
+Write-Host "Creating initial database migration..." -ForegroundColor Yellow
+dotnet ef migrations add InitialCreate --project src/Infrastructure
+
+# Update database
+Write-Host "Updating database..." -ForegroundColor Yellow
+dotnet ef database update --project src/Infrastructure
+
+# Seed initial data (if script exists)
+if (Test-Path "scripts/seed-data.sql") {
+    Write-Host "Seeding initial data..." -ForegroundColor Yellow
+    sqlcmd -S "(localdb)\MSSQLLocalDB" -d "PerformanceCalculationDb" -i "scripts/seed-data.sql"
+}
+
+Write-Host "Setup complete! Run 'dotnet run --project src/Api' to start the API." -ForegroundColor Green
+Write-Host "Run 'cd frontend && pnpm dev' to start the frontend." -ForegroundColor Green
+```
+
+### `scripts/setup.sh` (Linux/Mac Setup)
+```bash
+#!/bin/bash
+
+echo "Setting up TimeWeightedReturn development environment..."
+
+# Check if .NET 8 is installed
+echo "Checking .NET 8 installation..."
+if ! command -v dotnet &> /dev/null || ! dotnet --version | grep -q "^8\."; then
+    echo "Please install .NET 8 SDK from https://dotnet.microsoft.com/download"
+    exit 1
+fi
+echo ".NET version: $(dotnet --version)"
+
+# Check if Node.js is installed
+echo "Checking Node.js installation..."
+if ! command -v node &> /dev/null; then
+    echo "Please install Node.js from https://nodejs.org/"
+    exit 1
+fi
+echo "Node.js version: $(node --version)"
+
+# Install EF Core tools
+echo "Installing EF Core tools..."
+dotnet tool install --global dotnet-ef
+
+# Install pnpm globally
+echo "Installing pnpm..."
+npm install -g pnpm
+
+# Restore .NET packages
+echo "Restoring .NET packages..."
+dotnet restore
+
+# Install frontend dependencies
+echo "Installing frontend dependencies..."
+cd frontend
+pnpm install
+cd ..
+
+# Create initial database migration
+echo "Creating initial database migration..."
+dotnet ef migrations add InitialCreate --project src/Infrastructure
+
+# Update database
+echo "Updating database..."
+dotnet ef database update --project src/Infrastructure
+
+echo "Setup complete!"
+echo "Run 'dotnet run --project src/Api' to start the API."
+echo "Run 'cd frontend && pnpm dev' to start the frontend."
+```
+
+### `docker-compose.yml` (Local Development Environment)
+```yaml
+version: '3.8'
+
+services:
+  # SQL Server for non-Windows development
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong@Passw0rd123
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourStrong@Passw0rd123 -Q 'SELECT 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # Elasticsearch for logging (optional)
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+
+volumes:
+  sqlserver_data:
+  redis_data:
+  elasticsearch_data:
+```
+
+## Quick Start Commands
+
+### Initial Project Creation
+```bash
+# Create solution and projects
+dotnet new sln -n TimeWeightedReturn
+dotnet new webapi -n Api -o src/Api
+dotnet new classlib -n Domain -o src/Domain
+dotnet new classlib -n Application -o src/Application  
+dotnet new classlib -n Infrastructure -o src/Infrastructure
+dotnet new xunit -n Domain.Tests -o tests/Domain.Tests
+dotnet new xunit -n Application.Tests -o tests/Application.Tests
+dotnet new xunit -n Api.Tests -o tests/Api.Tests
+
+# Add projects to solution
+dotnet sln add src/Api src/Domain src/Application src/Infrastructure
+dotnet sln add tests/Domain.Tests tests/Application.Tests tests/Api.Tests
+
+# Add project references
+dotnet add src/Api reference src/Application src/Infrastructure
+dotnet add src/Application reference src/Domain
+dotnet add src/Infrastructure reference src/Domain src/Application
+dotnet add tests/Domain.Tests reference src/Domain
+dotnet add tests/Application.Tests reference src/Application
+dotnet add tests/Api.Tests reference src/Api
+
+# Create React frontend
+cd frontend
+pnpm create vite . --template react-ts
+```
+
+### Daily Development Workflow
+```bash
+# Start development environment
+docker-compose up -d  # Optional: external services
+dotnet run --project src/Api  # Terminal 1: API
+cd frontend && pnpm dev        # Terminal 2: Frontend
+
+# Run tests
+dotnet test                    # All .NET tests
+cd frontend && pnpm test      # Frontend tests
+
+# Database operations
+dotnet ef migrations add [Name] --project src/Infrastructure
+dotnet ef database update --project src/Infrastructure
+```
+
+This foundation setup ensures every developer can get up and running quickly with a consistent environment! 🚀
+
