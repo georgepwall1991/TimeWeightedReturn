@@ -1,3 +1,4 @@
+using System.Globalization;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,21 +8,23 @@ public class PortfolioContext : DbContext
 {
     public PortfolioContext(DbContextOptions<PortfolioContext> options) : base(options)
     {
+        // Ensure invariant culture is used for database operations
+        Database.SetCommandTimeout(TimeSpan.FromMinutes(5));
     }
-
-    // DbSets
-    public DbSet<Client> Clients { get; set; }
-    public DbSet<Portfolio> Portfolios { get; set; }
-    public DbSet<Account> Accounts { get; set; }
-    public DbSet<Instrument> Instruments { get; set; }
-    public DbSet<Holding> Holdings { get; set; }
-    public DbSet<Price> Prices { get; set; }
-    public DbSet<FxRate> FxRates { get; set; }
-    public DbSet<CashFlow> CashFlows { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Configure decimal precision for all decimal properties
+        foreach (var property in modelBuilder.Model
+            .GetEntityTypes()
+            .SelectMany(t => t.GetProperties())
+            .Where(p => p.ClrType == typeof(decimal) || p.ClrType == typeof(decimal?)))
+        {
+            property.SetPrecision(18);
+            property.SetScale(6);
+        }
 
         // Client Configuration
         modelBuilder.Entity<Client>(entity =>
@@ -128,4 +131,14 @@ public class PortfolioContext : DbContext
             entity.HasIndex(e => new { e.BaseCurrency, e.QuoteCurrency, e.Date }).IsUnique();
         });
     }
+
+    // DbSets
+    public DbSet<Client> Clients { get; set; }
+    public DbSet<Portfolio> Portfolios { get; set; }
+    public DbSet<Account> Accounts { get; set; }
+    public DbSet<Instrument> Instruments { get; set; }
+    public DbSet<Holding> Holdings { get; set; }
+    public DbSet<Price> Prices { get; set; }
+    public DbSet<FxRate> FxRates { get; set; }
+    public DbSet<CashFlow> CashFlows { get; set; }
 }

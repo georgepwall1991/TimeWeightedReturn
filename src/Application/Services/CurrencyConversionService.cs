@@ -4,13 +4,13 @@ namespace Application.Services;
 
 public interface ICurrencyConversionService
 {
-    decimal ConvertToGBP(decimal amount, string fromCurrency, DateOnly date, IEnumerable<FxRate> fxRates);
+    decimal ConvertToGbp(decimal amount, string fromCurrency, DateOnly date, IEnumerable<FxRate> fxRates);
     decimal GetFxRate(string fromCurrency, DateOnly date, IEnumerable<FxRate> fxRates);
 }
 
 public class CurrencyConversionService : ICurrencyConversionService
 {
-    public decimal ConvertToGBP(decimal amount, string fromCurrency, DateOnly date, IEnumerable<FxRate> fxRates)
+    public decimal ConvertToGbp(decimal amount, string fromCurrency, DateOnly date, IEnumerable<FxRate> fxRates)
     {
         if (fromCurrency == "GBP")
             return amount;

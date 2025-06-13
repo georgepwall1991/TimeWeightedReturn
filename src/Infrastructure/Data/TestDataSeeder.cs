@@ -71,8 +71,7 @@ public class TestDataSeeder
             msftPrice = Math.Max(250m, Math.Min(450m, msftPrice));
 
             // Add prices
-            prices.AddRange(new[]
-            {
+            prices.AddRange([
                 new Price
                 {
                     Id = Guid.NewGuid(),
@@ -105,14 +104,13 @@ public class TestDataSeeder
                     Value = cashPrice,
                     CreatedAt = DateTime.UtcNow
                 }
-            });
+            ]);
 
             // Add holdings for specific dates (monthly snapshots)
             if (date.Day == 1 || date == endDate) // First of month or last day
             {
                 // ISA Account holdings
-                holdings.AddRange(new[]
-                {
+                holdings.AddRange([
                     new Holding
                     {
                         Id = Guid.NewGuid(),
@@ -140,11 +138,10 @@ public class TestDataSeeder
                         Units = 5000m,
                         CreatedAt = DateTime.UtcNow
                     }
-                });
+                ]);
 
                 // GIA Account holdings
-                holdings.AddRange(new[]
-                {
+                holdings.AddRange([
                     new Holding
                     {
                         Id = Guid.NewGuid(),
@@ -163,7 +160,7 @@ public class TestDataSeeder
                         Units = 2000m,
                         CreatedAt = DateTime.UtcNow
                     }
-                });
+                ]);
             }
         }
 
@@ -201,8 +198,7 @@ public class TestDataSeeder
         };
 
         foreach (var quarterDate in quarterlyDates)
-            cashFlows.AddRange(new[]
-            {
+            cashFlows.AddRange([
                 new CashFlow
                 {
                     Id = Guid.NewGuid(),
@@ -227,7 +223,7 @@ public class TestDataSeeder
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 }
-            });
+            ]);
 
         // Bulk insert data
         await _context.Prices.AddRangeAsync(prices);

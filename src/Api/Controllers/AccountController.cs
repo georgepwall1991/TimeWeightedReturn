@@ -85,7 +85,7 @@ public class AccountController : ControllerBase
                 {
                     InstrumentId = h.HoldingId.ToString(),
                     h.Ticker,
-                    Name = h.InstrumentName,
+                    Name = h.Name,
                     h.Units,
                     h.Price,
                     h.ValueGBP,
@@ -374,7 +374,7 @@ public class AccountController : ControllerBase
                     AccountName = account.Name,
                     StartDate = startDate,
                     EndDate = endDate,
-                    HistoricalData = new List<HistoricalDataPoint>(),
+                    HistoricalData = [],
                     AvailableDateRange = new DateRangeInfo
                     {
                         Earliest = startDate,
@@ -465,7 +465,7 @@ public class AccountController : ControllerBase
         foreach (var holding in holdings)
         {
             worksheet.Cell(row, 1).Value = holding.Ticker;
-            worksheet.Cell(row, 2).Value = holding.InstrumentName;
+            worksheet.Cell(row, 2).Value = holding.Name;
             worksheet.Cell(row, 3).Value = holding.Units;
             worksheet.Cell(row, 4).Value = holding.Price;
             worksheet.Cell(row, 5).Value = holding.Currency;
@@ -502,7 +502,7 @@ public class AccountController : ControllerBase
 
         foreach (var holding in holdings)
             csv.AppendLine($"{holding.Ticker}," +
-                           $"{EscapeCsvField(holding.InstrumentName)}," +
+                           $"{EscapeCsvField(holding.Name)}," +
                            $"{holding.Units}," +
                            $"{holding.Price}," +
                            $"{holding.Currency}," +
@@ -528,14 +528,14 @@ public class GetAccountHoldingsHistoryResponse
     public string AccountName { get; set; } = string.Empty;
     public string StartDate { get; set; } = string.Empty;
     public string EndDate { get; set; } = string.Empty;
-    public List<HistoricalDataPoint> HistoricalData { get; set; } = new();
+    public List<HistoricalDataPoint> HistoricalData { get; set; } = [];
     public DateRangeInfo AvailableDateRange { get; set; } = new();
 }
 
 public class HistoricalDataPoint
 {
     public string Date { get; set; } = string.Empty;
-    public List<HoldingDto> Holdings { get; set; } = new();
+    public List<HoldingDto> Holdings { get; set; } = [];
     public decimal TotalValueGBP { get; set; }
     public int Count { get; set; }
 }

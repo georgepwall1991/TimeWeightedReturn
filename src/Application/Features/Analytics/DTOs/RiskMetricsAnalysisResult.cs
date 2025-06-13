@@ -19,8 +19,8 @@ public record RiskMetricsAnalysisResult
     // Additional Analysis
     public decimal RiskFreeRate { get; init; }
     public string RiskProfile { get; init; } = string.Empty; // Conservative, Moderate, Aggressive
-    public IReadOnlyList<DrawdownPeriodData> DrawdownPeriods { get; init; } = Array.Empty<DrawdownPeriodData>();
-    public IReadOnlyList<RollingVolatilityData> RollingVolatility { get; init; } = Array.Empty<RollingVolatilityData>();
+    public IReadOnlyList<DrawdownPeriodData> DrawdownPeriods { get; init; } = [];
+    public IReadOnlyList<RollingVolatilityData> RollingVolatility { get; init; } = [];
 
     // Risk Assessment
     public RiskAssessment RiskAssessment { get; init; } = new();
@@ -48,6 +48,6 @@ public record RiskAssessment
     public string DrawdownCategory { get; init; } = string.Empty; // Minimal, Moderate, Severe
     public decimal RiskScore { get; init; } // 1-10 scale
     public string OverallAssessment { get; init; } = string.Empty;
-    public IReadOnlyList<string> RiskWarnings { get; init; } = Array.Empty<string>();
-    public IReadOnlyList<string> PositiveFactors { get; init; } = Array.Empty<string>();
+    public IReadOnlyList<string> RiskWarnings { get; init; } = [];
+    public IReadOnlyList<string> PositiveFactors { get; init; } = [];
 }

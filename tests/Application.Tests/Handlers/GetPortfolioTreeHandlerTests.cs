@@ -54,7 +54,7 @@ public class GetPortfolioTreeHandlerTests
         };
 
         _mockRepository.Setup(r => r.GetClientsWithPortfoliosAsync(clientId))
-            .ReturnsAsync(new[] { client });
+            .ReturnsAsync([client]);
 
         _mockRepository.Setup(r => r.GetAccountValueAsync(accountId, date))
             .ReturnsAsync(10000m);
@@ -133,7 +133,7 @@ public class GetPortfolioTreeHandlerTests
         };
 
         _mockRepository.Setup(r => r.GetClientsWithPortfoliosAsync(clientId))
-            .ReturnsAsync(new[] { client });
+            .ReturnsAsync([client]);
 
         _mockRepository.Setup(r => r.GetAccountValueAsync(account1Id, date))
             .ReturnsAsync(15000m);
@@ -189,7 +189,7 @@ public class GetPortfolioTreeHandlerTests
         };
 
         _mockRepository.Setup(r => r.GetClientsWithPortfoliosAsync(clientId))
-            .ReturnsAsync(new[] { client });
+            .ReturnsAsync([client]);
 
         var query = new GetPortfolioTreeQuery(clientId, date);
 

@@ -23,7 +23,7 @@ public record ClientNodeDto : PortfolioTreeNodeDto
         NodeType = "Client";
     }
 
-    public IReadOnlyList<PortfolioNodeDto> Portfolios { get; init; } = Array.Empty<PortfolioNodeDto>();
+    public IReadOnlyList<PortfolioNodeDto> Portfolios { get; init; } = [];
     public int PortfoliosCount => Portfolios.Count;
 }
 
@@ -35,7 +35,7 @@ public record PortfolioNodeDto : PortfolioTreeNodeDto
     }
 
     public Guid ClientId { get; init; }
-    public IReadOnlyList<AccountNodeDto> Accounts { get; init; } = Array.Empty<AccountNodeDto>();
+    public IReadOnlyList<AccountNodeDto> Accounts { get; init; } = [];
     public int AccountsCount => Accounts.Count;
 }
 

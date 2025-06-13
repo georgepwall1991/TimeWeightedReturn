@@ -405,8 +405,7 @@ public class DataSeeder
         foreach (var date in holdingsDates)
         {
             // ISA Account holdings
-            holdingsList.AddRange(new[]
-            {
+            holdingsList.AddRange([
                 new Holding
                 {
                     Id = Guid.NewGuid(), AccountId = account1.Id, InstrumentId = instruments[0].Id, Date = date,
@@ -427,11 +426,10 @@ public class DataSeeder
                     Id = Guid.NewGuid(), AccountId = account1.Id, InstrumentId = instruments[9].Id, Date = date,
                     Units = 5000m, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
                 } // CASH_GBP
-            });
+            ]);
 
             // GIA Account holdings
-            holdingsList.AddRange(new[]
-            {
+            holdingsList.AddRange([
                 new Holding
                 {
                     Id = Guid.NewGuid(), AccountId = account2.Id, InstrumentId = instruments[1].Id, Date = date,
@@ -462,7 +460,7 @@ public class DataSeeder
                     Id = Guid.NewGuid(), AccountId = account2.Id, InstrumentId = instruments[11].Id, Date = date,
                     Units = 1500m, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
                 } // CASH_EUR
-            });
+            ]);
         }
 
         _context.Holdings.AddRange(holdingsList);
@@ -607,8 +605,7 @@ public class DataSeeder
         var cashFlows = new List<CashFlow>();
 
         // ISA Account cash flows
-        cashFlows.AddRange(new[]
-        {
+        cashFlows.AddRange([
             // Performance-influencing flows (keep in TWR)
             new CashFlow
             {
@@ -675,11 +672,10 @@ public class DataSeeder
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             }
-        });
+        ]);
 
         // GIA Account cash flows
-        cashFlows.AddRange(new[]
-        {
+        cashFlows.AddRange([
             // Performance-influencing flows
             new CashFlow
             {
@@ -748,7 +744,7 @@ public class DataSeeder
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             }
-        });
+        ]);
 
         _context.CashFlows.AddRange(cashFlows);
     }

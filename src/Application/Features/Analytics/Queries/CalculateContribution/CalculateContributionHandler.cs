@@ -69,7 +69,7 @@ public class CalculateContributionHandler : IRequestHandler<CalculateContributio
                 {
                     InstrumentId = startHolding.HoldingId.ToString(),
                     Ticker = startHolding.Ticker,
-                    Name = startHolding.InstrumentName,
+                    Name = startHolding.Name,
                     Currency = startHolding.Currency,
                     Type = instrumentType,
                     Units = startHolding.Units,

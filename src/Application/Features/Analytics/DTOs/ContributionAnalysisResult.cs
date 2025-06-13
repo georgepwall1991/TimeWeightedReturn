@@ -15,7 +15,7 @@ public record ContributionAnalysisResult
     public decimal EndValueGBP { get; init; }
 
     // Individual instrument contributions
-    public IReadOnlyList<ContributionData> InstrumentContributions { get; init; } = Array.Empty<ContributionData>();
+    public IReadOnlyList<ContributionData> InstrumentContributions { get; init; } = [];
 
     // Summary statistics
     public decimal TopContributorReturn { get; init; }

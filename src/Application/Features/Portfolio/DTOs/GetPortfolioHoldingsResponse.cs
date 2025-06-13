@@ -6,7 +6,7 @@ public record HoldingDto
 {
     public Guid HoldingId { get; init; }
     public string Ticker { get; init; } = string.Empty;
-    public string InstrumentName { get; init; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
     public string InstrumentType { get; init; } = string.Empty;
     public string Currency { get; init; } = string.Empty;
     public decimal Units { get; init; }

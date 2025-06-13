@@ -22,7 +22,7 @@ public class GetPortfolioHoldingsHandler : IRequestHandler<GetPortfolioHoldingsQ
         {
             HoldingId = h.HoldingId,
             Ticker = h.Ticker,
-            InstrumentName = h.InstrumentName,
+            Name = h.Name,
             InstrumentType = h.InstrumentType,
             Currency = h.Currency,
             Units = h.Units,

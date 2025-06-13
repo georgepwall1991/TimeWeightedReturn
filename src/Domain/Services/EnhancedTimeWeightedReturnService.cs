@@ -22,7 +22,7 @@ public class EnhancedTimeWeightedReturnService
         {
             Period = period,
             TotalReturn = 0m,
-            SubPeriods = new List<EnhancedSubPeriod>()
+            SubPeriods = []
         };
 
         // Filter cash flows by category for TWR treatment
@@ -160,7 +160,7 @@ public class EnhancedTwrResult
 {
     public DateRange Period { get; set; } = new(DateOnly.MinValue, DateOnly.MinValue);
     public decimal TotalReturn { get; set; }
-    public List<EnhancedSubPeriod> SubPeriods { get; set; } = new();
+    public List<EnhancedSubPeriod> SubPeriods { get; set; } = [];
     public int ExternalFlowCount { get; set; }
     public int PerformanceFlowCount { get; set; }
 
@@ -181,7 +181,7 @@ public class EnhancedSubPeriod
     public decimal StartValue { get; set; }
     public decimal EndValue { get; set; }
     public decimal Return { get; set; }
-    public List<CashFlowSummary> PerformanceFlows { get; set; } = new();
+    public List<CashFlowSummary> PerformanceFlows { get; set; } = [];
     public int Days { get; set; }
 
     public decimal TotalPerformanceFlow => PerformanceFlows.Sum(f => f.Amount);

@@ -227,7 +227,7 @@ public class CalculateRiskMetricsHandler : IRequestHandler<CalculateRiskMetricsQ
             RiskAssessment = new RiskAssessment
             {
                 OverallAssessment = "Insufficient data for risk analysis",
-                RiskWarnings = new[] { "Not enough historical data to calculate reliable risk metrics" }
+                RiskWarnings = ["Not enough historical data to calculate reliable risk metrics"]
             }
         };
     }

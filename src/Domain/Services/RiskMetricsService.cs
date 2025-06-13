@@ -16,7 +16,7 @@ public class RiskMetricsService
         var datesList = dates.ToList();
 
         if (valuesList.Count < 2 || datesList.Count != valuesList.Count)
-            return new RiskMetricsResult(0, 0, 0, 0, 0, 0, Array.Empty<DrawdownPeriod>());
+            return new RiskMetricsResult(0, 0, 0, 0, 0, 0, []);
 
         // Calculate daily returns
         var returns = CalculateReturns(valuesList);

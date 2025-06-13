@@ -29,7 +29,7 @@ public class PortfolioRepository : IPortfolioRepository
             .ToListAsync();
 
         if (!holdings.Any())
-            return Enumerable.Empty<HoldingDto>();
+            return [];
 
         // Get prices for the specified date
         var instrumentIds = holdings.Select(h => h.InstrumentId).ToList();
@@ -57,20 +57,20 @@ public class PortfolioRepository : IPortfolioRepository
 
             var localValue = holding.Units * price.Value;
             var fxRate = _currencyService.GetFxRate(holding.Instrument.Currency, date, fxRates);
-            var valueGBP = _currencyService.ConvertToGBP(localValue, holding.Instrument.Currency, date, fxRates);
+            var valueGbp = _currencyService.ConvertToGbp(localValue, holding.Instrument.Currency, date, fxRates);
 
             result.Add(new HoldingDto
             {
                 HoldingId = holding.Id,
                 Ticker = holding.Instrument.Ticker,
-                InstrumentName = holding.Instrument.Name,
+                Name = holding.Instrument.Name,
                 InstrumentType = holding.Instrument.Type.ToString(),
                 Currency = holding.Instrument.Currency,
                 Units = holding.Units,
                 Price = price.Value,
                 LocalValue = localValue,
                 FxRate = fxRate,
-                ValueGBP = valueGBP,
+                ValueGBP = valueGbp,
                 Date = holding.Date
             });
         }
@@ -111,7 +111,7 @@ public class PortfolioRepository : IPortfolioRepository
         }
 
         if (!holdings.Any())
-            return Enumerable.Empty<HoldingDto>();
+            return [];
 
         // Get prices for the specified date
         var instrumentIds = holdings.Select(h => h.InstrumentId).ToList();
@@ -156,13 +156,12 @@ public class PortfolioRepository : IPortfolioRepository
 
         foreach (var holding in holdings)
         {
-            var price = prices.FirstOrDefault(p => p.InstrumentId == holding.InstrumentId);
-            if (price == null)
-                // Try to get the latest available price on or before the date for this instrument
-                price = await _context.Prices
-                    .Where(p => p.InstrumentId == holding.InstrumentId && p.Date <= date)
-                    .OrderByDescending(p => p.Date)
-                    .FirstOrDefaultAsync();
+            // Try to get the latest available price on or before the date for this instrument
+            var price = prices.FirstOrDefault(p => p.InstrumentId == holding.InstrumentId) ?? await _context.Prices
+                .Where(p => p.InstrumentId == holding.InstrumentId && p.Date <= date)
+                .OrderByDescending(p => p.Date)
+                .FirstOrDefaultAsync();
+
             if (price == null)
                 throw new InvalidOperationException(
                     $"No price found for instrument {holding.Instrument.Ticker} on or before {date}");
@@ -185,20 +184,20 @@ public class PortfolioRepository : IPortfolioRepository
                 throw new InvalidOperationException(
                     $"No FX rate found for currency {holding.Instrument.Currency} on or before {date}");
 
-            var valueGBP = _currencyService.ConvertToGBP(localValue, holding.Instrument.Currency, date, fxRates);
+            var valueGbp = _currencyService.ConvertToGbp(localValue, holding.Instrument.Currency, date, fxRates);
 
             result.Add(new HoldingDto
             {
                 HoldingId = holding.Id,
                 Ticker = holding.Instrument.Ticker,
-                InstrumentName = holding.Instrument.Name,
+                Name = holding.Instrument.Name,
                 InstrumentType = holding.Instrument.Type.ToString(),
                 Currency = holding.Instrument.Currency,
                 Units = holding.Units,
                 Price = price.Value,
                 LocalValue = localValue,
                 FxRate = fxRate,
-                ValueGBP = valueGBP,
+                ValueGBP = valueGbp,
                 Date = holding.Date
             });
         }
@@ -300,23 +299,29 @@ public class PortfolioRepository : IPortfolioRepository
         {
             var price = prices.GetValueOrDefault(h.InstrumentId);
             var fxRate = h.Instrument.Currency == "GBP" ? 1m : fxRates.GetValueOrDefault(h.Instrument.Currency, 1m);
-            var valueGBP = h.Units * price * fxRate;
+            var valueGbp = CalculateHoldingValueInGbp(h, price, fxRate);
 
             return new HoldingDto
             {
                 HoldingId = h.Id,
                 Ticker = h.Instrument.Ticker,
-                InstrumentName = h.Instrument.Name,
+                Name = h.Instrument.Name,
                 InstrumentType = h.Instrument.Type.ToString(),
                 Currency = h.Instrument.Currency,
                 Units = h.Units,
                 Price = price,
                 LocalValue = h.Units * price,
                 FxRate = fxRate,
-                ValueGBP = valueGBP,
+                ValueGBP = valueGbp,
                 Date = h.Date
             };
         }).ToList();
+    }
+
+    private static decimal CalculateHoldingValueInGbp(Holding holding, decimal price, decimal fxRate)
+    {
+        var valueGbp = holding.Units * price * fxRate;
+        return valueGbp;
     }
 
     public async Task<Dictionary<Guid, decimal>> GetPricesForHoldingsAsync(IEnumerable<Guid> holdingIds)

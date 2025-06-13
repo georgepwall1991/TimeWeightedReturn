@@ -26,7 +26,7 @@ public class CashFlowSummaryDto
     public decimal TotalOutflows { get; set; }
     public decimal NetFlow => TotalInflows + TotalOutflows; // Outflows are negative
     public int TransactionCount { get; set; }
-    public List<CashFlowDto> Transactions { get; set; } = new();
+    public List<CashFlowDto> Transactions { get; set; } = [];
 }
 
 public class CashFlowAnalysisDto
@@ -41,18 +41,18 @@ public class CashFlowAnalysisDto
     public decimal TotalPerformanceInflows { get; set; }
     public decimal TotalPerformanceOutflows { get; set; }
     public decimal NetPerformanceFlow => TotalPerformanceInflows + TotalPerformanceOutflows;
-    public List<CashFlowDto> PerformanceFlows { get; set; } = new();
+    public List<CashFlowDto> PerformanceFlows { get; set; } = [];
 
     // External Flows (TWR sub-period breakers)
     public decimal TotalExternalInflows { get; set; }
     public decimal TotalExternalOutflows { get; set; }
     public decimal NetExternalFlow => TotalExternalInflows + TotalExternalOutflows;
-    public List<CashFlowDto> ExternalFlows { get; set; } = new();
+    public List<CashFlowDto> ExternalFlows { get; set; } = [];
     public int SubPeriodBreaks => ExternalFlows.Count;
 
     // Internal Flows (no TWR impact)
     public decimal TotalInternalFlow { get; set; }
-    public List<CashFlowDto> InternalFlows { get; set; } = new();
+    public List<CashFlowDto> InternalFlows { get; set; } = [];
 
     // Summary
     public decimal GrandTotalInflows => TotalPerformanceInflows + TotalExternalInflows;
@@ -82,7 +82,7 @@ public class EnhancedTwrResultDto
     public int SubPeriodCount { get; set; }
     public int ExternalFlowCount { get; set; }
     public int PerformanceFlowCount { get; set; }
-    public List<EnhancedSubPeriodDto> SubPeriods { get; set; } = new();
+    public List<EnhancedSubPeriodDto> SubPeriods { get; set; } = [];
     public CashFlowAnalysisDto CashFlowAnalysis { get; set; } = new();
 }
 
@@ -96,7 +96,7 @@ public class EnhancedSubPeriodDto
     public decimal Return { get; set; }
     public decimal TotalPerformanceFlow { get; set; }
     public int PerformanceFlowCount { get; set; }
-    public List<CashFlowSummaryItemDto> PerformanceFlows { get; set; } = new();
+    public List<CashFlowSummaryItemDto> PerformanceFlows { get; set; } = [];
 }
 
 public class CashFlowSummaryItemDto
