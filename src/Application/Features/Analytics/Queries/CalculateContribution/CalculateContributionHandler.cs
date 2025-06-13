@@ -8,8 +8,8 @@ namespace Application.Features.Analytics.Queries.CalculateContribution;
 
 public class CalculateContributionHandler : IRequestHandler<CalculateContributionQuery, ContributionAnalysisResult>
 {
-    private readonly IPortfolioRepository _repository;
     private readonly ContributionAnalysisService _contributionService;
+    private readonly IPortfolioRepository _repository;
     private readonly TimeWeightedReturnService _twrService;
 
     public CalculateContributionHandler(
@@ -22,17 +22,17 @@ public class CalculateContributionHandler : IRequestHandler<CalculateContributio
         _twrService = twrService;
     }
 
-    public async Task<ContributionAnalysisResult> Handle(CalculateContributionQuery request, CancellationToken cancellationToken)
+    public async Task<ContributionAnalysisResult> Handle(CalculateContributionQuery request,
+        CancellationToken cancellationToken)
     {
         var account = await _repository.GetAccountAsync(request.AccountId);
-        if (account == null)
-        {
-            throw new ArgumentException($"Account with ID {request.AccountId} not found");
-        }
+        if (account == null) throw new ArgumentException($"Account with ID {request.AccountId} not found");
 
         // Get holdings for start and end dates
-        var startHoldings = await _repository.GetAccountHoldingsWithInstrumentDetailsAsync(request.AccountId, request.StartDate);
-        var endHoldings = await _repository.GetAccountHoldingsWithInstrumentDetailsAsync(request.AccountId, request.EndDate);
+        var startHoldings =
+            await _repository.GetAccountHoldingsWithInstrumentDetailsAsync(request.AccountId, request.StartDate);
+        var endHoldings =
+            await _repository.GetAccountHoldingsWithInstrumentDetailsAsync(request.AccountId, request.EndDate);
 
         // Calculate total portfolio values
         var totalStartValue = startHoldings.Sum(h => h.ValueGBP);
@@ -43,7 +43,7 @@ public class CalculateContributionHandler : IRequestHandler<CalculateContributio
         var totalAbsoluteReturn = totalEndValue - totalStartValue;
 
         // Calculate contribution for each instrument
-        var instrumentContributions = new List<DTOs.ContributionData>();
+        var instrumentContributions = new List<ContributionData>();
 
         foreach (var startHolding in startHoldings)
         {
@@ -61,11 +61,11 @@ public class CalculateContributionHandler : IRequestHandler<CalculateContributio
                     contribution.AbsoluteContribution,
                     totalAbsoluteReturn);
 
-                var instrumentType = Enum.TryParse<DTOs.InstrumentType>(startHolding.InstrumentType, out var type)
+                var instrumentType = Enum.TryParse<InstrumentType>(startHolding.InstrumentType, out var type)
                     ? type
-                    : DTOs.InstrumentType.Security;
+                    : InstrumentType.Security;
 
-                instrumentContributions.Add(new DTOs.ContributionData
+                instrumentContributions.Add(new ContributionData
                 {
                     InstrumentId = startHolding.HoldingId.ToString(),
                     Ticker = startHolding.Ticker,

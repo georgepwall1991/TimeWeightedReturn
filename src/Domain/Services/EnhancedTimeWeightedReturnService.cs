@@ -4,14 +4,14 @@ using Domain.ValueObjects;
 namespace Domain.Services;
 
 /// <summary>
-/// Enhanced Time Weighted Return service that properly handles cash flows
-/// according to GIPS standards and portfolio management best practices
+///     Enhanced Time Weighted Return service that properly handles cash flows
+///     according to GIPS standards and portfolio management best practices
 /// </summary>
 public class EnhancedTimeWeightedReturnService
 {
     /// <summary>
-    /// Calculate TWR with proper cash flow handling
-    /// External flows break the calculation into sub-periods
+    ///     Calculate TWR with proper cash flow handling
+    ///     External flows break the calculation into sub-periods
     /// </summary>
     public EnhancedTwrResult Calculate(
         IEnumerable<ValuationPoint> valuations,
@@ -39,7 +39,7 @@ public class EnhancedTimeWeightedReturnService
         // Create sub-periods broken by external cash flows
         var subPeriods = CreateSubPeriods(valuations, externalFlows, period);
 
-        decimal chainedReturn = 1m;
+        var chainedReturn = 1m;
 
         foreach (var subPeriod in subPeriods)
         {
@@ -50,7 +50,7 @@ public class EnhancedTimeWeightedReturnService
             var subPeriodReturn = CalculateSubPeriodReturn(subPeriod, subPeriodFlows);
 
             result.SubPeriods.Add(subPeriodReturn);
-            chainedReturn *= (1 + subPeriodReturn.Return);
+            chainedReturn *= 1 + subPeriodReturn.Return;
         }
 
         result.TotalReturn = chainedReturn - 1;
@@ -61,7 +61,7 @@ public class EnhancedTimeWeightedReturnService
     }
 
     /// <summary>
-    /// Create sub-periods broken by external cash flows
+    ///     Create sub-periods broken by external cash flows
     /// </summary>
     private List<SubPeriodBoundary> CreateSubPeriods(
         IEnumerable<ValuationPoint> valuations,
@@ -74,7 +74,6 @@ public class EnhancedTimeWeightedReturnService
         var currentStart = period.Start;
 
         foreach (var flow in externalFlows)
-        {
             if (flow.Date > currentStart && flow.Date <= period.End)
             {
                 // Create sub-period ending just before the external flow
@@ -87,7 +86,6 @@ public class EnhancedTimeWeightedReturnService
                         .FirstOrDefault(v => v.Date >= currentStart);
 
                     if (startValuation != null)
-                    {
                         subPeriods.Add(new SubPeriodBoundary
                         {
                             StartDate = currentStart,
@@ -96,13 +94,11 @@ public class EnhancedTimeWeightedReturnService
                             EndValue = endValuation.Value,
                             ExternalFlowAmount = 0m // No external flow in this period
                         });
-                    }
                 }
 
                 // Next sub-period starts after the external flow
                 currentStart = flow.Date.AddDays(1);
             }
-        }
 
         // Final sub-period from last external flow to end
         var finalStartValuation = orderedValuations
@@ -111,7 +107,6 @@ public class EnhancedTimeWeightedReturnService
             .LastOrDefault(v => v.Date <= period.End);
 
         if (finalStartValuation != null && finalEndValuation != null)
-        {
             subPeriods.Add(new SubPeriodBoundary
             {
                 StartDate = currentStart,
@@ -120,13 +115,12 @@ public class EnhancedTimeWeightedReturnService
                 EndValue = finalEndValuation.Value,
                 ExternalFlowAmount = 0m
             });
-        }
 
         return subPeriods;
     }
 
     /// <summary>
-    /// Calculate return for a single sub-period including performance flows
+    ///     Calculate return for a single sub-period including performance flows
     /// </summary>
     private EnhancedSubPeriod CalculateSubPeriodReturn(
         SubPeriodBoundary boundary,
@@ -153,17 +147,18 @@ public class EnhancedTimeWeightedReturnService
                 Type = f.Type,
                 Description = f.Description
             }).ToList(),
-            Days = (boundary.EndDate.ToDateTime(TimeOnly.MinValue) - boundary.StartDate.ToDateTime(TimeOnly.MinValue)).Days
+            Days = (boundary.EndDate.ToDateTime(TimeOnly.MinValue) - boundary.StartDate.ToDateTime(TimeOnly.MinValue))
+                .Days
         };
     }
 }
 
 /// <summary>
-/// Enhanced TWR calculation result with detailed cash flow treatment
+///     Enhanced TWR calculation result with detailed cash flow treatment
 /// </summary>
 public class EnhancedTwrResult
 {
-    public DateRange Period { get; set; } = new DateRange(DateOnly.MinValue, DateOnly.MinValue);
+    public DateRange Period { get; set; } = new(DateOnly.MinValue, DateOnly.MinValue);
     public decimal TotalReturn { get; set; }
     public List<EnhancedSubPeriod> SubPeriods { get; set; } = new();
     public int ExternalFlowCount { get; set; }
@@ -177,7 +172,7 @@ public class EnhancedTwrResult
 }
 
 /// <summary>
-/// Enhanced sub-period with cash flow details
+///     Enhanced sub-period with cash flow details
 /// </summary>
 public class EnhancedSubPeriod
 {
@@ -193,7 +188,7 @@ public class EnhancedSubPeriod
 }
 
 /// <summary>
-/// Supporting classes
+///     Supporting classes
 /// </summary>
 public class ValuationPoint
 {

@@ -1,4 +1,3 @@
-
 using Application.Features.Analytics.DTOs;
 using Application.Features.Analytics.Queries.CalculateContribution;
 using MediatR;
@@ -18,7 +17,7 @@ public class ContributionController : ControllerBase
     }
 
     /// <summary>
-    /// Calculate contribution analysis for an account over a specified period
+    ///     Calculate contribution analysis for an account over a specified period
     /// </summary>
     /// <param name="accountId">Account ID</param>
     /// <param name="from">Start date for analysis</param>
@@ -32,10 +31,7 @@ public class ContributionController : ControllerBase
     {
         try
         {
-            if (from >= to)
-            {
-                return BadRequest(new { error = "Start date must be before end date" });
-            }
+            if (from >= to) return BadRequest(new { error = "Start date must be before end date" });
 
             var query = new CalculateContributionQuery(accountId, from, to);
             var result = await _mediator.Send(query);
@@ -57,7 +53,7 @@ public class ContributionController : ControllerBase
     }
 
     /// <summary>
-    /// Get contribution summary showing top and worst performers
+    ///     Get contribution summary showing top and worst performers
     /// </summary>
     /// <param name="accountId">Account ID</param>
     /// <param name="from">Start date</param>

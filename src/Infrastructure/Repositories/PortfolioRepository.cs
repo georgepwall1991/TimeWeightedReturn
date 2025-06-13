@@ -1,6 +1,7 @@
-using Application.Features.Common.DTOs;
 using Application.Features.Common.Interfaces;
+using Application.Features.Portfolio.DTOs;
 using Application.Services;
+using Domain.Entities;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -51,10 +52,8 @@ public class PortfolioRepository : IPortfolioRepository
         {
             var price = prices.FirstOrDefault(p => p.InstrumentId == holding.InstrumentId);
             if (price == null)
-            {
                 throw new InvalidOperationException(
                     $"No price found for instrument {holding.Instrument.Ticker} on {date}");
-            }
 
             var localValue = holding.Units * price.Value;
             var fxRate = _currencyService.GetFxRate(holding.Instrument.Currency, date, fxRates);
@@ -85,13 +84,31 @@ public class PortfolioRepository : IPortfolioRepository
 
     public async Task<IEnumerable<HoldingDto>> GetAccountHoldingsAsync(Guid accountId, DateOnly date)
     {
-        // Get holdings for the specific account on the specified date
+        // Try to get holdings for the requested date
         var holdings = await _context.Holdings
             .Where(h => h.AccountId == accountId && h.Date == date)
             .Include(h => h.Instrument)
             .Include(h => h.Account)
             .AsNoTracking()
             .ToListAsync();
+
+        // If no holdings for the requested date, find the latest date with holdings on or before the requested date
+        if (!holdings.Any())
+        {
+            var latestDate = await _context.Holdings
+                .Where(h => h.AccountId == accountId && h.Date <= date)
+                .OrderByDescending(h => h.Date)
+                .Select(h => h.Date)
+                .FirstOrDefaultAsync();
+
+            if (latestDate != default)
+                holdings = await _context.Holdings
+                    .Where(h => h.AccountId == accountId && h.Date == latestDate)
+                    .Include(h => h.Instrument)
+                    .Include(h => h.Account)
+                    .AsNoTracking()
+                    .ToListAsync();
+        }
 
         if (!holdings.Any())
             return Enumerable.Empty<HoldingDto>();
@@ -103,12 +120,36 @@ public class PortfolioRepository : IPortfolioRepository
             .AsNoTracking()
             .ToListAsync();
 
+        // If any price is missing, try to get the latest available price on or before the date for each instrument
+        var missingPriceInstrumentIds = instrumentIds.Except(prices.Select(p => p.InstrumentId)).ToList();
+        if (missingPriceInstrumentIds.Any())
+            foreach (var instrumentId in missingPriceInstrumentIds)
+            {
+                var latestPrice = await _context.Prices
+                    .Where(p => p.InstrumentId == instrumentId && p.Date <= date)
+                    .OrderByDescending(p => p.Date)
+                    .FirstOrDefaultAsync();
+                if (latestPrice != null) prices.Add(latestPrice);
+            }
+
         // Get FX rates for the specified date
         var currencies = holdings.Select(h => h.Instrument.Currency).Distinct().ToList();
         var fxRates = await _context.FxRates
             .Where(fx => currencies.Contains(fx.QuoteCurrency) && fx.Date == date)
             .AsNoTracking()
             .ToListAsync();
+
+        // If any FX rate is missing, try to get the latest available FX rate on or before the date for each currency
+        var missingFxCurrencies = currencies.Except(fxRates.Select(fx => fx.QuoteCurrency)).ToList();
+        if (missingFxCurrencies.Any())
+            foreach (var currency in missingFxCurrencies)
+            {
+                var latestFx = await _context.FxRates
+                    .Where(fx => fx.QuoteCurrency == currency && fx.Date <= date)
+                    .OrderByDescending(fx => fx.Date)
+                    .FirstOrDefaultAsync();
+                if (latestFx != null) fxRates.Add(latestFx);
+            }
 
         // Build result DTOs
         var result = new List<HoldingDto>();
@@ -117,13 +158,33 @@ public class PortfolioRepository : IPortfolioRepository
         {
             var price = prices.FirstOrDefault(p => p.InstrumentId == holding.InstrumentId);
             if (price == null)
-            {
+                // Try to get the latest available price on or before the date for this instrument
+                price = await _context.Prices
+                    .Where(p => p.InstrumentId == holding.InstrumentId && p.Date <= date)
+                    .OrderByDescending(p => p.Date)
+                    .FirstOrDefaultAsync();
+            if (price == null)
                 throw new InvalidOperationException(
-                    $"No price found for instrument {holding.Instrument.Ticker} on {date}");
-            }
+                    $"No price found for instrument {holding.Instrument.Ticker} on or before {date}");
 
             var localValue = holding.Units * price.Value;
+
+            // Try to get FX rate for this currency
             var fxRate = _currencyService.GetFxRate(holding.Instrument.Currency, date, fxRates);
+            if (fxRate == null)
+            {
+                // Try to get the latest available FX rate on or before the date for this currency
+                var latestFx = await _context.FxRates
+                    .Where(fx => fx.QuoteCurrency == holding.Instrument.Currency && fx.Date <= date)
+                    .OrderByDescending(fx => fx.Date)
+                    .FirstOrDefaultAsync();
+                if (latestFx != null) fxRate = latestFx.Rate;
+            }
+
+            if (fxRate == null)
+                throw new InvalidOperationException(
+                    $"No FX rate found for currency {holding.Instrument.Currency} on or before {date}");
+
             var valueGBP = _currencyService.ConvertToGBP(localValue, holding.Instrument.Currency, date, fxRates);
 
             result.Add(new HoldingDto
@@ -154,7 +215,7 @@ public class PortfolioRepository : IPortfolioRepository
         return holdings.Sum(h => h.ValueGBP);
     }
 
-    public async Task<IEnumerable<DateOnly>> GetHoldingDatesInRangeAsync(Guid accountId, DateOnly startDate, DateOnly endDate)
+    public async Task<List<DateOnly>> GetHoldingDatesInRangeAsync(Guid accountId, DateOnly startDate, DateOnly endDate)
     {
         return await _context.Holdings
             .Where(h => h.AccountId == accountId && h.Date >= startDate && h.Date <= endDate)
@@ -164,22 +225,19 @@ public class PortfolioRepository : IPortfolioRepository
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Domain.Entities.Client>> GetClientsWithPortfoliosAsync(Guid? clientId = null)
+    public async Task<IEnumerable<Client>> GetClientsWithPortfoliosAsync(Guid? clientId = null)
     {
         var query = _context.Clients
             .Include(c => c.Portfolios)
             .ThenInclude(p => p.Accounts)
             .AsNoTracking();
 
-        if (clientId.HasValue)
-        {
-            query = query.Where(c => c.Id == clientId.Value);
-        }
+        if (clientId.HasValue) query = query.Where(c => c.Id == clientId.Value);
 
         return await query.ToListAsync();
     }
 
-    public async Task<IEnumerable<Domain.Entities.Portfolio>> GetPortfoliosWithAccountsAsync(Guid clientId)
+    public async Task<IEnumerable<Portfolio>> GetPortfoliosWithAccountsAsync(Guid clientId)
     {
         return await _context.Portfolios
             .Where(p => p.ClientId == clientId)
@@ -188,7 +246,7 @@ public class PortfolioRepository : IPortfolioRepository
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Domain.Entities.Account>> GetAccountsAsync(Guid portfolioId)
+    public async Task<IEnumerable<Account>> GetAccountsAsync(Guid portfolioId)
     {
         return await _context.Accounts
             .Where(a => a.PortfolioId == portfolioId)
@@ -203,59 +261,98 @@ public class PortfolioRepository : IPortfolioRepository
             .CountAsync();
     }
 
-    public async Task<Domain.Entities.Account?> GetAccountAsync(Guid accountId)
+    public async Task<Account?> GetAccountAsync(Guid accountId)
     {
         return await _context.Accounts
             .AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == accountId);
     }
 
-    public async Task<IEnumerable<HoldingDto>> GetAccountHoldingsWithInstrumentDetailsAsync(Guid accountId, DateOnly date)
+    public async Task<List<HoldingDto>> GetAccountHoldingsWithInstrumentDetailsAsync(Guid accountId, DateOnly date)
     {
         var holdings = await _context.Holdings
-            .Where(h => h.AccountId == accountId && h.Date == date)
             .Include(h => h.Instrument)
-            .Include(h => h.Account)
-            .AsNoTracking()
+            .Where(h => h.AccountId == accountId && h.Date == date)
             .ToListAsync();
-
-        var instrumentIds = holdings.Select(h => h.InstrumentId).Distinct().ToList();
-        var currencies = holdings.Select(h => h.Instrument.Currency).Where(c => c != "GBP").Distinct().ToList();
 
         var prices = await _context.Prices
-            .Where(p => instrumentIds.Contains(p.InstrumentId) && p.Date == date)
-            .AsNoTracking()
-            .ToListAsync();
+            .Where(p => holdings.Select(h => h.InstrumentId).Contains(p.InstrumentId) && p.Date == date)
+            .ToDictionaryAsync(p => p.InstrumentId, p => p.Value);
 
-        var fxRates = currencies.Any()
-            ? await _context.FxRates
-                .Where(f => currencies.Contains(f.QuoteCurrency) && f.Date == date)
-                .AsNoTracking()
-                .ToListAsync()
-            : new List<Domain.Entities.FxRate>();
+        // Get all unique currencies that need FX rates
+        var currencies = holdings
+            .Select(h => h.Instrument.Currency)
+            .Distinct()
+            .Where(c => c != "GBP")
+            .ToList();
 
-        return holdings.Select(holding =>
+        var fxRates = new Dictionary<string, decimal>();
+        if (currencies.Any())
         {
-            var price = prices.FirstOrDefault(p => p.InstrumentId == holding.InstrumentId);
+            var rates = await _context.FxRates
+                .Where(f => f.Date == date && f.QuoteCurrency == "GBP" && currencies.Contains(f.BaseCurrency))
+                .ToListAsync();
 
-            var localValue = holding.Units * (price?.Value ?? 0);
-            var valueGBP = _currencyService.ConvertToGBP(localValue, holding.Instrument.Currency, date, fxRates);
-            var fxRate = _currencyService.GetFxRate(holding.Instrument.Currency, date, fxRates);
+            foreach (var rate in rates) fxRates[rate.BaseCurrency] = rate.Rate;
+        }
+
+        return holdings.Select(h =>
+        {
+            var price = prices.GetValueOrDefault(h.InstrumentId);
+            var fxRate = h.Instrument.Currency == "GBP" ? 1m : fxRates.GetValueOrDefault(h.Instrument.Currency, 1m);
+            var valueGBP = h.Units * price * fxRate;
 
             return new HoldingDto
             {
-                HoldingId = holding.Id,
-                Ticker = holding.Instrument.Ticker,
-                InstrumentName = holding.Instrument.Name,
-                InstrumentType = holding.Instrument.Type.ToString(),
-                Currency = holding.Instrument.Currency,
-                Units = holding.Units,
-                Price = price?.Value ?? 0,
-                LocalValue = localValue,
+                HoldingId = h.Id,
+                Ticker = h.Instrument.Ticker,
+                InstrumentName = h.Instrument.Name,
+                InstrumentType = h.Instrument.Type.ToString(),
+                Currency = h.Instrument.Currency,
+                Units = h.Units,
+                Price = price,
+                LocalValue = h.Units * price,
                 FxRate = fxRate,
                 ValueGBP = valueGBP,
-                Date = holding.Date
+                Date = h.Date
             };
         }).ToList();
+    }
+
+    public async Task<Dictionary<Guid, decimal>> GetPricesForHoldingsAsync(IEnumerable<Guid> holdingIds)
+    {
+        var holdings = await _context.Holdings
+            .Where(h => holdingIds.Contains(h.Id))
+            .Include(h => h.Instrument)
+            .ToListAsync();
+
+        var prices = await _context.Prices
+            .Where(p => holdings.Select(h => h.InstrumentId).Contains(p.InstrumentId))
+            .ToDictionaryAsync(p => p.InstrumentId, p => p.Value);
+
+        return holdings.ToDictionary(
+            h => h.Id,
+            h => prices.GetValueOrDefault(h.InstrumentId)
+        );
+    }
+
+    public async Task<Dictionary<(string Base, string Quote), decimal>> GetFxRatesForHoldingsAsync(
+        IEnumerable<(string Base, string Quote)> currencyPairs)
+    {
+        var pairs = currencyPairs.ToList();
+        if (!pairs.Any())
+            return new Dictionary<(string Base, string Quote), decimal>();
+
+        var rates = await _context.FxRates
+            .Where(f => pairs.Any(p => p.Base == f.BaseCurrency && p.Quote == f.QuoteCurrency))
+            .ToListAsync();
+
+        var result = new Dictionary<(string Base, string Quote), decimal>();
+        foreach (var rate in rates) result[(rate.BaseCurrency, rate.QuoteCurrency)] = rate.Rate;
+
+        // Add identity rates for same currency pairs
+        foreach (var pair in pairs.Where(p => p.Base == p.Quote)) result[pair] = 1m;
+
+        return result;
     }
 }

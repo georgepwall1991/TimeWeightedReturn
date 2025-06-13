@@ -65,6 +65,7 @@ public class DataSeeder
         // Create sample instruments
         var instruments = new[]
         {
+            // US Equities (Large Cap)
             new Instrument
             {
                 Id = Guid.NewGuid(),
@@ -88,6 +89,38 @@ public class DataSeeder
             new Instrument
             {
                 Id = Guid.NewGuid(),
+                Ticker = "GOOGL",
+                Name = "Alphabet Inc.",
+                Currency = "USD",
+                Type = InstrumentType.Security,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            // US Equities (Mid Cap)
+            new Instrument
+            {
+                Id = Guid.NewGuid(),
+                Ticker = "UBER",
+                Name = "Uber Technologies Inc.",
+                Currency = "USD",
+                Type = InstrumentType.Security,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new Instrument
+            {
+                Id = Guid.NewGuid(),
+                Ticker = "SQ",
+                Name = "Block Inc.",
+                Currency = "USD",
+                Type = InstrumentType.Security,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            // ETFs
+            new Instrument
+            {
+                Id = Guid.NewGuid(),
                 Ticker = "VOO",
                 Name = "Vanguard S&P 500 ETF",
                 Currency = "USD",
@@ -95,6 +128,132 @@ public class DataSeeder
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
+            new Instrument
+            {
+                Id = Guid.NewGuid(),
+                Ticker = "VWRL",
+                Name = "Vanguard FTSE All-World UCITS ETF",
+                Currency = "USD",
+                Type = InstrumentType.Security,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new Instrument
+            {
+                Id = Guid.NewGuid(),
+                Ticker = "IEMG",
+                Name = "iShares Core MSCI Emerging Markets ETF",
+                Currency = "USD",
+                Type = InstrumentType.Security,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            // UK Equities
+            new Instrument
+            {
+                Id = Guid.NewGuid(),
+                Ticker = "HSBA",
+                Name = "HSBC Holdings plc",
+                Currency = "GBP",
+                Type = InstrumentType.Security,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new Instrument
+            {
+                Id = Guid.NewGuid(),
+                Ticker = "BP",
+                Name = "BP plc",
+                Currency = "GBP",
+                Type = InstrumentType.Security,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            // European Equities
+            new Instrument
+            {
+                Id = Guid.NewGuid(),
+                Ticker = "ASML",
+                Name = "ASML Holding NV",
+                Currency = "EUR",
+                Type = InstrumentType.Security,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new Instrument
+            {
+                Id = Guid.NewGuid(),
+                Ticker = "SAP",
+                Name = "SAP SE",
+                Currency = "EUR",
+                Type = InstrumentType.Security,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            // Emerging Market Equities
+            new Instrument
+            {
+                Id = Guid.NewGuid(),
+                Ticker = "BABA",
+                Name = "Alibaba Group Holding Ltd",
+                Currency = "USD",
+                Type = InstrumentType.Security,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new Instrument
+            {
+                Id = Guid.NewGuid(),
+                Ticker = "TCS",
+                Name = "Tata Consultancy Services Ltd",
+                Currency = "INR",
+                Type = InstrumentType.Security,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            // Bonds
+            new Instrument
+            {
+                Id = Guid.NewGuid(),
+                Ticker = "AGG",
+                Name = "iShares Core U.S. Aggregate Bond ETF",
+                Currency = "USD",
+                Type = InstrumentType.Security,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new Instrument
+            {
+                Id = Guid.NewGuid(),
+                Ticker = "IGOV",
+                Name = "iShares International Treasury Bond ETF",
+                Currency = "USD",
+                Type = InstrumentType.Security,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            // Commodities
+            new Instrument
+            {
+                Id = Guid.NewGuid(),
+                Ticker = "GLD",
+                Name = "SPDR Gold Shares",
+                Currency = "USD",
+                Type = InstrumentType.Security,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new Instrument
+            {
+                Id = Guid.NewGuid(),
+                Ticker = "USO",
+                Name = "United States Oil Fund",
+                Currency = "USD",
+                Type = InstrumentType.Security,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            // Cash instruments
             new Instrument
             {
                 Id = Guid.NewGuid(),
@@ -114,182 +273,195 @@ public class DataSeeder
                 Type = InstrumentType.Cash,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
+            },
+            new Instrument
+            {
+                Id = Guid.NewGuid(),
+                Ticker = "CASH_EUR",
+                Name = "Cash - Euro",
+                Currency = "EUR",
+                Type = InstrumentType.Cash,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new Instrument
+            {
+                Id = Guid.NewGuid(),
+                Ticker = "CASH_JPY",
+                Name = "Cash - Japanese Yen",
+                Currency = "JPY",
+                Type = InstrumentType.Cash,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new Instrument
+            {
+                Id = Guid.NewGuid(),
+                Ticker = "CASH_INR",
+                Name = "Cash - Indian Rupee",
+                Currency = "INR",
+                Type = InstrumentType.Cash,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             }
         };
         _context.Instruments.AddRange(instruments);
 
-        // Create sample FX rates (GBP as base, so rate is how many quote currency per GBP)
-        // Use fixed dates for consistent testing
-        var sixMonthsAgo = new DateOnly(2024, 12, 11);
-        var threeMonthsAgo = new DateOnly(2025, 3, 11);
-        var oneMonthAgo = new DateOnly(2025, 5, 11);
-        var today = new DateOnly(2025, 6, 11);
-
-        var fxRates = new[]
-        {
-            // Historical rates
-            new FxRate
-            {
-                Id = Guid.NewGuid(),
-                BaseCurrency = "GBP",
-                QuoteCurrency = "USD",
-                Date = sixMonthsAgo,
-                Rate = 1.25m, // 1 GBP = 1.25 USD (6 months ago)
-                CreatedAt = DateTime.UtcNow
-            },
-            new FxRate
-            {
-                Id = Guid.NewGuid(),
-                BaseCurrency = "GBP",
-                QuoteCurrency = "USD",
-                Date = threeMonthsAgo,
-                Rate = 1.26m, // 1 GBP = 1.26 USD (3 months ago)
-                CreatedAt = DateTime.UtcNow
-            },
-            new FxRate
-            {
-                Id = Guid.NewGuid(),
-                BaseCurrency = "GBP",
-                QuoteCurrency = "USD",
-                Date = oneMonthAgo,
-                Rate = 1.28m, // 1 GBP = 1.28 USD (1 month ago)
-                CreatedAt = DateTime.UtcNow
-            },
-            new FxRate
-            {
-                Id = Guid.NewGuid(),
-                BaseCurrency = "GBP",
-                QuoteCurrency = "USD",
-                Date = today,
-                Rate = 1.27m, // 1 GBP = 1.27 USD (today)
-                CreatedAt = DateTime.UtcNow
-            }
-        };
+        // Generate comprehensive FX rates and market data
+        var (fxRates, marketDates) = await GenerateMarketData();
         _context.FxRates.AddRange(fxRates);
 
         // Create sample prices for multiple dates to show returns over time
-        var pricesDates = new[] { sixMonthsAgo, threeMonthsAgo, oneMonthAgo, today };
         var pricesList = new List<Price>();
 
-        // AAPL price progression showing 15% growth over 6 months
-        var aaplPrices = new[] { 152.60m, 162.40m, 170.20m, 175.50m };
-        // MSFT price progression showing 12% growth over 6 months
-        var msftPrices = new[] { 370.80m, 385.60m, 402.10m, 415.30m };
-        // VOO price progression showing 8% growth over 6 months
-        var vooPrices = new[] { 430.80m, 442.20m, 455.60m, 465.20m };
-
-        for (int i = 0; i < pricesDates.Length; i++)
+        // Define base prices and growth rates for each instrument with market-realistic volatility
+        var instrumentPrices = new Dictionary<string, (decimal BasePrice, decimal GrowthRate, decimal Volatility)>
         {
-            var date = pricesDates[i];
+            // US Large Cap (Lower volatility)
+            { "AAPL", (152.60m, 0.15m, 0.015m) }, // 15% growth, 1.5% daily volatility
+            { "MSFT", (370.80m, 0.12m, 0.014m) }, // 12% growth, 1.4% daily volatility
+            { "GOOGL", (142.50m, 0.14m, 0.016m) }, // 14% growth, 1.6% daily volatility
 
-            // Security prices (showing growth over time)
-            pricesList.AddRange(new[]
+            // US Mid Cap (Higher volatility)
+            { "UBER", (45.20m, 0.18m, 0.025m) }, // 18% growth, 2.5% daily volatility
+            { "SQ", (65.80m, 0.16m, 0.028m) }, // 16% growth, 2.8% daily volatility
+
+            // ETFs (Lower volatility)
+            { "VOO", (430.80m, 0.08m, 0.012m) }, // 8% growth, 1.2% daily volatility
+            { "VWRL", (95.20m, 0.09m, 0.013m) }, // 9% growth, 1.3% daily volatility
+            { "IEMG", (48.60m, 0.11m, 0.018m) }, // 11% growth, 1.8% daily volatility
+
+            // UK Equities (Moderate volatility)
+            { "HSBA", (580.40m, 0.05m, 0.016m) }, // 5% growth, 1.6% daily volatility
+            { "BP", (480.60m, 0.06m, 0.019m) }, // 6% growth, 1.9% daily volatility
+
+            // European Equities
+            { "ASML", (780.20m, 0.16m, 0.022m) }, // 16% growth, 2.2% daily volatility
+            { "SAP", (145.80m, 0.07m, 0.017m) }, // 7% growth, 1.7% daily volatility
+
+            // Emerging Markets (Higher volatility)
+            { "BABA", (75.40m, 0.20m, 0.032m) }, // 20% growth, 3.2% daily volatility
+            { "TCS", (3800.00m, 0.15m, 0.028m) }, // 15% growth, 2.8% daily volatility
+
+            // Bonds (Lowest volatility)
+            { "AGG", (98.20m, 0.03m, 0.008m) }, // 3% growth, 0.8% daily volatility
+            { "IGOV", (52.40m, 0.02m, 0.009m) }, // 2% growth, 0.9% daily volatility
+
+            // Commodities (Highest volatility)
+            { "GLD", (185.60m, 0.06m, 0.024m) }, // 6% growth, 2.4% daily volatility
+            { "USO", (72.80m, 0.04m, 0.035m) } // 4% growth, 3.5% daily volatility
+        };
+
+        var random = new Random(42); // Use same seed for reproducibility
+
+        foreach (var date in marketDates)
+        {
+            // Calculate days since start as a percentage of total period
+            var daysSinceStart = (date.ToDateTime(TimeOnly.MinValue) - marketDates[0].ToDateTime(TimeOnly.MinValue))
+                .TotalDays;
+            var totalDays =
+                (marketDates[^1].ToDateTime(TimeOnly.MinValue) - marketDates[0].ToDateTime(TimeOnly.MinValue))
+                .TotalDays;
+            var progress = (decimal)(daysSinceStart / totalDays);
+
+            foreach (var instrument in instruments)
             {
-                new Price
+                decimal price;
+                if (instrument.Type == InstrumentType.Cash)
                 {
-                    Id = Guid.NewGuid(),
-                    InstrumentId = instruments[0].Id, // AAPL
-                    Date = date,
-                    Value = aaplPrices[i],
-                    CreatedAt = DateTime.UtcNow
-                },
-                new Price
-                {
-                    Id = Guid.NewGuid(),
-                    InstrumentId = instruments[1].Id, // MSFT
-                    Date = date,
-                    Value = msftPrices[i],
-                    CreatedAt = DateTime.UtcNow
-                },
-                new Price
-                {
-                    Id = Guid.NewGuid(),
-                    InstrumentId = instruments[2].Id, // VOO
-                    Date = date,
-                    Value = vooPrices[i],
-                    CreatedAt = DateTime.UtcNow
-                },
-                // Cash always has price of 1
-                new Price
-                {
-                    Id = Guid.NewGuid(),
-                    InstrumentId = instruments[3].Id, // CASH_GBP
-                    Date = date,
-                    Value = 1.00m,
-                    CreatedAt = DateTime.UtcNow
-                },
-                new Price
-                {
-                    Id = Guid.NewGuid(),
-                    InstrumentId = instruments[4].Id, // CASH_USD
-                    Date = date,
-                    Value = 1.00m,
-                    CreatedAt = DateTime.UtcNow
+                    price = 1.00m; // Cash always has price of 1
                 }
-            });
+                else
+                {
+                    var (basePrice, growthRate, volatility) = instrumentPrices[instrument.Ticker];
+
+                    // Add some random daily volatility
+                    var dailyVolatility = (decimal)(random.NextDouble() - 0.5) * volatility;
+
+                    // Calculate price with growth trend and volatility
+                    price = Math.Round(basePrice * (1 + growthRate * progress + dailyVolatility), 2);
+
+                    // Ensure price doesn't go below 40% of base price
+                    price = Math.Max(price, basePrice * 0.4m);
+                }
+
+                pricesList.Add(new Price
+                {
+                    Id = Guid.NewGuid(),
+                    InstrumentId = instrument.Id,
+                    Date = date,
+                    Value = price,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
         }
 
         _context.Prices.AddRange(pricesList);
 
-        // Create sample holdings for multiple dates (same positions held throughout period)
+        // Create sample holdings for multiple dates (bi-weekly instead of weekly)
         var holdingsList = new List<Holding>();
+        var holdingsDates = marketDates.Where((_, i) => i % 14 == 0).ToList();
 
-        foreach (var date in pricesDates)
+        foreach (var date in holdingsDates)
         {
+            // ISA Account holdings
             holdingsList.AddRange(new[]
             {
-                // ISA Account holdings
                 new Holding
                 {
-                    Id = Guid.NewGuid(),
-                    AccountId = account1.Id,
-                    InstrumentId = instruments[0].Id, // AAPL
-                    Date = date,
-                    Units = 100m,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                },
+                    Id = Guid.NewGuid(), AccountId = account1.Id, InstrumentId = instruments[0].Id, Date = date,
+                    Units = 100m, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
+                }, // AAPL
                 new Holding
                 {
-                    Id = Guid.NewGuid(),
-                    AccountId = account1.Id,
-                    InstrumentId = instruments[2].Id, // VOO
-                    Date = date,
-                    Units = 50m,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                },
+                    Id = Guid.NewGuid(), AccountId = account1.Id, InstrumentId = instruments[3].Id, Date = date,
+                    Units = 50m, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
+                }, // VOO
                 new Holding
                 {
-                    Id = Guid.NewGuid(),
-                    AccountId = account1.Id,
-                    InstrumentId = instruments[3].Id, // CASH_GBP
-                    Date = date,
-                    Units = 5000m,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                },
-                // GIA Account holdings
+                    Id = Guid.NewGuid(), AccountId = account1.Id, InstrumentId = instruments[4].Id, Date = date,
+                    Units = 75m, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
+                }, // VWRL
                 new Holding
                 {
-                    Id = Guid.NewGuid(),
-                    AccountId = account2.Id,
-                    InstrumentId = instruments[1].Id, // MSFT
-                    Date = date,
-                    Units = 75m,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                },
+                    Id = Guid.NewGuid(), AccountId = account1.Id, InstrumentId = instruments[9].Id, Date = date,
+                    Units = 5000m, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
+                } // CASH_GBP
+            });
+
+            // GIA Account holdings
+            holdingsList.AddRange(new[]
+            {
                 new Holding
                 {
-                    Id = Guid.NewGuid(),
-                    AccountId = account2.Id,
-                    InstrumentId = instruments[4].Id, // CASH_USD
-                    Date = date,
-                    Units = 2000m,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                }
+                    Id = Guid.NewGuid(), AccountId = account2.Id, InstrumentId = instruments[1].Id, Date = date,
+                    Units = 75m, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
+                }, // MSFT
+                new Holding
+                {
+                    Id = Guid.NewGuid(), AccountId = account2.Id, InstrumentId = instruments[2].Id, Date = date,
+                    Units = 50m, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
+                }, // GOOGL
+                new Holding
+                {
+                    Id = Guid.NewGuid(), AccountId = account2.Id, InstrumentId = instruments[6].Id, Date = date,
+                    Units = 200m, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
+                }, // BP
+                new Holding
+                {
+                    Id = Guid.NewGuid(), AccountId = account2.Id, InstrumentId = instruments[7].Id, Date = date,
+                    Units = 25m, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
+                }, // ASML
+                new Holding
+                {
+                    Id = Guid.NewGuid(), AccountId = account2.Id, InstrumentId = instruments[10].Id, Date = date,
+                    Units = 2000m, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
+                }, // CASH_USD
+                new Holding
+                {
+                    Id = Guid.NewGuid(), AccountId = account2.Id, InstrumentId = instruments[11].Id, Date = date,
+                    Units = 1500m, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
+                } // CASH_EUR
             });
         }
 
@@ -299,6 +471,135 @@ public class DataSeeder
         await SeedCashFlows(account1.Id, account2.Id, instruments);
 
         await _context.SaveChangesAsync();
+    }
+
+    private async Task<(List<FxRate> FxRates, List<DateOnly> MarketDates)> GenerateMarketData()
+    {
+        var fxRates = new List<FxRate>();
+        var marketDates = new List<DateOnly>();
+        var random = new Random(42); // Fixed seed for reproducibility
+
+        // Calculate date range: 2 years back to T+7
+        var endDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(7); // T+7
+        var startDate = endDate.AddYears(-2); // 2 years back
+
+        // Define currency pairs with their typical ranges
+        var currencyPairs = new[]
+        {
+            new
+            {
+                Base = "GBP", Quote = "USD", BaseRate = 1.25m, MinRate = 1.10m, MaxRate = 1.40m, Volatility = 0.005m
+            },
+            new
+            {
+                Base = "GBP", Quote = "EUR", BaseRate = 1.15m, MinRate = 1.05m, MaxRate = 1.25m, Volatility = 0.004m
+            },
+            new
+            {
+                Base = "GBP", Quote = "JPY", BaseRate = 185.00m, MinRate = 160.00m, MaxRate = 210.00m,
+                Volatility = 0.006m
+            },
+            new
+            {
+                Base = "EUR", Quote = "USD", BaseRate = 1.08m, MinRate = 0.95m, MaxRate = 1.20m, Volatility = 0.005m
+            },
+            new
+            {
+                Base = "EUR", Quote = "GBP", BaseRate = 0.87m, MinRate = 0.80m, MaxRate = 0.95m, Volatility = 0.004m
+            },
+            new
+            {
+                Base = "USD", Quote = "JPY", BaseRate = 148.00m, MinRate = 130.00m, MaxRate = 165.00m,
+                Volatility = 0.006m
+            },
+            new
+            {
+                Base = "EUR", Quote = "JPY", BaseRate = 171.00m, MinRate = 150.00m, MaxRate = 190.00m,
+                Volatility = 0.006m
+            }
+        };
+
+        // Generate rates for each day in the range
+        for (var date = startDate; date <= endDate; date = date.AddDays(1))
+        {
+            // Skip weekends
+            if (date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday)
+                continue;
+
+            // Skip holidays
+            if (IsHoliday(date))
+                continue;
+
+            marketDates.Add(date);
+
+            foreach (var pair in currencyPairs)
+            {
+                // Add some random variation to simulate market movements
+                var dailyChange = (decimal)(random.NextDouble() - 0.5) * pair.Volatility;
+                var currentRate = Math.Round(pair.BaseRate * (1 + dailyChange), 4);
+
+                // Ensure rate stays within realistic bounds
+                currentRate = Math.Clamp(currentRate, pair.MinRate, pair.MaxRate);
+
+                fxRates.Add(new FxRate
+                {
+                    Id = Guid.NewGuid(),
+                    BaseCurrency = pair.Base,
+                    QuoteCurrency = pair.Quote,
+                    Date = date,
+                    Rate = currentRate,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+        }
+
+        return (fxRates, marketDates);
+    }
+
+    private bool IsHoliday(DateOnly date)
+    {
+        // Comprehensive list of UK and US holidays
+        var holidays = new[]
+        {
+            // UK Holidays
+            new DateOnly(date.Year, 1, 1), // New Year's Day
+            new DateOnly(date.Year, 12, 25), // Christmas
+            new DateOnly(date.Year, 12, 26), // Boxing Day
+            new DateOnly(date.Year, 4, 7), // Good Friday (approximate)
+            new DateOnly(date.Year, 4, 10), // Easter Monday (approximate)
+            new DateOnly(date.Year, 5, 1), // May Day
+            new DateOnly(date.Year, 5, 29), // Spring Bank Holiday (approximate)
+            new DateOnly(date.Year, 8, 28), // Summer Bank Holiday (approximate)
+
+            // US Holidays
+            new DateOnly(date.Year, 1, 1), // New Year's Day
+            new DateOnly(date.Year, 1, 15), // Martin Luther King Jr. Day (approximate)
+            new DateOnly(date.Year, 2, 19), // Presidents' Day (approximate)
+            new DateOnly(date.Year, 3, 31), // Easter Monday (approximate)
+            new DateOnly(date.Year, 5, 27), // Memorial Day (approximate)
+            new DateOnly(date.Year, 6, 19), // Juneteenth
+            new DateOnly(date.Year, 7, 4), // Independence Day
+            new DateOnly(date.Year, 9, 2), // Labor Day (approximate)
+            new DateOnly(date.Year, 11, 28), // Thanksgiving Day (approximate)
+            new DateOnly(date.Year, 12, 25), // Christmas Day
+
+            // European Holidays (major markets)
+            new DateOnly(date.Year, 1, 1), // New Year's Day
+            new DateOnly(date.Year, 5, 1), // Labour Day
+            new DateOnly(date.Year, 12, 25), // Christmas
+            new DateOnly(date.Year, 12, 26), // Boxing Day/St. Stephen's Day
+
+            // Japanese Holidays
+            new DateOnly(date.Year, 1, 1), // New Year's Day
+            new DateOnly(date.Year, 1, 2), // Bank Holiday
+            new DateOnly(date.Year, 1, 3), // Bank Holiday
+            new DateOnly(date.Year, 5, 3), // Constitution Memorial Day
+            new DateOnly(date.Year, 5, 4), // Greenery Day
+            new DateOnly(date.Year, 5, 5), // Children's Day
+            new DateOnly(date.Year, 12, 23) // Emperor's Birthday
+        };
+
+        return holidays.Contains(date);
     }
 
     private async Task SeedCashFlows(Guid isaAccountId, Guid giaAccountId, Instrument[] instruments)

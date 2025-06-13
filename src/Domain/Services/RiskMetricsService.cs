@@ -1,5 +1,3 @@
-using Domain.ValueObjects;
-
 namespace Domain.Services;
 
 public class RiskMetricsService
@@ -7,7 +5,7 @@ public class RiskMetricsService
     private const decimal RISK_FREE_RATE = 0.02m; // 2% annual risk-free rate (configurable)
 
     /// <summary>
-    /// Calculate comprehensive risk metrics for a series of portfolio values
+    ///     Calculate comprehensive risk metrics for a series of portfolio values
     /// </summary>
     public RiskMetricsResult CalculateRiskMetrics(
         IEnumerable<decimal> portfolioValues,
@@ -18,9 +16,7 @@ public class RiskMetricsService
         var datesList = dates.ToList();
 
         if (valuesList.Count < 2 || datesList.Count != valuesList.Count)
-        {
             return new RiskMetricsResult(0, 0, 0, 0, 0, 0, Array.Empty<DrawdownPeriod>());
-        }
 
         // Calculate daily returns
         var returns = CalculateReturns(valuesList);
@@ -51,26 +47,24 @@ public class RiskMetricsService
     }
 
     /// <summary>
-    /// Calculate daily returns from portfolio values
+    ///     Calculate daily returns from portfolio values
     /// </summary>
     private List<decimal> CalculateReturns(List<decimal> values)
     {
         var returns = new List<decimal>();
 
-        for (int i = 1; i < values.Count; i++)
-        {
+        for (var i = 1; i < values.Count; i++)
             if (values[i - 1] > 0)
             {
                 var dailyReturn = (values[i] - values[i - 1]) / values[i - 1];
                 returns.Add(dailyReturn);
             }
-        }
 
         return returns;
     }
 
     /// <summary>
-    /// Calculate volatility (standard deviation of returns)
+    ///     Calculate volatility (standard deviation of returns)
     /// </summary>
     private decimal CalculateVolatility(List<decimal> returns)
     {
@@ -84,34 +78,34 @@ public class RiskMetricsService
     }
 
     /// <summary>
-    /// Annualize volatility based on the time period
+    ///     Annualize volatility based on the time period
     /// </summary>
     private decimal AnnualizeVolatility(decimal volatility, List<DateOnly> dates)
     {
         if (dates.Count < 2) return volatility;
 
-        var totalDays = (dates.Last() - dates.First()).Days;
+        var totalDays = dates.Last().DayNumber - dates.First().DayNumber;
         var annualizationFactor = (decimal)Math.Sqrt(365.25 / Math.Max(totalDays / (dates.Count - 1), 1));
 
         return volatility * annualizationFactor;
     }
 
     /// <summary>
-    /// Annualize return based on the time period
+    ///     Annualize return based on the time period
     /// </summary>
     private decimal AnnualizeReturn(decimal meanReturn, List<DateOnly> dates)
     {
         if (dates.Count < 2) return meanReturn;
 
-        var totalDays = (dates.Last() - dates.First()).Days;
+        var totalDays = dates.Last().DayNumber - dates.First().DayNumber;
         var periodsPerYear = 365.25m / Math.Max(totalDays / (dates.Count - 1), 1);
 
         return meanReturn * periodsPerYear;
     }
 
     /// <summary>
-    /// Calculate Sharpe Ratio (risk-adjusted return)
-    /// Formula: (Portfolio Return - Risk Free Rate) / Portfolio Volatility
+    ///     Calculate Sharpe Ratio (risk-adjusted return)
+    ///     Formula: (Portfolio Return - Risk Free Rate) / Portfolio Volatility
     /// </summary>
     private decimal CalculateSharpeRatio(decimal portfolioReturn, decimal volatility, decimal riskFreeRate)
     {
@@ -120,7 +114,7 @@ public class RiskMetricsService
     }
 
     /// <summary>
-    /// Calculate drawdown metrics including maximum drawdown and all drawdown periods
+    ///     Calculate drawdown metrics including maximum drawdown and all drawdown periods
     /// </summary>
     private (decimal maxDrawdown, decimal currentDrawdown, IReadOnlyList<DrawdownPeriod> periods)
         CalculateDrawdownMetrics(List<decimal> values, List<DateOnly> dates)
@@ -132,7 +126,7 @@ public class RiskMetricsService
         var currentDrawdownStart = (DateOnly?)null;
         var currentMaxDrawdownInPeriod = 0m;
 
-        for (int i = 1; i < values.Count; i++)
+        for (var i = 1; i < values.Count; i++)
         {
             var currentValue = values[i];
             var currentDate = dates[i];
@@ -146,7 +140,7 @@ public class RiskMetricsService
                         currentDrawdownStart.Value,
                         dates[i - 1],
                         currentMaxDrawdownInPeriod,
-                        (dates[i - 1] - currentDrawdownStart.Value).Days + 1));
+                        dates[i - 1].DayNumber - currentDrawdownStart.Value.DayNumber + 1));
 
                     currentDrawdownStart = null;
                     currentMaxDrawdownInPeriod = 0m;
@@ -160,10 +154,7 @@ public class RiskMetricsService
                 // We're in a drawdown
                 var drawdown = (peak - currentValue) / peak;
 
-                if (!currentDrawdownStart.HasValue)
-                {
-                    currentDrawdownStart = peakDate;
-                }
+                if (!currentDrawdownStart.HasValue) currentDrawdownStart = peakDate;
 
                 currentMaxDrawdownInPeriod = Math.Max(currentMaxDrawdownInPeriod, drawdown);
                 maxDrawdown = Math.Max(maxDrawdown, drawdown);
@@ -172,13 +163,11 @@ public class RiskMetricsService
 
         // Handle ongoing drawdown at the end
         if (currentDrawdownStart.HasValue)
-        {
             drawdownPeriods.Add(new DrawdownPeriod(
                 currentDrawdownStart.Value,
                 dates.Last(),
                 currentMaxDrawdownInPeriod,
-                (dates.Last() - currentDrawdownStart.Value).Days + 1));
-        }
+                dates.Last().DayNumber - currentDrawdownStart.Value.DayNumber + 1));
 
         var currentDrawdown = values.Last() < peak ? (peak - values.Last()) / peak : 0m;
 
@@ -186,7 +175,7 @@ public class RiskMetricsService
     }
 
     /// <summary>
-    /// Calculate Value at Risk (VaR) at specified confidence level
+    ///     Calculate Value at Risk (VaR) at specified confidence level
     /// </summary>
     private decimal CalculateValueAtRisk(List<decimal> returns, decimal confidenceLevel)
     {
@@ -200,7 +189,7 @@ public class RiskMetricsService
     }
 
     /// <summary>
-    /// Calculate rolling volatility for time series analysis
+    ///     Calculate rolling volatility for time series analysis
     /// </summary>
     public IEnumerable<RollingVolatilityPoint> CalculateRollingVolatility(
         IEnumerable<decimal> values,
@@ -212,7 +201,7 @@ public class RiskMetricsService
         var returns = CalculateReturns(valuesList);
         var result = new List<RollingVolatilityPoint>();
 
-        for (int i = windowDays; i < returns.Count; i++)
+        for (var i = windowDays; i < returns.Count; i++)
         {
             var windowReturns = returns.Skip(i - windowDays).Take(windowDays).ToList();
             var volatility = CalculateVolatility(windowReturns);

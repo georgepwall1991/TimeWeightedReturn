@@ -1,6 +1,7 @@
-
+using Application;
 using Application.Features.Common.Interfaces;
 using Application.Services;
+using Domain.Services;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +19,7 @@ builder.Services.AddDbContext<PortfolioContext>(options =>
 builder.Services.AddMediatR(cfg =>
 {
     cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
-    cfg.RegisterServicesFromAssembly(typeof(Application.AssemblyReference).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(AssemblyReference).Assembly);
 });
 
 // Register application services
@@ -27,9 +28,9 @@ builder.Services.AddScoped<IPortfolioRepository, PortfolioRepository>();
 builder.Services.AddScoped<DataSeeder>();
 
 // Register domain services
-builder.Services.AddScoped<Domain.Services.TimeWeightedReturnService>();
-builder.Services.AddScoped<Domain.Services.ContributionAnalysisService>();
-builder.Services.AddScoped<Domain.Services.RiskMetricsService>();
+builder.Services.AddScoped<TimeWeightedReturnService>();
+builder.Services.AddScoped<ContributionAnalysisService>();
+builder.Services.AddScoped<RiskMetricsService>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -40,9 +41,9 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevelopmentCors", policy =>
         policy.WithOrigins("http://localhost:3000", "http://localhost:5173") // React dev servers
-              .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials());
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials());
 });
 
 var app = builder.Build();

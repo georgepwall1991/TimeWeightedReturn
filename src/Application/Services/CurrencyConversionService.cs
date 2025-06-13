@@ -30,11 +30,9 @@ public class CurrencyConversionService : ICurrencyConversionService
             fx.Date == date);
 
         if (fxRate == null)
-        {
             throw new InvalidOperationException(
                 $"No FX rate found for {fromCurrency} to GBP on {date}. " +
                 "Please ensure FX rates are loaded for all required currencies and dates.");
-        }
 
         return fxRate.Rate;
     }

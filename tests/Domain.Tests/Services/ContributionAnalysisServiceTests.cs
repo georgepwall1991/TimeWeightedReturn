@@ -15,13 +15,14 @@ public class ContributionAnalysisServiceTests
     public void CalculateContribution_WithPositiveReturn_ReturnsCorrectContribution()
     {
         // Arrange
-        decimal positionStartValue = 10000m;  // £10,000
-        decimal positionEndValue = 11000m;    // £11,000
-        decimal totalPortfolioStartValue = 50000m; // £50,000
-        decimal totalPortfolioEndValue = 55000m;   // £55,000
+        var positionStartValue = 10000m; // £10,000
+        var positionEndValue = 11000m; // £11,000
+        var totalPortfolioStartValue = 50000m; // £50,000
+        var totalPortfolioEndValue = 55000m; // £55,000
 
         // Act
-        var result = _service.CalculateContribution(positionStartValue, positionEndValue, totalPortfolioStartValue, totalPortfolioEndValue);
+        var result = _service.CalculateContribution(positionStartValue, positionEndValue, totalPortfolioStartValue,
+            totalPortfolioEndValue);
 
         // Assert
         Assert.Equal(0.2m, result.Weight); // 10,000 / 50,000 = 20%
@@ -34,13 +35,14 @@ public class ContributionAnalysisServiceTests
     public void CalculateContribution_WithNegativeReturn_ReturnsNegativeContribution()
     {
         // Arrange
-        decimal positionStartValue = 15000m;
-        decimal positionEndValue = 12000m;   // Loss of £3,000
-        decimal totalPortfolioStartValue = 50000m;
-        decimal totalPortfolioEndValue = 47000m;
+        var positionStartValue = 15000m;
+        var positionEndValue = 12000m; // Loss of £3,000
+        var totalPortfolioStartValue = 50000m;
+        var totalPortfolioEndValue = 47000m;
 
         // Act
-        var result = _service.CalculateContribution(positionStartValue, positionEndValue, totalPortfolioStartValue, totalPortfolioEndValue);
+        var result = _service.CalculateContribution(positionStartValue, positionEndValue, totalPortfolioStartValue,
+            totalPortfolioEndValue);
 
         // Assert
         Assert.Equal(0.3m, result.Weight); // 15,000 / 50,000 = 30%
@@ -53,13 +55,14 @@ public class ContributionAnalysisServiceTests
     public void CalculateContribution_WithZeroStartValue_ReturnsZeroContribution()
     {
         // Arrange
-        decimal positionStartValue = 0m;
-        decimal positionEndValue = 1000m;
-        decimal totalPortfolioStartValue = 50000m;
-        decimal totalPortfolioEndValue = 51000m;
+        var positionStartValue = 0m;
+        var positionEndValue = 1000m;
+        var totalPortfolioStartValue = 50000m;
+        var totalPortfolioEndValue = 51000m;
 
         // Act
-        var result = _service.CalculateContribution(positionStartValue, positionEndValue, totalPortfolioStartValue, totalPortfolioEndValue);
+        var result = _service.CalculateContribution(positionStartValue, positionEndValue, totalPortfolioStartValue,
+            totalPortfolioEndValue);
 
         // Assert
         Assert.Equal(0m, result.Weight);
@@ -72,13 +75,14 @@ public class ContributionAnalysisServiceTests
     public void CalculateContribution_WithZeroPortfolioValue_ReturnsZeroValues()
     {
         // Arrange
-        decimal positionStartValue = 10000m;
-        decimal positionEndValue = 11000m;
-        decimal totalPortfolioStartValue = 0m;
-        decimal totalPortfolioEndValue = 0m;
+        var positionStartValue = 10000m;
+        var positionEndValue = 11000m;
+        var totalPortfolioStartValue = 0m;
+        var totalPortfolioEndValue = 0m;
 
         // Act
-        var result = _service.CalculateContribution(positionStartValue, positionEndValue, totalPortfolioStartValue, totalPortfolioEndValue);
+        var result = _service.CalculateContribution(positionStartValue, positionEndValue, totalPortfolioStartValue,
+            totalPortfolioEndValue);
 
         // Assert
         Assert.Equal(0m, result.Weight);
@@ -91,11 +95,12 @@ public class ContributionAnalysisServiceTests
     public void CalculatePercentageContribution_WithPositiveTotal_ReturnsCorrectPercentage()
     {
         // Arrange
-        decimal instrumentAbsoluteContribution = 1000m;
-        decimal totalPortfolioAbsoluteReturn = 5000m;
+        var instrumentAbsoluteContribution = 1000m;
+        var totalPortfolioAbsoluteReturn = 5000m;
 
         // Act
-        var result = _service.CalculatePercentageContribution(instrumentAbsoluteContribution, totalPortfolioAbsoluteReturn);
+        var result =
+            _service.CalculatePercentageContribution(instrumentAbsoluteContribution, totalPortfolioAbsoluteReturn);
 
         // Assert
         Assert.Equal(0.2m, result); // 1000 / 5000 = 20%
@@ -105,11 +110,12 @@ public class ContributionAnalysisServiceTests
     public void CalculatePercentageContribution_WithZeroTotal_ReturnsZero()
     {
         // Arrange
-        decimal instrumentAbsoluteContribution = 1000m;
-        decimal totalPortfolioAbsoluteReturn = 0m;
+        var instrumentAbsoluteContribution = 1000m;
+        var totalPortfolioAbsoluteReturn = 0m;
 
         // Act
-        var result = _service.CalculatePercentageContribution(instrumentAbsoluteContribution, totalPortfolioAbsoluteReturn);
+        var result =
+            _service.CalculatePercentageContribution(instrumentAbsoluteContribution, totalPortfolioAbsoluteReturn);
 
         // Assert
         Assert.Equal(0m, result);
@@ -119,8 +125,8 @@ public class ContributionAnalysisServiceTests
     public void CalculatePortfolioReturn_WithGrowth_ReturnsPositiveReturn()
     {
         // Arrange
-        decimal startValue = 100000m;
-        decimal endValue = 110000m;
+        var startValue = 100000m;
+        var endValue = 110000m;
 
         // Act
         var result = _service.CalculatePortfolioReturn(startValue, endValue);
@@ -133,8 +139,8 @@ public class ContributionAnalysisServiceTests
     public void CalculatePortfolioReturn_WithLoss_ReturnsNegativeReturn()
     {
         // Arrange
-        decimal startValue = 100000m;
-        decimal endValue = 95000m;
+        var startValue = 100000m;
+        var endValue = 95000m;
 
         // Act
         var result = _service.CalculatePortfolioReturn(startValue, endValue);
@@ -149,11 +155,11 @@ public class ContributionAnalysisServiceTests
         // Arrange
         var contributions = new[]
         {
-            ("AAPL", 0.03m),   // 3%
+            ("AAPL", 0.03m), // 3%
             ("GOOGL", -0.01m), // -1%
-            ("MSFT", 0.05m),   // 5% (highest)
-            ("VOO", 0.02m),    // 2%
-            ("CASH", -0.02m)   // -2% (lowest)
+            ("MSFT", 0.05m), // 5% (highest)
+            ("VOO", 0.02m), // 2%
+            ("CASH", -0.02m) // -2% (lowest)
         };
 
         // Act

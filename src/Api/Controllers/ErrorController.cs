@@ -1,5 +1,5 @@
-using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
 
@@ -17,12 +17,10 @@ public class ErrorController : ControllerBase
     [HttpPost("client")]
     public IActionResult LogClientError([FromBody] ClientErrorReport request)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        _logger.LogError("Client Error: {Message} | Stack: {Stack} | URL: {Url} | UserAgent: {UserAgent} | UserId: {UserId} | Timestamp: {Timestamp}",
+        _logger.LogError(
+            "Client Error: {Message} | Stack: {Stack} | URL: {Url} | UserAgent: {UserAgent} | UserId: {UserId} | Timestamp: {Timestamp}",
             request.Message,
             request.Stack,
             request.Url,
@@ -37,12 +35,10 @@ public class ErrorController : ControllerBase
     [HttpPost("javascript")]
     public IActionResult LogJavaScriptError([FromBody] JavaScriptErrorReport request)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        _logger.LogError("JavaScript Error: {Message} | Source: {Source} | Line: {Line} | Column: {Column} | URL: {Url} | UserAgent: {UserAgent} | Timestamp: {Timestamp}",
+        _logger.LogError(
+            "JavaScript Error: {Message} | Source: {Source} | Line: {Line} | Column: {Column} | URL: {Url} | UserAgent: {UserAgent} | Timestamp: {Timestamp}",
             request.Message,
             request.Source,
             request.Line,
@@ -57,20 +53,17 @@ public class ErrorController : ControllerBase
 
 public class ClientErrorReport
 {
-    [Required]
-    public string Message { get; set; } = string.Empty;
+    [Required] public string Message { get; set; } = string.Empty;
 
     public string? Stack { get; set; }
 
-    [Required]
-    public string Url { get; set; } = string.Empty;
+    [Required] public string Url { get; set; } = string.Empty;
 
     public string? UserAgent { get; set; }
 
     public string? UserId { get; set; }
 
-    [Required]
-    public DateTime Timestamp { get; set; }
+    [Required] public DateTime Timestamp { get; set; }
 
     public string? ComponentStack { get; set; }
 
@@ -79,8 +72,7 @@ public class ClientErrorReport
 
 public class JavaScriptErrorReport
 {
-    [Required]
-    public string Message { get; set; } = string.Empty;
+    [Required] public string Message { get; set; } = string.Empty;
 
     public string? Source { get; set; }
 
@@ -88,11 +80,9 @@ public class JavaScriptErrorReport
 
     public int? Column { get; set; }
 
-    [Required]
-    public string Url { get; set; } = string.Empty;
+    [Required] public string Url { get; set; } = string.Empty;
 
     public string? UserAgent { get; set; }
 
-    [Required]
-    public DateTime Timestamp { get; set; }
+    [Required] public DateTime Timestamp { get; set; }
 }

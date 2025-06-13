@@ -3,9 +3,9 @@ namespace Domain.Services;
 public class ContributionAnalysisService
 {
     /// <summary>
-    /// Calculate contribution analysis for a portfolio position
-    /// Formula: Contribution = Weight × Return
-    /// Where Weight = (Start Value / Total Portfolio Value) and Return = (End Value - Start Value) / Start Value
+    ///     Calculate contribution analysis for a portfolio position
+    ///     Formula: Contribution = Weight × Return
+    ///     Where Weight = (Start Value / Total Portfolio Value) and Return = (End Value - Start Value) / Start Value
     /// </summary>
     public ContributionResult CalculateContribution(
         decimal positionStartValue,
@@ -13,10 +13,7 @@ public class ContributionAnalysisService
         decimal totalPortfolioStartValue,
         decimal totalPortfolioEndValue)
     {
-        if (totalPortfolioStartValue <= 0)
-        {
-            return new ContributionResult(0, 0, 0, 0);
-        }
+        if (totalPortfolioStartValue <= 0) return new ContributionResult(0, 0, 0, 0);
 
         // Calculate position weight at start of period
         var weight = positionStartValue / totalPortfolioStartValue;
@@ -36,7 +33,7 @@ public class ContributionAnalysisService
     }
 
     /// <summary>
-    /// Calculate the percentage that each instrument's contribution represents of the total portfolio return
+    ///     Calculate the percentage that each instrument's contribution represents of the total portfolio return
     /// </summary>
     public decimal CalculatePercentageContribution(
         decimal instrumentAbsoluteContribution,
@@ -49,7 +46,7 @@ public class ContributionAnalysisService
     }
 
     /// <summary>
-    /// Calculate portfolio-level return for comparison
+    ///     Calculate portfolio-level return for comparison
     /// </summary>
     public decimal CalculatePortfolioReturn(decimal startValue, decimal endValue)
     {
@@ -60,23 +57,20 @@ public class ContributionAnalysisService
     }
 
     /// <summary>
-    /// Identify top and worst contributors from a list of contributions
+    ///     Identify top and worst contributors from a list of contributions
     /// </summary>
     public (ContributionSummary top, ContributionSummary worst) GetTopAndWorstContributors(
         IEnumerable<(string ticker, decimal contribution)> contributions)
     {
         var contributionList = contributions.ToList();
 
-        if (!contributionList.Any())
-        {
-            return (new ContributionSummary("", 0), new ContributionSummary("", 0));
-        }
+        if (!contributionList.Any()) return (new ContributionSummary("", 0), new ContributionSummary("", 0));
 
         var top = contributionList.OrderByDescending(c => c.contribution).First();
         var worst = contributionList.OrderBy(c => c.contribution).First();
 
         return (new ContributionSummary(top.ticker, top.contribution),
-                new ContributionSummary(worst.ticker, worst.contribution));
+            new ContributionSummary(worst.ticker, worst.contribution));
     }
 }
 

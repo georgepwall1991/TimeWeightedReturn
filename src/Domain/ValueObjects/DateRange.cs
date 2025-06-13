@@ -2,9 +2,6 @@ namespace Domain.ValueObjects;
 
 public record DateRange
 {
-    public DateOnly Start { get; init; }
-    public DateOnly End { get; init; }
-
     public DateRange(DateOnly start, DateOnly end)
     {
         if (end < start)
@@ -14,9 +11,15 @@ public record DateRange
         End = end;
     }
 
+    public DateOnly Start { get; init; }
+    public DateOnly End { get; init; }
+
     public int Days => End.DayNumber - Start.DayNumber + 1;
 
-    public bool Contains(DateOnly date) => date >= Start && date <= End;
+    public bool Contains(DateOnly date)
+    {
+        return date >= Start && date <= End;
+    }
 
     public IEnumerable<DateOnly> GetDates()
     {

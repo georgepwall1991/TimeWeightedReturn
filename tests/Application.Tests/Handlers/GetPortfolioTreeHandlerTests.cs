@@ -1,5 +1,4 @@
 using Application.Features.Common.Interfaces;
-using Application.Features.Portfolio.DTOs;
 using Application.Features.Portfolio.Queries.GetPortfolioTree;
 using Domain.Entities;
 using Domain.Services;
@@ -9,9 +8,9 @@ namespace Application.Tests.Handlers;
 
 public class GetPortfolioTreeHandlerTests
 {
+    private readonly GetPortfolioTreeHandler _handler;
     private readonly Mock<IPortfolioRepository> _mockRepository;
     private readonly Mock<TimeWeightedReturnService> _mockTwrService;
-    private readonly GetPortfolioTreeHandler _handler;
 
     public GetPortfolioTreeHandlerTests()
     {
@@ -35,14 +34,14 @@ public class GetPortfolioTreeHandlerTests
             Name = "Test Client",
             Portfolios = new List<Portfolio>
             {
-                new Portfolio
+                new()
                 {
                     Id = portfolioId,
                     Name = "Test Portfolio",
                     ClientId = clientId,
                     Accounts = new List<Account>
                     {
-                        new Account
+                        new()
                         {
                             Id = accountId,
                             Name = "Test Account",
@@ -63,7 +62,7 @@ public class GetPortfolioTreeHandlerTests
         _mockRepository.Setup(r => r.GetHoldingCountAsync(accountId, date))
             .ReturnsAsync(5);
 
-        var query = new GetPortfolioTreeQuery(ClientId: clientId, Date: date);
+        var query = new GetPortfolioTreeQuery(clientId, date);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -113,15 +112,21 @@ public class GetPortfolioTreeHandlerTests
             Name = "Test Client",
             Portfolios = new List<Portfolio>
             {
-                new Portfolio
+                new()
                 {
                     Id = portfolioId,
                     Name = "Test Portfolio",
                     ClientId = clientId,
                     Accounts = new List<Account>
                     {
-                        new Account { Id = account1Id, Name = "Account 1", AccountNumber = "ACC001", PortfolioId = portfolioId },
-                        new Account { Id = account2Id, Name = "Account 2", AccountNumber = "ACC002", PortfolioId = portfolioId }
+                        new()
+                        {
+                            Id = account1Id, Name = "Account 1", AccountNumber = "ACC001", PortfolioId = portfolioId
+                        },
+                        new()
+                        {
+                            Id = account2Id, Name = "Account 2", AccountNumber = "ACC002", PortfolioId = portfolioId
+                        }
                     }
                 }
             }
@@ -140,7 +145,7 @@ public class GetPortfolioTreeHandlerTests
         _mockRepository.Setup(r => r.GetHoldingCountAsync(account2Id, date))
             .ReturnsAsync(7);
 
-        var query = new GetPortfolioTreeQuery(ClientId: clientId, Date: date);
+        var query = new GetPortfolioTreeQuery(clientId, date);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -173,7 +178,7 @@ public class GetPortfolioTreeHandlerTests
             Name = "Empty Client",
             Portfolios = new List<Portfolio>
             {
-                new Portfolio
+                new()
                 {
                     Id = portfolioId,
                     Name = "Empty Portfolio",
@@ -186,7 +191,7 @@ public class GetPortfolioTreeHandlerTests
         _mockRepository.Setup(r => r.GetClientsWithPortfoliosAsync(clientId))
             .ReturnsAsync(new[] { client });
 
-        var query = new GetPortfolioTreeQuery(ClientId: clientId, Date: date);
+        var query = new GetPortfolioTreeQuery(clientId, date);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);

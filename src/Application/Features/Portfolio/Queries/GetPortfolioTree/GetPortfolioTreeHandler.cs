@@ -23,21 +23,21 @@ public class GetPortfolioTreeHandler : IRequestHandler<GetPortfolioTreeQuery, Po
         var clients = await _repository.GetClientsWithPortfoliosAsync(request.ClientId);
 
         var clientNodes = new List<ClientNodeDto>();
-        decimal totalValueAcrossAllClients = 0m;
+        var totalValueAcrossAllClients = 0m;
 
         foreach (var client in clients)
         {
             var portfolios = new List<PortfolioNodeDto>();
 
             decimal clientTotalValue = 0;
-            int clientTotalHoldings = 0;
+            var clientTotalHoldings = 0;
 
             foreach (var portfolio in client.Portfolios)
             {
                 var accounts = new List<AccountNodeDto>();
 
                 decimal portfolioTotalValue = 0;
-                int portfolioTotalHoldings = 0;
+                var portfolioTotalHoldings = 0;
 
                 foreach (var account in portfolio.Accounts)
                 {
@@ -54,7 +54,8 @@ public class GetPortfolioTreeHandler : IRequestHandler<GetPortfolioTreeQuery, Po
                         TotalValueGBP = accountValue,
                         HoldingsCount = holdingCount,
                         Metrics = request.MetricsStartDate.HasValue && request.MetricsEndDate.HasValue
-                            ? await CalculateAccountMetrics(account.Id, request.MetricsStartDate.Value, request.MetricsEndDate.Value)
+                            ? await CalculateAccountMetrics(account.Id, request.MetricsStartDate.Value,
+                                request.MetricsEndDate.Value)
                             : null
                     };
 
@@ -72,7 +73,8 @@ public class GetPortfolioTreeHandler : IRequestHandler<GetPortfolioTreeQuery, Po
                     TotalValueGBP = portfolioTotalValue,
                     HoldingsCount = portfolioTotalHoldings,
                     Metrics = request.MetricsStartDate.HasValue && request.MetricsEndDate.HasValue
-                        ? await CalculatePortfolioMetrics(portfolio.Id, request.MetricsStartDate.Value, request.MetricsEndDate.Value)
+                        ? await CalculatePortfolioMetrics(portfolio.Id, request.MetricsStartDate.Value,
+                            request.MetricsEndDate.Value)
                         : null
                 };
 
@@ -89,7 +91,8 @@ public class GetPortfolioTreeHandler : IRequestHandler<GetPortfolioTreeQuery, Po
                 TotalValueGBP = clientTotalValue,
                 HoldingsCount = clientTotalHoldings,
                 Metrics = request.MetricsStartDate.HasValue && request.MetricsEndDate.HasValue
-                    ? await CalculateClientMetrics(client.Id, request.MetricsStartDate.Value, request.MetricsEndDate.Value)
+                    ? await CalculateClientMetrics(client.Id, request.MetricsStartDate.Value,
+                        request.MetricsEndDate.Value)
                     : null
             };
 
@@ -104,7 +107,8 @@ public class GetPortfolioTreeHandler : IRequestHandler<GetPortfolioTreeQuery, Po
         );
     }
 
-    private async Task<PerformanceMetricsDto?> CalculateAccountMetrics(Guid accountId, DateOnly startDate, DateOnly endDate)
+    private async Task<PerformanceMetricsDto?> CalculateAccountMetrics(Guid accountId, DateOnly startDate,
+        DateOnly endDate)
     {
         try
         {
@@ -119,7 +123,7 @@ public class GetPortfolioTreeHandler : IRequestHandler<GetPortfolioTreeQuery, Po
             allDates = allDates.Distinct().OrderBy(d => d).ToList();
 
             var subPeriods = new List<SubPeriod>();
-            for (int i = 0; i < allDates.Count - 1; i++)
+            for (var i = 0; i < allDates.Count - 1; i++)
             {
                 var periodStart = allDates[i];
                 var periodEnd = allDates[i + 1];
@@ -127,10 +131,7 @@ public class GetPortfolioTreeHandler : IRequestHandler<GetPortfolioTreeQuery, Po
                 var startValue = await _repository.GetAccountValueAsync(accountId, periodStart);
                 var endValue = await _repository.GetAccountValueAsync(accountId, periodEnd);
 
-                if (startValue > 0)
-                {
-                    subPeriods.Add(new SubPeriod(startValue, endValue, 0m)); // No flows for now
-                }
+                if (startValue > 0) subPeriods.Add(new SubPeriod(startValue, endValue, 0m)); // No flows for now
             }
 
             if (!subPeriods.Any())
@@ -155,7 +156,8 @@ public class GetPortfolioTreeHandler : IRequestHandler<GetPortfolioTreeQuery, Po
         }
     }
 
-    private async Task<PerformanceMetricsDto?> CalculatePortfolioMetrics(Guid portfolioId, DateOnly startDate, DateOnly endDate)
+    private async Task<PerformanceMetricsDto?> CalculatePortfolioMetrics(Guid portfolioId, DateOnly startDate,
+        DateOnly endDate)
     {
         try
         {
@@ -198,7 +200,8 @@ public class GetPortfolioTreeHandler : IRequestHandler<GetPortfolioTreeQuery, Po
         }
     }
 
-    private async Task<PerformanceMetricsDto?> CalculateClientMetrics(Guid clientId, DateOnly startDate, DateOnly endDate)
+    private async Task<PerformanceMetricsDto?> CalculateClientMetrics(Guid clientId, DateOnly startDate,
+        DateOnly endDate)
     {
         try
         {

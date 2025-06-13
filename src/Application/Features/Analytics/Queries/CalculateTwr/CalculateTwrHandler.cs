@@ -28,21 +28,13 @@ public class CalculateTwrHandler : IRequestHandler<CalculateTwrQuery, TwrResult>
             request.EndDate);
 
         if (!holdingDates.Any())
-        {
             throw new InvalidOperationException(
                 $"No holdings found for account {request.AccountId} in period {request.StartDate} to {request.EndDate}");
-        }
 
         // Ensure we have start and end dates in our holding dates
         var allDates = holdingDates.ToList();
-        if (!allDates.Contains(request.StartDate))
-        {
-            allDates.Insert(0, request.StartDate);
-        }
-        if (!allDates.Contains(request.EndDate))
-        {
-            allDates.Add(request.EndDate);
-        }
+        if (!allDates.Contains(request.StartDate)) allDates.Insert(0, request.StartDate);
+        if (!allDates.Contains(request.EndDate)) allDates.Add(request.EndDate);
 
         allDates = allDates.Distinct().OrderBy(d => d).ToList();
 
@@ -50,7 +42,7 @@ public class CalculateTwrHandler : IRequestHandler<CalculateTwrQuery, TwrResult>
         // In future sprints, we'll detect cash flows and split periods accordingly
         var subPeriods = new List<SubPeriod>();
 
-        for (int i = 0; i < allDates.Count - 1; i++)
+        for (var i = 0; i < allDates.Count - 1; i++)
         {
             var startDate = allDates[i];
             var endDate = allDates[i + 1];
@@ -62,16 +54,12 @@ public class CalculateTwrHandler : IRequestHandler<CalculateTwrQuery, TwrResult>
             var netFlow = 0m;
 
             if (startValue > 0) // Only create sub-period if we have a valid start value
-            {
                 subPeriods.Add(new SubPeriod(startValue, endValue, netFlow));
-            }
         }
 
         if (!subPeriods.Any())
-        {
             throw new InvalidOperationException(
-                $"No valid sub-periods found for TWR calculation");
-        }
+                "No valid sub-periods found for TWR calculation");
 
         // Calculate TWR
         var twr = _twrService.Calculate(subPeriods);

@@ -1,4 +1,3 @@
-using Application.Features.Portfolio.DTOs;
 using Application.Features.Portfolio.Queries.GetPortfolioHoldings;
 using Infrastructure.Data;
 using MediatR;
@@ -11,8 +10,8 @@ namespace Api.Controllers;
 [Route("api/[controller]")]
 public class PortfolioController : ControllerBase
 {
-    private readonly IMediator _mediator;
     private readonly PortfolioContext _context;
+    private readonly IMediator _mediator;
 
     public PortfolioController(IMediator mediator, PortfolioContext context)
     {
@@ -58,9 +57,9 @@ public class PortfolioController : ControllerBase
             {
                 PortfolioId = portfolioId,
                 Date = targetDate.ToString("yyyy-MM-dd"),
-                Holdings = response.Holdings,
-                TotalValueGBP = response.TotalValueGBP,
-                Count = response.Holdings.Count
+                response.Holdings,
+                response.TotalValueGBP,
+                response.Holdings.Count
             });
         }
         catch (FormatException)

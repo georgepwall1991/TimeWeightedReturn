@@ -17,7 +17,7 @@ public class TreeController : ControllerBase
     }
 
     /// <summary>
-    /// Get hierarchical portfolio tree structure
+    ///     Get hierarchical portfolio tree structure
     /// </summary>
     /// <param name="clientId">Optional: Filter to specific client</param>
     /// <param name="date">Date for holdings values (defaults to today)</param>
@@ -45,7 +45,7 @@ public class TreeController : ControllerBase
     }
 
     /// <summary>
-    /// Get tree structure for a specific client with performance metrics
+    ///     Get tree structure for a specific client with performance metrics
     /// </summary>
     /// <param name="clientId">Client ID</param>
     /// <param name="from">Start date for metrics</param>
@@ -60,10 +60,10 @@ public class TreeController : ControllerBase
         try
         {
             var query = new GetPortfolioTreeQuery(
-                ClientId: clientId,
-                Date: to, // Use end date for current values
-                MetricsStartDate: from,
-                MetricsEndDate: to);
+                clientId,
+                to, // Use end date for current values
+                from,
+                to);
 
             var result = await _mediator.Send(query);
 
@@ -76,7 +76,7 @@ public class TreeController : ControllerBase
     }
 
     /// <summary>
-    /// Get tree structure with current values only (no performance metrics)
+    ///     Get tree structure with current values only (no performance metrics)
     /// </summary>
     /// <param name="date">Date for holdings values (defaults to today)</param>
     /// <returns>Tree structure with current values</returns>

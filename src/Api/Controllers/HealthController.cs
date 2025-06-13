@@ -9,7 +9,8 @@ public class HealthController : ControllerBase
     [HttpGet("ping")]
     public IActionResult Ping()
     {
-        return Ok(new {
+        return Ok(new
+        {
             Status = "Healthy",
             Timestamp = DateTime.UtcNow,
             Service = "TimeWeightedReturn API",

@@ -19,10 +19,7 @@ public class TestDataSeeder
             .Where(p => p.Date < DateOnly.FromDateTime(DateTime.Today.AddDays(-30)))
             .AnyAsync();
 
-        if (existingHistoricalPrices)
-        {
-            return;
-        }
+        if (existingHistoricalPrices) return;
 
         // Get existing instruments
         var instruments = await _context.Instruments.ToListAsync();
@@ -31,20 +28,15 @@ public class TestDataSeeder
         var cashGbpInstrument = instruments.FirstOrDefault(i => i.Ticker == "CASH_GBP");
         var cashUsdInstrument = instruments.FirstOrDefault(i => i.Ticker == "CASH_USD");
 
-        if (aaplInstrument == null || msftInstrument == null || cashGbpInstrument == null || cashUsdInstrument == null)
-        {
-            return; // Skip if instruments don't exist
-        }
+        if (aaplInstrument == null || msftInstrument == null || cashGbpInstrument == null ||
+            cashUsdInstrument == null) return; // Skip if instruments don't exist
 
         // Get existing accounts
         var accounts = await _context.Accounts.ToListAsync();
         var isaAccount = accounts.FirstOrDefault(a => a.AccountNumber == "ISA001");
         var giaAccount = accounts.FirstOrDefault(a => a.AccountNumber == "GIA001");
 
-        if (isaAccount == null || giaAccount == null)
-        {
-            return; // Skip if accounts don't exist
-        }
+        if (isaAccount == null || giaAccount == null) return; // Skip if accounts don't exist
 
         // Clear existing holdings for clean test data
         var existingHoldings = await _context.Holdings.ToListAsync();
@@ -59,9 +51,9 @@ public class TestDataSeeder
         var random = new Random(42); // Consistent seed for reproducible results
 
         // Initial prices
-        decimal aaplPrice = 150.00m;
-        decimal msftPrice = 350.00m;
-        decimal cashPrice = 1.00m;
+        var aaplPrice = 150.00m;
+        var msftPrice = 350.00m;
+        var cashPrice = 1.00m;
 
         for (var date = startDate; date <= endDate; date = date.AddDays(1))
         {
@@ -177,7 +169,7 @@ public class TestDataSeeder
 
         // Add FX rates for historical data
         var fxRates = new List<FxRate>();
-        decimal usdGbpRate = 1.25m; // Starting rate
+        var usdGbpRate = 1.25m; // Starting rate
 
         for (var date = startDate; date <= endDate; date = date.AddDays(1))
         {
@@ -209,7 +201,6 @@ public class TestDataSeeder
         };
 
         foreach (var quarterDate in quarterlyDates)
-        {
             cashFlows.AddRange(new[]
             {
                 new CashFlow
@@ -237,7 +228,6 @@ public class TestDataSeeder
                     UpdatedAt = DateTime.UtcNow
                 }
             });
-        }
 
         // Bulk insert data
         await _context.Prices.AddRangeAsync(prices);

@@ -18,37 +18,37 @@ public abstract record PortfolioTreeNodeDto
 
 public record ClientNodeDto : PortfolioTreeNodeDto
 {
-    public IReadOnlyList<PortfolioNodeDto> Portfolios { get; init; } = Array.Empty<PortfolioNodeDto>();
-    public int PortfoliosCount => Portfolios.Count;
-
     public ClientNodeDto()
     {
         NodeType = "Client";
     }
+
+    public IReadOnlyList<PortfolioNodeDto> Portfolios { get; init; } = Array.Empty<PortfolioNodeDto>();
+    public int PortfoliosCount => Portfolios.Count;
 }
 
 public record PortfolioNodeDto : PortfolioTreeNodeDto
 {
-    public Guid ClientId { get; init; }
-    public IReadOnlyList<AccountNodeDto> Accounts { get; init; } = Array.Empty<AccountNodeDto>();
-    public int AccountsCount => Accounts.Count;
-
     public PortfolioNodeDto()
     {
         NodeType = "Portfolio";
     }
+
+    public Guid ClientId { get; init; }
+    public IReadOnlyList<AccountNodeDto> Accounts { get; init; } = Array.Empty<AccountNodeDto>();
+    public int AccountsCount => Accounts.Count;
 }
 
 public record AccountNodeDto : PortfolioTreeNodeDto
 {
-    public Guid PortfolioId { get; init; }
-    public string AccountNumber { get; init; } = string.Empty;
-    public string Currency { get; init; } = "GBP";
-
     public AccountNodeDto()
     {
         NodeType = "Account";
     }
+
+    public Guid PortfolioId { get; init; }
+    public string AccountNumber { get; init; } = string.Empty;
+    public string Currency { get; init; } = "GBP";
 }
 
 public record PerformanceMetricsDto

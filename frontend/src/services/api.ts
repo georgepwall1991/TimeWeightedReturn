@@ -15,10 +15,61 @@ import type {
 interface GetAccountHoldingsResponse {
   accountId: string;
   accountName: string;
-  date: string;
+  requestedDate: string;
+  actualDate: string;
   holdings: HoldingDto[];
   totalValueGBP: number;
   count: number;
+  dataStatus: 'Exact' | 'Nearest' | 'NoData';
+  message?: string;
+  availableDateRange?: {
+    earliest: string;
+    latest: string;
+    totalDates: number;
+  };
+}
+
+// Account dates response interface
+interface GetAccountDatesResponse {
+  accountId: string;
+  accountName: string;
+  dates: string[];
+  startDate: string;
+  endDate: string;
+}
+
+// Account holdings history response interface
+interface GetAccountHoldingsHistoryResponse {
+  accountId: string;
+  accountName: string;
+  startDate: string;
+  endDate: string;
+  historicalData: Array<{
+    date: string;
+    holdings: Array<{
+      instrumentId: string;
+      ticker: string;
+      name: string;
+      units: number;
+      price: number;
+      valueGBP: number;
+      instrumentType: string;
+      currency: string;
+    }>;
+    totalValueGBP: number;
+    count: number;
+  }>;
+  availableDateRange: {
+    earliest: string;
+    latest: string;
+    totalDates: number;
+  };
+}
+
+export interface ExportHoldingsRequest {
+  accountId: string;
+  date: string;
+  format: 'csv' | 'excel';
 }
 
 // Base API configuration
@@ -38,7 +89,10 @@ export const api = createApi({
     getPortfolioTree: builder.query<PortfolioTreeResponse, { clientId?: string }>({
       query: ({ clientId }) => ({
         url: 'tree',
-        params: clientId ? { clientId } : {},
+        params: {
+          ...(clientId ? { clientId } : {}),
+          date: new Date().toISOString().split('T')[0] // Always include today's date
+        },
       }),
       providesTags: ['PortfolioTree'],
       keepUnusedDataFor: 300, // Cache for 5 minutes
@@ -148,6 +202,37 @@ export const api = createApi({
       ],
       keepUnusedDataFor: 600, // Cache for 10 minutes
     }),
+
+    // Account Available Dates
+    getAccountDates: builder.query<GetAccountDatesResponse, { accountId: string }>({
+      query: ({ accountId }) => ({
+        url: `account/${accountId}/dates`,
+      }),
+      providesTags: (_result, _error, { accountId }) => [
+        { type: 'AccountHoldings', id: accountId },
+      ],
+      keepUnusedDataFor: 600, // Cache for 10 minutes
+    }),
+
+    getAccountHoldingsHistory: builder.query<GetAccountHoldingsHistoryResponse, {
+      accountId: string;
+      startDate: string;
+      endDate: string;
+    }>({
+      query: ({ accountId, startDate, endDate }) => ({
+        url: `account/${accountId}/holdings/history`,
+        params: { startDate, endDate }
+      })
+    }),
+
+    exportHoldings: builder.mutation<Blob, ExportHoldingsRequest>({
+      query: ({ accountId, date, format }) => ({
+        url: `accounts/${accountId}/holdings/export`,
+        method: 'GET',
+        params: { date, format },
+        responseHandler: async (response) => response.blob()
+      })
+    })
   }),
 });
 
@@ -161,7 +246,10 @@ export const {
   useCalculateRiskMetricsQuery,
   useGetAccountQuery,
   useGetAccountValueQuery,
+  useGetAccountDatesQuery,
+  useGetAccountHoldingsHistoryQuery,
+  useExportHoldingsMutation,
 } = api;
 
 // Export types for convenience
-export type { GetAccountHoldingsResponse };
+export type { GetAccountHoldingsResponse, GetAccountDatesResponse };

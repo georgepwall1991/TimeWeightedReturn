@@ -2,14 +2,13 @@ using Api.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Xunit;
 
 namespace Api.Tests.Controllers;
 
 public class ErrorControllerTests
 {
-    private readonly Mock<ILogger<ErrorController>> _mockLogger;
     private readonly ErrorController _controller;
+    private readonly Mock<ILogger<ErrorController>> _mockLogger;
 
     public ErrorControllerTests()
     {

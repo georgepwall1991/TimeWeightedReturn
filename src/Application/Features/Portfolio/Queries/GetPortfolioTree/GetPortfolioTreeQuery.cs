@@ -1,5 +1,5 @@
-using MediatR;
 using Application.Features.Portfolio.DTOs;
+using MediatR;
 
 namespace Application.Features.Portfolio.Queries.GetPortfolioTree;
 

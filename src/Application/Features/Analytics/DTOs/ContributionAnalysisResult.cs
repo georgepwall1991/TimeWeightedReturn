@@ -22,7 +22,7 @@ public record ContributionAnalysisResult
     public decimal WorstContributorReturn { get; init; }
     public string TopContributorTicker { get; init; } = string.Empty;
     public string WorstContributorTicker { get; init; } = string.Empty;
-};
+}
 
 public record ContributionData
 {
@@ -40,9 +40,9 @@ public record ContributionData
     public decimal EndValueGBP { get; init; }
 
     // Weight and return calculations
-    public decimal Weight { get; init; }              // Position weight at start of period
-    public decimal InstrumentReturn { get; init; }    // Return of this instrument
-    public decimal Contribution { get; init; }        // Weight × Return = contribution to portfolio
+    public decimal Weight { get; init; } // Position weight at start of period
+    public decimal InstrumentReturn { get; init; } // Return of this instrument
+    public decimal Contribution { get; init; } // Weight × Return = contribution to portfolio
 
     // Performance metrics
     public decimal AbsoluteContribution { get; init; } // Absolute GBP contribution

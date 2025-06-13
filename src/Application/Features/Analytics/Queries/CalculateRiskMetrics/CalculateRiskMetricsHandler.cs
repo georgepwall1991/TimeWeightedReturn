@@ -1,7 +1,6 @@
 using Application.Features.Analytics.DTOs;
 using Application.Features.Common.Interfaces;
 using Domain.Services;
-using Domain.ValueObjects;
 using MediatR;
 
 namespace Application.Features.Analytics.Queries.CalculateRiskMetrics;
@@ -19,28 +18,24 @@ public class CalculateRiskMetricsHandler : IRequestHandler<CalculateRiskMetricsQ
         _riskService = riskService;
     }
 
-    public async Task<RiskMetricsAnalysisResult> Handle(CalculateRiskMetricsQuery request, CancellationToken cancellationToken)
+    public async Task<RiskMetricsAnalysisResult> Handle(CalculateRiskMetricsQuery request,
+        CancellationToken cancellationToken)
     {
         var account = await _repository.GetAccountAsync(request.AccountId);
-        if (account == null)
-        {
-            throw new ArgumentException($"Account with ID {request.AccountId} not found");
-        }
+        if (account == null) throw new ArgumentException($"Account with ID {request.AccountId} not found");
 
         // Get daily portfolio values for the period
-        var (portfolioValues, dates) = await GetPortfolioValueTimeSeries(request.AccountId, request.StartDate, request.EndDate);
+        var (portfolioValues, dates) =
+            await GetPortfolioValueTimeSeries(request.AccountId, request.StartDate, request.EndDate);
 
-        if (portfolioValues.Count < 2)
-        {
-            return CreateEmptyResult(request, account.Name);
-        }
+        if (portfolioValues.Count < 2) return CreateEmptyResult(request, account.Name);
 
         // Calculate risk metrics
         var riskFreeRate = request.RiskFreeRate ?? 0.02m; // Default 2%
         var riskMetrics = _riskService.CalculateRiskMetrics(portfolioValues, dates, riskFreeRate);
 
         // Calculate rolling volatility for charting
-        var rollingVolatility = _riskService.CalculateRollingVolatility(portfolioValues, dates, 30);
+        var rollingVolatility = _riskService.CalculateRollingVolatility(portfolioValues, dates);
 
         // Generate risk assessment
         var riskAssessment = GenerateRiskAssessment(riskMetrics);
@@ -52,7 +47,7 @@ public class CalculateRiskMetricsHandler : IRequestHandler<CalculateRiskMetricsQ
             AccountName = account.Name,
             StartDate = request.StartDate,
             EndDate = request.EndDate,
-            Days = (request.EndDate - request.StartDate).Days,
+            Days = request.EndDate.DayNumber - request.StartDate.DayNumber,
             AnnualizedVolatility = riskMetrics.AnnualizedVolatility,
             SharpeRatio = riskMetrics.SharpeRatio,
             MaximumDrawdown = riskMetrics.MaximumDrawdown,
@@ -110,7 +105,6 @@ public class CalculateRiskMetricsHandler : IRequestHandler<CalculateRiskMetricsQ
 
         // Ensure we have the end date
         if (dates.LastOrDefault() != endDate)
-        {
             try
             {
                 var endValue = await _repository.GetAccountValueAsync(accountId, endDate);
@@ -124,7 +118,6 @@ public class CalculateRiskMetricsHandler : IRequestHandler<CalculateRiskMetricsQ
             {
                 // End date value not available
             }
-        }
 
         return (values, dates);
     }
@@ -202,9 +195,9 @@ public class CalculateRiskMetricsHandler : IRequestHandler<CalculateRiskMetricsQ
 
     private decimal CalculateRiskScore(RiskMetricsResult metrics)
     {
-        var volScore = Math.Max(0, 10 - (metrics.AnnualizedVolatility * 50)); // Lower vol = higher score
+        var volScore = Math.Max(0, 10 - metrics.AnnualizedVolatility * 50); // Lower vol = higher score
         var sharpeScore = Math.Min(10, Math.Max(0, metrics.SharpeRatio * 5)); // Higher Sharpe = higher score
-        var drawdownScore = Math.Max(0, 10 - (metrics.MaximumDrawdown * 50)); // Lower drawdown = higher score
+        var drawdownScore = Math.Max(0, 10 - metrics.MaximumDrawdown * 50); // Lower drawdown = higher score
 
         return Math.Max(1, Math.Min(10, (volScore + sharpeScore + drawdownScore) / 3));
     }
@@ -228,7 +221,7 @@ public class CalculateRiskMetricsHandler : IRequestHandler<CalculateRiskMetricsQ
             AccountName = accountName,
             StartDate = request.StartDate,
             EndDate = request.EndDate,
-            Days = (request.EndDate - request.StartDate).Days,
+            Days = request.EndDate.DayNumber - request.StartDate.DayNumber,
             RiskFreeRate = request.RiskFreeRate ?? 0.02m,
             RiskProfile = "Unknown",
             RiskAssessment = new RiskAssessment

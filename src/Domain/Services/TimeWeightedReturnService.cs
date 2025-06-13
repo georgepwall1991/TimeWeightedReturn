@@ -5,9 +5,9 @@ namespace Domain.Services;
 public class TimeWeightedReturnService
 {
     /// <summary>
-    /// Calculate Time Weighted Return by chaining sub-periods.
-    /// Formula: TWR = ∏(1 + Ri) - 1
-    /// Where Ri is the return for each sub-period
+    ///     Calculate Time Weighted Return by chaining sub-periods.
+    ///     Formula: TWR = ∏(1 + Ri) - 1
+    ///     Where Ri is the return for each sub-period
     /// </summary>
     public decimal Calculate(IEnumerable<SubPeriod> periods)
     {
@@ -19,7 +19,7 @@ public class TimeWeightedReturnService
     }
 
     /// <summary>
-    /// Calculate annualized return from total return and time period
+    ///     Calculate annualized return from total return and time period
     /// </summary>
     public decimal AnnualizeReturn(decimal totalReturn, int days)
     {

@@ -1,5 +1,4 @@
 using Application.Features.Common.Interfaces;
-using Application.Features.Common.DTOs;
 using Application.Features.Portfolio.DTOs;
 using MediatR;
 
@@ -14,11 +13,12 @@ public class GetPortfolioHoldingsHandler : IRequestHandler<GetPortfolioHoldingsQ
         _portfolioRepository = portfolioRepository;
     }
 
-    public async Task<GetPortfolioHoldingsResponse> Handle(GetPortfolioHoldingsQuery request, CancellationToken cancellationToken)
+    public async Task<GetPortfolioHoldingsResponse> Handle(GetPortfolioHoldingsQuery request,
+        CancellationToken cancellationToken)
     {
         var holdingsData = await _portfolioRepository.GetPortfolioHoldingsAsync(request.PortfolioId, request.Date);
 
-        var holdings = holdingsData.Select(h => new Portfolio.DTOs.HoldingDto
+        var holdings = holdingsData.Select(h => new HoldingDto
         {
             HoldingId = h.HoldingId,
             Ticker = h.Ticker,

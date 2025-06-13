@@ -1,5 +1,5 @@
-using MediatR;
 using Application.Features.Analytics.DTOs;
+using MediatR;
 
 namespace Application.Features.Analytics.Queries.CalculateRiskMetrics;
 
