@@ -210,7 +210,7 @@ const ContributionDashboard: React.FC<ContributionDashboardProps> = ({
           <div className="text-center py-12">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No Holdings Found</h3>
             <p className="text-gray-600">
-              No holdings found for {accountName || 'this account'} on {holdingsData?.date || date}.
+              No holdings found for {accountName || 'this account'} on {holdingsData?.actualDate || date}.
             </p>
           </div>
         </div>
@@ -231,7 +231,7 @@ const ContributionDashboard: React.FC<ContributionDashboardProps> = ({
               {displayAccountName} • {period} • {summary.numberOfHoldings} holdings
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              Holdings as of {holdingsData.date} • Total Value: {formatCurrency(holdingsData.totalValueGBP)}
+              Holdings as of {holdingsData.actualDate} • Total Value: {formatCurrency(holdingsData.totalValueGBP)}
             </p>
           </div>
           <div className="text-right">

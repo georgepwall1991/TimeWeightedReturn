@@ -1,62 +1,72 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { TrendingUp, BarChart3, PieChart, Calendar, Target } from "lucide-react";
 import { api } from "../../services/api";
 import { formatPercentage, formatCurrency } from "../../utils/formatters";
 import { PerformanceChart, ContributionChart } from "../charts";
 import { CalculationErrorBoundary } from "../layout/CalculationErrorBoundary";
-import RiskAnalyticsDashboard from "./RiskAnalyticsDashboard";
 
 interface AdvancedAnalyticsDashboardProps {
   accountId: string;
   accountName: string;
 }
 
+type DatePreset = '1M' | '3M' | '6M' | '1Y' | 'YTD' | 'Custom';
+
 const AdvancedAnalyticsDashboard: React.FC<AdvancedAnalyticsDashboardProps> = ({
-  accountId,
-  accountName,
-}) => {
-  const [activeTab, setActiveTab] = useState<string>("performance");
-  const [selectedRange, setSelectedRange] = useState<string>("1Y");
-  const [customRange, setCustomRange] = useState({
-    from: "",
-    to: "",
-  });
+    accountId,
+    accountName,
+  }) => {
+   const [dateRange, setDateRange] = useState<DatePreset>('1Y');
+   const [customRange, setCustomRange] = useState({
+     from: "",
+     to: "",
+   });
 
-  // Predefined date ranges
-  const dateRanges = {
-    "1M": () => {
-      const end = new Date();
-      const start = new Date();
-      start.setMonth(start.getMonth() - 1);
-      return { from: start.toISOString().split("T")[0], to: end.toISOString().split("T")[0] };
-    },
-    "3M": () => {
-      const end = new Date();
-      const start = new Date();
-      start.setMonth(start.getMonth() - 3);
-      return { from: start.toISOString().split("T")[0], to: end.toISOString().split("T")[0] };
-    },
-    "6M": () => {
-      const end = new Date();
-      const start = new Date();
-      start.setMonth(start.getMonth() - 6);
-      return { from: start.toISOString().split("T")[0], to: end.toISOString().split("T")[0] };
-    },
-    "1Y": () => {
-      const end = new Date();
-      const start = new Date();
-      start.setFullYear(start.getFullYear() - 1);
-      return { from: start.toISOString().split("T")[0], to: end.toISOString().split("T")[0] };
-    },
-  };
+   // Define date ranges
+   const dateRanges = {
+     '1M': '1 Month',
+     '3M': '3 Months',
+     '6M': '6 Months',
+     '1Y': '1 Year',
+     'YTD': 'Year to Date'
+   };
 
-  // Get current date range
-  const getCurrentRange = () => {
-    if (selectedRange === "Custom") {
-      return customRange;
+  const getCurrentRange = useCallback((): { start: string; end: string } => {
+    if (dateRange === 'Custom') {
+      return {
+        start: customRange.from,
+        end: customRange.to
+      };
     }
-    return dateRanges[selectedRange as keyof typeof dateRanges]();
-  };
+
+    const end = new Date();
+    const start = new Date();
+
+    switch (dateRange) {
+      case '1M':
+        start.setMonth(start.getMonth() - 1);
+        break;
+      case '3M':
+        start.setMonth(start.getMonth() - 3);
+        break;
+      case '6M':
+        start.setMonth(start.getMonth() - 6);
+        break;
+      case '1Y':
+        start.setFullYear(start.getFullYear() - 1);
+        break;
+      case 'YTD':
+        start.setFullYear(start.getFullYear(), 0, 1);
+        break;
+    }
+
+    return {
+      start: start.toISOString().split('T')[0],
+      end: end.toISOString().split('T')[0]
+    };
+  }, [dateRange, customRange]);
+
+  const currentRange = useMemo(() => getCurrentRange(), [getCurrentRange]);
 
   // Fetch TWR and Contribution data
   const {
@@ -67,10 +77,11 @@ const AdvancedAnalyticsDashboard: React.FC<AdvancedAnalyticsDashboardProps> = ({
   } = api.useCalculateTWRQuery(
     {
       accountId,
-      ...getCurrentRange(),
+      from: currentRange.start,
+      to: currentRange.end,
     },
     {
-      skip: selectedRange === "Custom" && (!customRange.from || !customRange.to),
+      skip: dateRange === 'Custom' && (!customRange.from || !customRange.to),
     }
   );
 
@@ -82,11 +93,11 @@ const AdvancedAnalyticsDashboard: React.FC<AdvancedAnalyticsDashboardProps> = ({
   } = api.useCalculateContributionQuery(
     {
       accountId,
-      startDate: getCurrentRange().from,
-      endDate: getCurrentRange().to,
+      startDate: currentRange.start,
+      endDate: currentRange.end,
     },
     {
-      skip: selectedRange === "Custom" && (!customRange.from || !customRange.to),
+      skip: dateRange === 'Custom' && (!customRange.from || !customRange.to),
     }
   );
 
@@ -95,8 +106,8 @@ const AdvancedAnalyticsDashboard: React.FC<AdvancedAnalyticsDashboardProps> = ({
     if (!twrData) return [];
 
     const range = getCurrentRange();
-    const startDate = new Date(range.from);
-    const endDate = new Date(range.to);
+    const startDate = new Date(range.start);
+    const endDate = new Date(range.end);
     const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
     const data = [];
@@ -120,7 +131,7 @@ const AdvancedAnalyticsDashboard: React.FC<AdvancedAnalyticsDashboardProps> = ({
     }
 
     return data;
-  }, [twrData, contributionData, selectedRange, customRange]);
+  }, [twrData, contributionData, getCurrentRange]);
 
   // Transform contribution data for chart
   const contributionChartData = useMemo(() => {
@@ -169,9 +180,9 @@ const AdvancedAnalyticsDashboard: React.FC<AdvancedAnalyticsDashboardProps> = ({
             {Object.keys(dateRanges).map((range) => (
               <button
                 key={range}
-                onClick={() => setSelectedRange(range)}
+                onClick={() => setDateRange(range as DatePreset)}
                 className={`px-4 py-2 text-sm rounded-lg font-medium transition-all ${
-                  selectedRange === range
+                  dateRange === range
                     ? "bg-blue-100 text-blue-700 border-2 border-blue-300 shadow-sm"
                     : "bg-gray-100 text-gray-700 border-2 border-gray-200 hover:bg-gray-200 hover:border-gray-300"
                 }`}
@@ -180,9 +191,9 @@ const AdvancedAnalyticsDashboard: React.FC<AdvancedAnalyticsDashboardProps> = ({
               </button>
             ))}
             <button
-              onClick={() => setSelectedRange("Custom")}
+              onClick={() => setDateRange("Custom")}
               className={`px-4 py-2 text-sm rounded-lg font-medium transition-all ${
-                selectedRange === "Custom"
+                dateRange === "Custom"
                   ? "bg-blue-100 text-blue-700 border-2 border-blue-300 shadow-sm"
                   : "bg-gray-100 text-gray-700 border-2 border-gray-200 hover:bg-gray-200 hover:border-gray-300"
               }`}
@@ -192,7 +203,7 @@ const AdvancedAnalyticsDashboard: React.FC<AdvancedAnalyticsDashboardProps> = ({
           </div>
 
           {/* Custom Date Range */}
-          {selectedRange === "Custom" && (
+          {dateRange === "Custom" && (
             <div className="grid grid-cols-2 gap-4 max-w-md">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -295,31 +306,32 @@ const AdvancedAnalyticsDashboard: React.FC<AdvancedAnalyticsDashboardProps> = ({
       {/* Error State */}
       {hasError && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="flex">
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">
-                  Analytics Error
-                </h3>
-                <div className="mt-2 text-sm text-red-700">
-                  <p>Unable to load analytics data for the selected period.</p>
-                </div>
-                <div className="mt-3 flex space-x-2">
-                  <button
-                    onClick={() => refetchTwr()}
-                    className="bg-red-100 hover:bg-red-200 text-red-800 text-sm font-medium py-1 px-3 rounded-md transition-colors"
-                  >
-                    Retry TWR
-                  </button>
-                  <button
-                    onClick={() => refetchContribution()}
-                    className="bg-red-100 hover:bg-red-200 text-red-800 text-sm font-medium py-1 px-3 rounded-md transition-colors"
-                  >
-                    Retry Contribution
-                  </button>
-                </div>
-              </div>
-            </div>
+          <div className="space-y-4">
+            {/* TWR Error */}
+            {twrError && (
+              <CalculationErrorBoundary
+                error={twrError}
+                accountId={accountId}
+                accountName={accountName}
+                startDate={currentRange.start}
+                endDate={currentRange.end}
+                calculationType="TWR"
+                onRetry={refetchTwr}
+              />
+            )}
+
+            {/* Contribution Error */}
+            {contributionError && (
+              <CalculationErrorBoundary
+                error={contributionError}
+                accountId={accountId}
+                accountName={accountName}
+                startDate={currentRange.start}
+                endDate={currentRange.end}
+                calculationType="CONTRIBUTION"
+                onRetry={refetchContribution}
+              />
+            )}
           </div>
         </div>
       )}

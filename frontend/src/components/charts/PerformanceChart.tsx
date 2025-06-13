@@ -39,7 +39,15 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
   const valueRange = maxValue - minValue;
   const padding = valueRange * 0.1;
 
-  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[]; label?: string }) => {
+  // Define proper tooltip payload interface
+  interface TooltipPayload {
+    payload: PerformanceDataPoint & {
+      dateFormatted: string;
+      returnPercent?: number;
+    };
+  }
+
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: TooltipPayload[]; label?: string }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (

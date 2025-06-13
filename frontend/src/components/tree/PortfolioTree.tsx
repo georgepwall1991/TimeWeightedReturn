@@ -26,7 +26,7 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
   // Use the updated API hook with empty object as parameter
   const { data, error, isLoading, refetch } = api.useGetPortfolioTreeQuery({});
 
-  const toggleNode = (nodeId: string) => {
+  const toggleNode = useCallback((nodeId: string) => {
     const newExpanded = new Set(expandedNodes);
     if (newExpanded.has(nodeId)) {
       newExpanded.delete(nodeId);
@@ -34,7 +34,7 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
       newExpanded.add(nodeId);
     }
     setExpandedNodes(newExpanded);
-  };
+  }, [expandedNodes]);
 
   // Select node
   const selectNode = useCallback(

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { api } from "../../services/api";
 import { formatPercentage } from "../../utils/formatters";
 import { PerformanceChart } from "../charts";
@@ -19,7 +19,7 @@ const TwrCalculator: React.FC<TwrCalculatorProps> = ({
   });
 
   // Predefined date ranges
-  const dateRanges = {
+  const dateRanges = useMemo(() => ({
     "1M": () => {
       const end = new Date();
       const start = new Date();
@@ -44,15 +44,15 @@ const TwrCalculator: React.FC<TwrCalculatorProps> = ({
       start.setFullYear(start.getFullYear() - 1);
       return { from: start.toISOString().split("T")[0], to: end.toISOString().split("T")[0] };
     },
-  };
+  }), []);
 
   // Get current date range
-  const getCurrentRange = () => {
+  const getCurrentRange = useCallback(() => {
     if (selectedRange === "Custom") {
       return customRange;
     }
     return dateRanges[selectedRange as keyof typeof dateRanges]();
-  };
+  }, [selectedRange, customRange, dateRanges]);
 
   const {
     data: twrData,
@@ -103,7 +103,7 @@ const TwrCalculator: React.FC<TwrCalculatorProps> = ({
     }
 
     return data;
-  }, [twrData, selectedRange, customRange]);
+  }, [twrData, getCurrentRange]);
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

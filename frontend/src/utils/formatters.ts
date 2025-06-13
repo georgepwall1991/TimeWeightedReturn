@@ -24,24 +24,34 @@ export const formatters = {
   }),
 };
 
-export const formatCurrency = (value: number): string => {
+// Safe number validation
+const isValidNumber = (value: unknown): value is number => {
+  return typeof value === 'number' && !isNaN(value) && isFinite(value);
+};
+
+export const formatCurrency = (value: number | undefined | null): string => {
+  if (!isValidNumber(value)) return '£0.00';
   return formatters.currency.format(value);
 };
 
-export const formatPercentage = (value: number): string => {
+export const formatPercentage = (value: number | undefined | null): string => {
+  if (!isValidNumber(value)) return '0.00%';
   return formatters.percentage.format(value);
 };
 
-export const formatDecimal = (value: number): string => {
+export const formatDecimal = (value: number | undefined | null): string => {
+  if (!isValidNumber(value)) return '0.00';
   return formatters.decimal.format(value);
 };
 
-export const formatUnits = (value: number): string => {
+export const formatUnits = (value: number | undefined | null): string => {
+  if (!isValidNumber(value)) return '0';
   return formatters.units.format(value);
 };
 
 // Get CSS class for performance values
-export const getPerformanceClass = (value: number): string => {
+export const getPerformanceClass = (value: number | undefined | null): string => {
+  if (!isValidNumber(value)) return 'neutral';
   if (value > 0) return 'positive';
   if (value < 0) return 'negative';
   return 'neutral';
@@ -49,7 +59,9 @@ export const getPerformanceClass = (value: number): string => {
 
 // Format dates consistently
 export const formatDate = (dateString: string): string => {
+  if (!dateString) return 'Invalid Date';
   const date = new Date(dateString);
+  if (isNaN(date.getTime())) return 'Invalid Date';
   return date.toLocaleDateString('en-GB', {
     day: '2-digit',
     month: '2-digit',
@@ -58,5 +70,6 @@ export const formatDate = (dateString: string): string => {
 };
 
 export const formatDateForApi = (date: Date): string => {
+  if (!date || isNaN(date.getTime())) return new Date().toISOString().split('T')[0];
   return date.toISOString().split('T')[0]; // YYYY-MM-DD format
 };

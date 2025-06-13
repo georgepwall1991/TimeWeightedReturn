@@ -59,7 +59,20 @@ const HoldingsCompositionChart: React.FC<HoldingsCompositionChartProps> = ({
     [holdings]
   );
 
-  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
+  // Define proper tooltip payload interface
+  interface TooltipPayload {
+    payload: {
+      name: string;
+      fullName: string;
+      value: number;
+      percentage: number;
+      units: number;
+      type: 'Cash' | 'Security';
+      color: string;
+    };
+  }
+
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: TooltipPayload[] }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (

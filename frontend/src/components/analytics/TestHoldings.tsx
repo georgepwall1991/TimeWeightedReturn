@@ -120,7 +120,7 @@ const TestHoldings: React.FC = () => {
                     {holdingsData.accountName}
                   </h3>
                   <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
-                    <span>Date: {holdingsData.date}</span>
+                    <span>Date: {holdingsData.actualDate}</span>
                     <span>Holdings: {holdingsData.count}</span>
                     <span>Total Value: {formatCurrency(holdingsData.totalValueGBP)}</span>
                   </div>

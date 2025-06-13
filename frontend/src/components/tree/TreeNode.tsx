@@ -1,7 +1,11 @@
-import React from 'react';
-import { ChevronRight, ChevronDown, User, Folder, Briefcase } from 'lucide-react';
-import { formatCurrency } from '../../utils/formatters';
-import type { ClientNodeDto, PortfolioNodeDto, AccountNodeDto } from '../../types/api';
+import React from "react";
+import { ChevronRight, ChevronDown, User, Briefcase, FolderOpen } from "lucide-react";
+import { formatCurrency } from "../../utils/formatters";
+import type {
+  ClientNodeDto,
+  PortfolioNodeDto,
+  AccountNodeDto,
+} from "../../types/api";
 
 interface TreeNodeProps {
   level: number;
@@ -26,18 +30,48 @@ interface AccountNodeProps extends TreeNodeProps {
   node: AccountNodeDto;
 }
 
+// Asset type breakdown component for accounts
+const AssetTypeIndicators: React.FC<{
+  cashValue?: number;
+  securityValue?: number;
+  totalValue: number;
+}> = ({ cashValue = 0, securityValue = 0, totalValue }) => {
+  // Safe number validation
+  const safeCashValue = typeof cashValue === 'number' && !isNaN(cashValue) ? cashValue : 0;
+  const safeSecurityValue = typeof securityValue === 'number' && !isNaN(securityValue) ? securityValue : 0;
+  const safeTotalValue = typeof totalValue === 'number' && !isNaN(totalValue) && totalValue > 0 ? totalValue : 0;
+
+  if (safeTotalValue === 0) return null;
+
+  const cashPercentage = Math.round((safeCashValue / safeTotalValue) * 100);
+  const securityPercentage = Math.round((safeSecurityValue / safeTotalValue) * 100);
+
+  return (
+    <div className="flex items-center space-x-1 ml-2">
+      {safeCashValue > 0 && (
+        <div className="flex items-center">
+          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+          <span className="text-xs text-gray-500 ml-1">{cashPercentage}%</span>
+        </div>
+      )}
+      {safeSecurityValue > 0 && (
+        <div className="flex items-center">
+          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+          <span className="text-xs text-gray-500 ml-1">{securityPercentage}%</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Base TreeNode component
-const TreeNodeBase: React.FC<{
-  level: number;
-  isExpanded: boolean;
-  hasChildren: boolean;
-  onToggle: () => void;
-  onSelect: () => void;
-  isSelected: boolean;
+const BaseNode: React.FC<TreeNodeProps & {
   icon: React.ReactNode;
   title: string;
-  subtitle: string;
-  value: string;
+  subtitle?: string;
+  value?: string;
+  rawValue?: number; // Add raw value for calculations
+  assetBreakdown?: { cashValue?: number; securityValue?: number; };
   children?: React.ReactNode;
 }> = ({
   level,
@@ -50,60 +84,77 @@ const TreeNodeBase: React.FC<{
   title,
   subtitle,
   value,
+  rawValue,
+  assetBreakdown,
   children,
 }) => {
+  const indentWidth = level * 20;
+
   return (
-    <div className="select-none">
+    <div>
       <div
-        className={`
-          flex items-center py-2 px-3 hover:bg-gray-50 cursor-pointer transition-colors
-          ${isSelected ? 'bg-blue-50 border-r-2 border-blue-500' : ''}
-        `}
-        style={{ paddingLeft: `${level * 1.5 + 0.75}rem` }}
+        className={`flex items-center py-2 px-3 cursor-pointer hover:bg-gray-50 transition-colors ${
+          isSelected ? "bg-blue-50 border-r-2 border-blue-500" : ""
+        }`}
+        style={{ paddingLeft: `${12 + indentWidth}px` }}
         onClick={onSelect}
       >
         {/* Expand/Collapse Button */}
-        <div className="w-5 h-5 flex items-center justify-center mr-2">
-          {hasChildren && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggle();
-              }}
-              className="p-1 hover:bg-gray-200 rounded transition-colors"
-            >
-              {isExpanded ? (
-                <ChevronDown className="w-3 h-3" />
-              ) : (
-                <ChevronRight className="w-3 h-3" />
-              )}
-            </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle();
+          }}
+          className="w-4 h-4 flex items-center justify-center mr-2 text-gray-400 hover:text-gray-600"
+          disabled={!hasChildren}
+        >
+          {hasChildren ? (
+            isExpanded ? (
+              <ChevronDown className="w-3 h-3" />
+            ) : (
+              <ChevronRight className="w-3 h-3" />
+            )
+          ) : (
+            <div className="w-3 h-3" />
           )}
-        </div>
+        </button>
 
         {/* Icon */}
-        <div className="w-5 h-5 flex items-center justify-center mr-3 text-gray-600">
-          {icon}
-        </div>
+        <div className="mr-3 text-gray-500">{icon}</div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <div className="font-medium text-gray-900 truncate">{title}</div>
-          <div className="text-sm text-gray-500 truncate">{subtitle}</div>
-        </div>
-
-        {/* Value */}
-        <div className="ml-4 text-right">
-          <div className="font-medium text-gray-900 currency">{value}</div>
+          <div className="flex items-center justify-between">
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium text-gray-900 truncate">
+                {title}
+              </div>
+              {subtitle && (
+                <div className="text-xs text-gray-500 truncate">{subtitle}</div>
+              )}
+            </div>
+            <div className="flex items-center space-x-2 ml-4">
+              {/* Asset type indicators for accounts */}
+              {assetBreakdown && rawValue && (
+                <AssetTypeIndicators
+                  cashValue={assetBreakdown.cashValue}
+                  securityValue={assetBreakdown.securityValue}
+                  totalValue={rawValue}
+                />
+              )}
+              {/* Value */}
+              {value && (
+                <div className="text-right">
+                  <div className="text-sm font-medium text-gray-900">
+                    {value}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* Children */}
-      {isExpanded && children && (
-        <div className="transition-all duration-200 ease-in-out">
-          {children}
-        </div>
-      )}
+      {children && isExpanded && <div>{children}</div>}
     </div>
   );
 };
@@ -122,7 +173,7 @@ export const ClientNode: React.FC<ClientNodeProps> = ({
   const subtitle = `${node.portfoliosCount} ${node.portfoliosCount === 1 ? 'portfolio' : 'portfolios'}`;
 
   return (
-    <TreeNodeBase
+    <BaseNode
       level={level}
       isExpanded={isExpanded}
       hasChildren={hasChildren}
@@ -133,9 +184,10 @@ export const ClientNode: React.FC<ClientNodeProps> = ({
       title={node.name}
       subtitle={subtitle}
       value={formatCurrency(node.totalValueGBP)}
+      rawValue={Number(node.totalValueGBP)}
     >
       {children}
-    </TreeNodeBase>
+    </BaseNode>
   );
 };
 
@@ -153,47 +205,48 @@ export const PortfolioNode: React.FC<PortfolioNodeProps> = ({
   const subtitle = `${node.accountsCount} ${node.accountsCount === 1 ? 'account' : 'accounts'}`;
 
   return (
-    <TreeNodeBase
+    <BaseNode
       level={level}
       isExpanded={isExpanded}
       hasChildren={hasChildren}
       onToggle={onToggle}
       onSelect={onSelect}
       isSelected={isSelected}
-      icon={<Folder className="w-4 h-4" />}
+      icon={<FolderOpen className="w-4 h-4" />}
       title={node.name}
       subtitle={subtitle}
       value={formatCurrency(node.totalValueGBP)}
+      rawValue={Number(node.totalValueGBP)}
     >
       {children}
-    </TreeNodeBase>
+    </BaseNode>
   );
 };
 
 // Account Node
-export const AccountNode: React.FC<AccountNodeProps> = ({
-  node,
-  level,
-  isExpanded,
-  hasChildren,
-  onToggle,
-  onSelect,
-  isSelected,
-}) => {
-  const subtitle = `${node.currency} • ${node.holdingsCount} ${node.holdingsCount === 1 ? 'holding' : 'holdings'}`;
+export const AccountNode: React.FC<AccountNodeProps> = ({ node, ...props }) => {
+  // Safe mock asset breakdown - in real app this would come from the API
+  const safeTotalValue = typeof node.totalValueGBP === 'number' && !isNaN(node.totalValueGBP) ? node.totalValueGBP : 0;
+
+  const mockAssetBreakdown = safeTotalValue > 0 ? {
+    cashValue: safeTotalValue * 0.2, // Assume 20% cash for demo
+    securityValue: safeTotalValue * 0.8, // Assume 80% securities for demo
+  } : undefined;
 
   return (
-    <TreeNodeBase
-      level={level}
-      isExpanded={isExpanded}
-      hasChildren={hasChildren}
-      onToggle={onToggle}
-      onSelect={onSelect}
-      isSelected={isSelected}
+    <BaseNode
+      level={props.level}
+      isExpanded={props.isExpanded}
+      hasChildren={props.hasChildren}
+      onToggle={props.onToggle}
+      onSelect={props.onSelect}
+      isSelected={props.isSelected}
       icon={<Briefcase className="w-4 h-4" />}
       title={node.name}
-      subtitle={subtitle}
-      value={formatCurrency(node.totalValueGBP)}
+      subtitle={node.accountNumber}
+      value={formatCurrency(safeTotalValue)}
+      rawValue={safeTotalValue}
+      assetBreakdown={mockAssetBreakdown}
     />
   );
 };

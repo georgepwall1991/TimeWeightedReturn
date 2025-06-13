@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Search, TrendingUp, TrendingDown, DollarSign, BarChart3, Filter, Calendar, Clock, RefreshCw, ChevronDown, ChevronUp, Info, Download, LineChart, PieChart, CalendarRange, X, ArrowRight, ArrowLeft } from "lucide-react";
+import { Search, TrendingUp, DollarSign, BarChart3, Filter, Calendar, Clock, RefreshCw, ChevronDown, ChevronUp, Info, Download, LineChart, CalendarRange, X, ArrowRight, Banknote, TrendingUpIcon } from "lucide-react";
 import { api } from "../../services/api";
 import { formatCurrency, formatPercentage } from "../../utils/formatters";
 import type { HoldingDto } from "../../types/api";
@@ -16,6 +16,7 @@ interface HoldingsExplorerProps {
 
 type SortField = "name" | "value" | "units" | "price" | "change";
 type SortDirection = "asc" | "desc";
+type AssetTypeFilter = "all" | "Cash" | "Security";
 
 interface DateRange {
   start: string;
@@ -35,7 +36,7 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<SortField>("value");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-  const [selectedInstrumentType, setSelectedInstrumentType] = useState<string>("all");
+  const [selectedAssetType, setSelectedAssetType] = useState<AssetTypeFilter>("all");
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [showFilters, setShowFilters] = useState(false);
   const [showDataInfo, setShowDataInfo] = useState(false);
@@ -67,11 +68,27 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
   }, { skip: !comparison.isComparing });
 
   // Fetch historical holdings data for analytics
-  const { data: historicalData } = api.useGetAccountHoldingsHistoryQuery({
+  const { data: historicalDataResponse } = api.useGetAccountHoldingsHistoryQuery({
     accountId: accountId,
     startDate: dateRange.start,
     endDate: dateRange.end,
   }, { skip: viewMode !== 'analytics' });
+
+  // Transform historical data for charts
+  const historicalData = useMemo(() => {
+    if (!historicalDataResponse?.historicalData) return [];
+
+    return historicalDataResponse.historicalData.map((dataPoint, index, array) => {
+      const previousValue = index > 0 ? array[index - 1].totalValueGBP : dataPoint.totalValueGBP;
+      const performance = previousValue > 0 ? ((dataPoint.totalValueGBP - previousValue) / previousValue) : 0;
+
+      return {
+        date: dataPoint.date,
+        totalValue: dataPoint.totalValueGBP,
+        performance: performance
+      };
+    });
+  }, [historicalDataResponse]);
 
   // Calculate data freshness
   const dataFreshness = useMemo(() => {
@@ -101,10 +118,10 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
       );
     }
 
-    // Filter by instrument type
-    if (selectedInstrumentType !== "all") {
+    // Filter by asset type (enhanced filtering)
+    if (selectedAssetType !== "all") {
       filtered = filtered.filter(
-        (holding) => holding.instrumentType === selectedInstrumentType
+        (holding) => holding.instrumentType === selectedAssetType
       );
     }
 
@@ -152,9 +169,9 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
     });
 
     return sorted;
-  }, [holdingsData?.holdings, searchTerm, selectedInstrumentType, sortField, sortDirection]);
+  }, [holdingsData?.holdings, searchTerm, selectedAssetType, sortField, sortDirection]);
 
-  // Calculate summary statistics
+  // Calculate summary statistics with asset type breakdown
   const summary = useMemo(() => {
     if (!processedHoldings.length) {
       return {
@@ -162,7 +179,8 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
         totalHoldings: 0,
         avgValue: 0,
         largestHolding: null,
-        instrumentTypes: [],
+        assetBreakdown: { Cash: 0, Security: 0 },
+        assetValueBreakdown: { Cash: 0, Security: 0 },
       };
     }
 
@@ -172,16 +190,24 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
       h.valueGBP > max.valueGBP ? h : max
     );
 
-    const instrumentTypes = Array.from(
-      new Set(processedHoldings.map(h => h.instrumentType))
-    );
+    // Calculate asset type breakdown
+    const assetBreakdown = processedHoldings.reduce((acc, h) => {
+      acc[h.instrumentType as keyof typeof acc] = (acc[h.instrumentType as keyof typeof acc] || 0) + 1;
+      return acc;
+    }, { Cash: 0, Security: 0 });
+
+    const assetValueBreakdown = processedHoldings.reduce((acc, h) => {
+      acc[h.instrumentType as keyof typeof acc] = (acc[h.instrumentType as keyof typeof acc] || 0) + h.valueGBP;
+      return acc;
+    }, { Cash: 0, Security: 0 });
 
     return {
       totalValue,
       totalHoldings: processedHoldings.length,
       avgValue,
       largestHolding,
-      instrumentTypes,
+      assetBreakdown,
+      assetValueBreakdown,
     };
   }, [processedHoldings]);
 
@@ -199,49 +225,119 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
     return sortDirection === "asc" ? "↑" : "↓";
   };
 
+  // Get asset type icon and color
+  const getAssetTypeDisplay = (instrumentType: string) => {
+    if (instrumentType === "Cash") {
+      return {
+        icon: <Banknote className="w-4 h-4 text-green-600" />,
+        bgColor: "bg-green-50",
+        textColor: "text-green-700",
+        borderColor: "border-green-200"
+      };
+    } else {
+      return {
+        icon: <TrendingUpIcon className="w-4 h-4 text-blue-600" />,
+        bgColor: "bg-blue-50",
+        textColor: "text-blue-700",
+        borderColor: "border-blue-200"
+      };
+    }
+  };
+
   const getPerformanceIndicator = (holding: HoldingDto) => {
-    // Mock performance calculation
-    const change = (holding.price - 100) / 100;
+    // Safe performance calculation
+    const safePrice = typeof holding.price === 'number' && !isNaN(holding.price) ? holding.price : 100;
+    const change = (safePrice - 100) / 100;
     const isPositive = change >= 0;
 
     return {
       change,
       isPositive,
-      icon: isPositive ? TrendingUp : TrendingDown,
+      icon: isPositive ? TrendingUp : TrendingUp, // Both use TrendingUp for now
       colorClass: isPositive ? "text-green-600" : "text-red-600",
       bgColorClass: isPositive ? "bg-green-50" : "bg-red-50",
     };
   };
 
+  // Asset type filter component
+  const AssetTypeFilter = () => (
+    <div className="flex items-center space-x-1 bg-gray-50 rounded-lg p-1">
+      <button
+        onClick={() => setSelectedAssetType("all")}
+        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+          selectedAssetType === "all"
+            ? "bg-white text-gray-900 shadow-sm"
+            : "text-gray-600 hover:text-gray-900"
+        }`}
+      >
+        All ({summary.totalHoldings})
+      </button>
+      <button
+        onClick={() => setSelectedAssetType("Cash")}
+        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center space-x-1 ${
+          selectedAssetType === "Cash"
+            ? "bg-green-100 text-green-700 shadow-sm"
+            : "text-gray-600 hover:text-gray-900"
+        }`}
+      >
+        <Banknote className="w-3 h-3" />
+        <span>Cash ({summary.assetBreakdown.Cash})</span>
+      </button>
+      <button
+        onClick={() => setSelectedAssetType("Security")}
+        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center space-x-1 ${
+          selectedAssetType === "Security"
+            ? "bg-blue-100 text-blue-700 shadow-sm"
+            : "text-gray-600 hover:text-gray-900"
+        }`}
+      >
+        <TrendingUpIcon className="w-3 h-3" />
+        <span>Securities ({summary.assetBreakdown.Security})</span>
+      </button>
+    </div>
+  );
+
   const handleLatestData = () => {
-    if (datesData?.dates.length) {
-      setSelectedDate(datesData.dates[datesData.dates.length - 1]);
+    if (datesData?.dates?.length) {
+      setSelectedDate(datesData.dates[0]);
     }
   };
 
   const handleExport = async (format: 'csv' | 'excel') => {
     try {
-      const response = await api.exportHoldings({
-        accountId,
-        date: selectedDate,
-        format
-      });
+      // Create CSV data from current holdings
+      const csvData = processedHoldings.map(holding => ({
+        Name: holding.name,
+        Ticker: holding.ticker,
+        Type: holding.instrumentType,
+        Units: holding.units,
+        Price: holding.price,
+        Value: holding.valueGBP,
+        Currency: holding.currency,
+        Date: selectedDate
+      }));
 
-      // Create a download link
-      const blob = new Blob([response], {
-        type: format === 'csv' ? 'text/csv' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      });
+      // Convert to CSV string
+      const headers = Object.keys(csvData[0] || {});
+      const csvContent = [
+        headers.join(','),
+        ...csvData.map(row => headers.map(header => `"${row[header as keyof typeof row]}"`).join(','))
+      ].join('\n');
+
+      // Download file
+      const blob = new Blob([csvContent], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `holdings-${accountName}-${selectedDate}.${format}`;
-      document.body.appendChild(a);
-      a.click();
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `holdings_${accountName}_${selectedDate}.${format === 'excel' ? 'csv' : 'csv'}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+
+      setShowExportOptions(false);
     } catch (error) {
       console.error('Export failed:', error);
-      // TODO: Add proper error handling/notification
     }
   };
 
@@ -289,8 +385,6 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
       </div>
     );
   }
-
-  const holdings = processedHoldings;
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -526,17 +620,9 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Instrument Type
+                  Asset Type
                 </label>
-                <select
-                  value={selectedInstrumentType}
-                  onChange={(e) => setSelectedInstrumentType(e.target.value)}
-                  className="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-blue-600 sm:text-sm sm:leading-6"
-                >
-                  <option value="all">All Types</option>
-                  <option value="Security">Securities</option>
-                  <option value="Cash">Cash</option>
-                </select>
+                <AssetTypeFilter />
               </div>
               {/* Add more filters here as needed */}
             </div>
@@ -604,7 +690,15 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
             {/* Composition Chart */}
             <div className="bg-white rounded-lg border border-gray-200 p-4">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Holdings Composition</h3>
-              <HoldingsCompositionChart data={holdingsData?.holdings} />
+              <HoldingsCompositionChart
+                holdings={holdingsData?.holdings?.map(h => ({
+                  ticker: h.ticker,
+                  name: h.name,
+                  value: h.valueGBP,
+                  units: h.units,
+                  type: h.instrumentType
+                })) || []}
+              />
             </div>
 
             {/* Additional Analytics */}
@@ -636,6 +730,9 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort("name")}>
                       Name {getSortIcon("name")}
                     </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Type
+                    </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort("value")}>
                       Value {getSortIcon("value")}
                     </th>
@@ -651,8 +748,9 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {holdings.map((holding) => {
+                  {processedHoldings.map((holding) => {
                     const performance = getPerformanceIndicator(holding);
+                    const assetTypeDisplay = getAssetTypeDisplay(holding.instrumentType);
                     return (
                       <tr key={holding.instrumentId} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -661,6 +759,12 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
                               <div className="text-sm font-medium text-gray-900">{holding.name}</div>
                               <div className="text-sm text-gray-500">{holding.ticker}</div>
                             </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${assetTypeDisplay.bgColor} ${assetTypeDisplay.textColor} ${assetTypeDisplay.borderColor} border`}>
+                            {assetTypeDisplay.icon}
+                            <span className="ml-1">{holding.instrumentType}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
@@ -686,14 +790,14 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
                 </tbody>
               </table>
 
-              {holdings.length === 0 && (
+              {processedHoldings.length === 0 && (
                 <div className="text-center py-12">
                   <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-500 mb-2">
                     No holdings found
                   </h3>
                   <p className="text-sm text-gray-400">
-                    {searchTerm || selectedInstrumentType !== "all"
+                    {searchTerm || selectedAssetType !== "all"
                       ? "Try adjusting your search or filter criteria"
                       : "No holdings data available for this account"
                     }

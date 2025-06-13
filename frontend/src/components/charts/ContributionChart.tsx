@@ -53,7 +53,16 @@ const ContributionChart: React.FC<ContributionChartProps> = ({
     };
   }, [data]);
 
-  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
+  // Define proper tooltip payload interface
+  interface TooltipPayload {
+    payload: ContributionData & {
+      name: string;
+      fullName: string;
+      isPositive: boolean;
+    };
+  }
+
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: TooltipPayload[] }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
