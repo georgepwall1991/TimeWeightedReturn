@@ -1,0 +1,75 @@
+{
+  "resources": {
+    "postgres": {
+      "type": "container.v0",
+      "image": "postgres:16",
+      "env": {
+        "POSTGRES_USER": { "value": "postgres" },
+        "POSTGRES_PASSWORD": { "value": "postgres" }
+      },
+      "bindings": {
+        "tcp": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5432
+        }
+      }
+    },
+    "portfoliodb": {
+      "type": "postgres.database.v0",
+      "parent": "postgres"
+    },
+    "redis": {
+      "type": "container.v0",
+      "image": "redis:7-alpine",
+      "bindings": {
+        "tcp": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 6379
+        }
+      }
+    },
+    "api": {
+      "type": "project.v0",
+      "path": "src/Api/Api.csproj",
+      "env": {
+        "ConnectionStrings__portfoliodb": "{portfoliodb.connectionString}",
+        "ConnectionStrings__redis": "{redis.connectionString}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 8080
+        },
+        "https": {
+          "scheme": "https",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 8081
+        }
+      }
+    },
+    "frontend": {
+      "type": "dockerfile.v0",
+      "path": "frontend/Dockerfile",
+      "context": "frontend",
+      "env": {
+        "VITE_API_URL": "{api.bindings.http.url}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 80,
+          "external": true
+        }
+      }
+    }
+  }
+}

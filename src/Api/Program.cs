@@ -11,6 +11,8 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();
+
 // Add services to the container.
 builder.Services.AddControllers();
 
@@ -24,9 +26,11 @@ builder.Services.AddHangfire(config => config
 // Add the Hangfire server.
 builder.Services.AddHangfireServer();
 
-// Configure Entity Framework
-builder.Services.AddDbContext<PortfolioContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+// Configure Entity Framework with PostgreSQL through Aspire
+builder.AddNpgsqlDbContext<PortfolioContext>("portfoliodb");
+
+// Add Redis through Aspire
+builder.AddRedisClient("redis");
 
 // Add MediatR
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
@@ -52,7 +56,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevelopmentCors", policy =>
-        policy.WithOrigins("http://localhost:3000", "http://localhost:5173") // React dev servers
+        policy.WithOrigins("http://localhost:3000", "http://localhost:5173", "http://localhost:5175") // React dev servers
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials());
@@ -60,12 +64,20 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Seed data in development
-if (app.Environment.IsDevelopment())
+// Apply migrations and seed data
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
-    var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
-    await seeder.SeedAsync();
+    var dbContext = scope.ServiceProvider.GetRequiredService<PortfolioContext>();
+
+    // Apply any pending migrations
+    await dbContext.Database.EnsureCreatedAsync();
+
+    // Seed data in development
+    if (app.Environment.IsDevelopment())
+    {
+        var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
+        await seeder.SeedAsync();
+    }
 }
 
 // Configure the HTTP request pipeline.
@@ -80,5 +92,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+
+app.MapDefaultEndpoints();
 
 app.Run();

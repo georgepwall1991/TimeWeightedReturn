@@ -20,11 +20,12 @@ namespace Infrastructure.Data
                 .AddEnvironmentVariables()
                 .Build();
 
-            // Get connection string
-            var connectionString = config.GetConnectionString("DefaultConnection");
+            // Get connection string - default to PostgreSQL for migrations
+            var connectionString = config.GetConnectionString("portfoliodb") 
+                ?? "Host=localhost;Database=portfoliodb;Username=postgres;Password=postgres";
 
             var optionsBuilder = new DbContextOptionsBuilder<PortfolioContext>();
-            optionsBuilder.UseSqlite(connectionString);
+            optionsBuilder.UseNpgsql(connectionString);
 
             return new PortfolioContext(optionsBuilder.Options);
         }
