@@ -2,7 +2,8 @@ using System.Text;
 using Application.Features.Analytics.Queries.CalculateContribution;
 using Application.Features.Analytics.Queries.CalculateRiskMetrics;
 using Application.Features.Analytics.Queries.CalculateTwr;
-using Application.Features.Common.Interfaces;
+using Application.Services;
+using Domain.Interfaces;
 using Application.Features.Portfolio.DTOs;
 using ClosedXML.Excel;
 using MediatR;
@@ -16,11 +17,13 @@ public class AccountController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly IPortfolioRepository _portfolioRepository;
+    private readonly IHoldingMapperService _holdingMapperService;
 
-    public AccountController(IMediator mediator, IPortfolioRepository portfolioRepository)
+    public AccountController(IMediator mediator, IPortfolioRepository portfolioRepository, IHoldingMapperService holdingMapperService)
     {
         _mediator = mediator;
         _portfolioRepository = portfolioRepository;
+        _holdingMapperService = holdingMapperService;
     }
 
     /// <summary>
@@ -71,8 +74,9 @@ public class AccountController : ControllerBase
             // If no date before target, use earliest available date
             if (nearestDate == default) nearestDate = availableDates.Min();
 
-            var holdings =
+            var holdingsEntities =
                 await _portfolioRepository.GetAccountHoldingsWithInstrumentDetailsAsync(accountId, nearestDate);
+            var holdings = await _holdingMapperService.MapHoldingsToDtosAsync(holdingsEntities, nearestDate);
             var totalValue = holdings.Sum(h => h.ValueGBP);
 
             var response = new
@@ -81,19 +85,7 @@ public class AccountController : ControllerBase
                 AccountName = account.Name,
                 RequestedDate = targetDate.ToString("yyyy-MM-dd"),
                 ActualDate = nearestDate.ToString("yyyy-MM-dd"),
-                Holdings = holdings.Select(h => new
-                {
-                    InstrumentId = h.HoldingId.ToString(),
-                    h.Ticker,
-                    Name = h.Name,
-                    h.Units,
-                    h.Price,
-                    h.ValueGBP,
-                    h.InstrumentType,
-                    h.Currency,
-                    h.LocalValue,
-                    h.FxRate
-                }),
+                Holdings = holdings,
                 TotalValueGBP = totalValue,
                 Count = holdings.Count(),
                 DataStatus = nearestDate == targetDate ? "Exact" : "Nearest",
@@ -111,10 +103,10 @@ public class AccountController : ControllerBase
         {
             return BadRequest("Invalid date format. Please use YYYY-MM-DD format.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return StatusCode(500,
-                new { error = "An error occurred while retrieving account holdings", details = ex.Message });
+                new { error = "An error occurred while retrieving account holdings" });
         }
     }
 
@@ -141,10 +133,10 @@ public class AccountController : ControllerBase
                 account.CreatedAt
             });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return StatusCode(500,
-                new { error = "An error occurred while retrieving account details", details = ex.Message });
+                new { error = "An error occurred while retrieving account details" });
         }
     }
 
@@ -180,9 +172,9 @@ public class AccountController : ControllerBase
         {
             return BadRequest("Invalid date format. Please use YYYY-MM-DD format.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { error = "An error occurred while calculating TWR", details = ex.Message });
+            return StatusCode(500, new { error = "An error occurred while calculating TWR" });
         }
     }
 
@@ -216,10 +208,10 @@ public class AccountController : ControllerBase
         {
             return BadRequest("Invalid date format. Please use YYYY-MM-DD format.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return StatusCode(500,
-                new { error = "An error occurred while retrieving account value", details = ex.Message });
+                new { error = "An error occurred while retrieving account value" });
         }
     }
 
@@ -255,10 +247,10 @@ public class AccountController : ControllerBase
         {
             return BadRequest("Invalid date format. Please use YYYY-MM-DD format.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return StatusCode(500,
-                new { error = "An error occurred while calculating contribution analysis", details = ex.Message });
+                new { error = "An error occurred while calculating contribution analysis" });
         }
     }
 
@@ -296,10 +288,10 @@ public class AccountController : ControllerBase
         {
             return BadRequest("Invalid date format. Please use YYYY-MM-DD format.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return StatusCode(500,
-                new { error = "An error occurred while calculating risk metrics", details = ex.Message });
+                new { error = "An error occurred while calculating risk metrics" });
         }
     }
 
@@ -331,10 +323,10 @@ public class AccountController : ControllerBase
                 EndDate = endDate.ToString("yyyy-MM-dd")
             });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return StatusCode(500,
-                new { error = "An error occurred while retrieving account dates", details = ex.Message });
+                new { error = "An error occurred while retrieving account dates" });
         }
     }
 
@@ -387,7 +379,8 @@ public class AccountController : ControllerBase
             var historicalData = new List<HistoricalDataPoint>();
             foreach (var date in availableDates)
             {
-                var holdings = await _portfolioRepository.GetAccountHoldingsWithInstrumentDetailsAsync(accountId, date);
+                var holdingsEntities = await _portfolioRepository.GetAccountHoldingsWithInstrumentDetailsAsync(accountId, date);
+                var holdings = await _holdingMapperService.MapHoldingsToDtosAsync(holdingsEntities, date);
                 var totalValue = holdings.Sum(h => h.ValueGBP);
 
                 historicalData.Add(new HistoricalDataPoint
@@ -418,10 +411,10 @@ public class AccountController : ControllerBase
         {
             return BadRequest("Invalid date format. Please use YYYY-MM-DD format.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return StatusCode(500,
-                new { error = "An error occurred while retrieving historical holdings data", details = ex.Message });
+                new { error = "An error occurred while retrieving historical holdings data" });
         }
     }
 
@@ -433,20 +426,21 @@ public class AccountController : ControllerBase
     {
         try
         {
-            var holdings = await _portfolioRepository.GetAccountHoldingsWithInstrumentDetailsAsync(accountId, date);
+            var holdingsEntities = await _portfolioRepository.GetAccountHoldingsWithInstrumentDetailsAsync(accountId, date);
+            var holdings = await _holdingMapperService.MapHoldingsToDtosAsync(holdingsEntities, date);
             if (!holdings.Any()) return NotFound(new { message = "No holdings data available for the specified date" });
 
             if (format.ToLower() == "excel") return await ExportToExcel(holdings, date);
 
             return await ExportToCsv(holdings, date);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return StatusCode(500, new { message = "An error occurred while exporting holdings" });
         }
     }
 
-    private async Task<IActionResult> ExportToExcel(List<HoldingDto> holdings, DateOnly date)
+    private Task<IActionResult> ExportToExcel(List<HoldingDto> holdings, DateOnly date)
     {
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Holdings");
@@ -488,14 +482,14 @@ public class AccountController : ControllerBase
         workbook.SaveAs(stream);
         stream.Position = 0;
 
-        return File(
+        return Task.FromResult<IActionResult>(File(
             stream.ToArray(),
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             $"holdings-{date:yyyy-MM-dd}.xlsx"
-        );
+        ));
     }
 
-    private async Task<IActionResult> ExportToCsv(List<HoldingDto> holdings, DateOnly date)
+    private Task<IActionResult> ExportToCsv(List<HoldingDto> holdings, DateOnly date)
     {
         var csv = new StringBuilder();
         csv.AppendLine("Ticker,Name,Units,Price,Currency,Value (GBP),Type");
@@ -510,7 +504,7 @@ public class AccountController : ControllerBase
                            $"{holding.InstrumentType}");
 
         var bytes = Encoding.UTF8.GetBytes(csv.ToString());
-        return File(bytes, "text/csv", $"holdings-{date:yyyy-MM-dd}.csv");
+        return Task.FromResult<IActionResult>(File(bytes, "text/csv", $"holdings-{date:yyyy-MM-dd}.csv"));
     }
 
     private string EscapeCsvField(string field)

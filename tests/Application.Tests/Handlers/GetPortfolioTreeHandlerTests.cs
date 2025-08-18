@@ -1,4 +1,4 @@
-using Application.Features.Common.Interfaces;
+using Domain.Interfaces;
 using Application.Features.Portfolio.Queries.GetPortfolioTree;
 using Domain.Entities;
 using Domain.Services;
@@ -53,7 +53,7 @@ public class GetPortfolioTreeHandlerTests
             }
         };
 
-        _mockRepository.Setup(r => r.GetClientsWithPortfoliosAsync(clientId))
+        _mockRepository.Setup(r => r.GetClientsWithPortfoliosAsync(clientId, null))
             .ReturnsAsync([client]);
 
         _mockRepository.Setup(r => r.GetAccountValueAsync(accountId, date))
@@ -62,7 +62,7 @@ public class GetPortfolioTreeHandlerTests
         _mockRepository.Setup(r => r.GetHoldingCountAsync(accountId, date))
             .ReturnsAsync(5);
 
-        var query = new GetPortfolioTreeQuery(clientId, date);
+        var query = new GetPortfolioTreeQuery(clientId, date, null, null, null);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -132,7 +132,7 @@ public class GetPortfolioTreeHandlerTests
             }
         };
 
-        _mockRepository.Setup(r => r.GetClientsWithPortfoliosAsync(clientId))
+        _mockRepository.Setup(r => r.GetClientsWithPortfoliosAsync(clientId, null))
             .ReturnsAsync([client]);
 
         _mockRepository.Setup(r => r.GetAccountValueAsync(account1Id, date))
@@ -145,7 +145,7 @@ public class GetPortfolioTreeHandlerTests
         _mockRepository.Setup(r => r.GetHoldingCountAsync(account2Id, date))
             .ReturnsAsync(7);
 
-        var query = new GetPortfolioTreeQuery(clientId, date);
+        var query = new GetPortfolioTreeQuery(clientId, date, null, null, null);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -188,10 +188,10 @@ public class GetPortfolioTreeHandlerTests
             }
         };
 
-        _mockRepository.Setup(r => r.GetClientsWithPortfoliosAsync(clientId))
+        _mockRepository.Setup(r => r.GetClientsWithPortfoliosAsync(clientId, null))
             .ReturnsAsync([client]);
 
-        var query = new GetPortfolioTreeQuery(clientId, date);
+        var query = new GetPortfolioTreeQuery(clientId, date, null, null, null);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -221,10 +221,10 @@ public class GetPortfolioTreeHandlerTests
             new Client { Id = client2Id, Name = "Client 2", Portfolios = new List<Portfolio>() }
         };
 
-        _mockRepository.Setup(r => r.GetClientsWithPortfoliosAsync(null))
+        _mockRepository.Setup(r => r.GetClientsWithPortfoliosAsync(null, null))
             .ReturnsAsync(clients);
 
-        var query = new GetPortfolioTreeQuery(Date: date);
+        var query = new GetPortfolioTreeQuery(null, date, null, null, null);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -234,5 +234,36 @@ public class GetPortfolioTreeHandlerTests
         Assert.Equal(2, clientNodes.Count);
         Assert.Contains(clientNodes, c => c.Id == client1Id && c.Name == "Client 1");
         Assert.Contains(clientNodes, c => c.Id == client2Id && c.Name == "Client 2");
+    }
+
+    [Fact]
+    public async Task Handle_WithUserId_ReturnsOnlyUserClients()
+    {
+        // Arrange
+        var userId1 = "user1";
+        var userId2 = "user2";
+        var client1Id = Guid.NewGuid();
+        var client2Id = Guid.NewGuid();
+        var date = new DateOnly(2025, 6, 11);
+
+        var clients = new[]
+        {
+            new Client { Id = client1Id, Name = "Client 1", UserId = userId1, Portfolios = new List<Portfolio>() },
+            new Client { Id = client2Id, Name = "Client 2", UserId = userId2, Portfolios = new List<Portfolio>() }
+        };
+
+        _mockRepository.Setup(r => r.GetClientsWithPortfoliosAsync(null, userId1))
+            .ReturnsAsync(new[] { clients[0] });
+
+        var query = new GetPortfolioTreeQuery(null, date, null, null, userId1);
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        var clientNodes = result.Clients;
+        Assert.Single(clientNodes);
+        Assert.Equal(client1Id, clientNodes.First().Id);
+        Assert.Equal("Client 1", clientNodes.First().Name);
     }
 }

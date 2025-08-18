@@ -70,7 +70,7 @@ public class PortfolioController : ControllerBase
         {
             return BadRequest(ex.Message);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             // Log the exception in production
             return StatusCode(500, "An error occurred while retrieving holdings.");

@@ -18,26 +18,43 @@ public class DataSeeder
         if (await _context.Clients.AnyAsync())
             return;
 
-        // Create sample client
-        var client = new Client
+        // Create sample clients for different users
+        var client1 = new Client
         {
             Id = Guid.NewGuid(),
             Name = "Smith Family Trust",
+            UserId = "user1",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
-        _context.Clients.Add(client);
+        var client2 = new Client
+        {
+            Id = Guid.NewGuid(),
+            Name = "Jones Investments",
+            UserId = "user2",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        _context.Clients.AddRange(client1, client2);
 
-        // Create sample portfolio
-        var portfolio = new Portfolio
+        // Create sample portfolios for each client
+        var portfolio1 = new Portfolio
         {
             Id = Guid.NewGuid(),
             Name = "Conservative Growth Portfolio",
-            ClientId = client.Id,
+            ClientId = client1.Id,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
-        _context.Portfolios.Add(portfolio);
+        var portfolio2 = new Portfolio
+        {
+            Id = Guid.NewGuid(),
+            Name = "Aggressive Tech Portfolio",
+            ClientId = client2.Id,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        _context.Portfolios.AddRange(portfolio1, portfolio2);
 
         // Create sample accounts
         var account1 = new Account
@@ -45,7 +62,7 @@ public class DataSeeder
             Id = Guid.NewGuid(),
             Name = "ISA Account",
             AccountNumber = "ISA001",
-            PortfolioId = portfolio.Id,
+            PortfolioId = portfolio1.Id,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -55,12 +72,22 @@ public class DataSeeder
             Id = Guid.NewGuid(),
             Name = "General Investment Account",
             AccountNumber = "GIA001",
-            PortfolioId = portfolio.Id,
+            PortfolioId = portfolio1.Id,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
 
-        _context.Accounts.AddRange(account1, account2);
+        var account3 = new Account
+        {
+            Id = Guid.NewGuid(),
+            Name = "Tech Stocks Account",
+            AccountNumber = "TSA001",
+            PortfolioId = portfolio2.Id,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _context.Accounts.AddRange(account1, account2, account3);
 
         // Create sample instruments
         var instruments = new[]
@@ -308,7 +335,7 @@ public class DataSeeder
         _context.Instruments.AddRange(instruments);
 
         // Generate comprehensive FX rates and market data
-        var (fxRates, marketDates) = await GenerateMarketData();
+        var (fxRates, marketDates) = GenerateMarketData();
         _context.FxRates.AddRange(fxRates);
 
         // Create sample prices for multiple dates to show returns over time
@@ -463,15 +490,46 @@ public class DataSeeder
             ]);
         }
 
+        // Add holdings for the new account
+        holdingsList.AddRange([
+            new Holding
+            {
+                Id = Guid.NewGuid(), AccountId = account3.Id, InstrumentId = instruments[0].Id, Date = holdingsDates.First(),
+                Units = 200m, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
+            }, // AAPL
+            new Holding
+            {
+                Id = Guid.NewGuid(), AccountId = account3.Id, InstrumentId = instruments[1].Id, Date = holdingsDates.First(),
+                Units = 150m, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
+            }, // MSFT
+            new Holding
+            {
+                Id = Guid.NewGuid(), AccountId = account3.Id, InstrumentId = instruments[2].Id, Date = holdingsDates.First(),
+                Units = 100m, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
+            } // GOOGL
+        ]);
+
         _context.Holdings.AddRange(holdingsList);
 
         // Seed sample cash flows to demonstrate TWR calculation with flows
         await SeedCashFlows(account1.Id, account2.Id, instruments);
 
+        // Seed benchmark data
+        var benchmark = new Benchmark { Id = Guid.NewGuid(), Name = "S&P 500" };
+        _context.Benchmarks.Add(benchmark);
+
+        var benchmarkHoldings = new[]
+        {
+            new BenchmarkHolding { Id = Guid.NewGuid(), BenchmarkId = benchmark.Id, InstrumentId = instruments[0].Id, Weight = 0.4m }, // AAPL
+            new BenchmarkHolding { Id = Guid.NewGuid(), BenchmarkId = benchmark.Id, InstrumentId = instruments[1].Id, Weight = 0.3m }, // MSFT
+            new BenchmarkHolding { Id = Guid.NewGuid(), BenchmarkId = benchmark.Id, InstrumentId = instruments[2].Id, Weight = 0.3m }  // GOOGL
+        };
+        _context.BenchmarkHoldings.AddRange(benchmarkHoldings);
+
         await _context.SaveChangesAsync();
     }
 
-    private async Task<(List<FxRate> FxRates, List<DateOnly> MarketDates)> GenerateMarketData()
+    private (List<FxRate> FxRates, List<DateOnly> MarketDates) GenerateMarketData()
     {
         var fxRates = new List<FxRate>();
         var marketDates = new List<DateOnly>();
@@ -600,7 +658,7 @@ public class DataSeeder
         return holidays.Contains(date);
     }
 
-    private async Task SeedCashFlows(Guid isaAccountId, Guid giaAccountId, Instrument[] instruments)
+    private Task SeedCashFlows(Guid isaAccountId, Guid giaAccountId, Instrument[] instruments)
     {
         var cashFlows = new List<CashFlow>();
 
@@ -747,5 +805,6 @@ public class DataSeeder
         ]);
 
         _context.CashFlows.AddRange(cashFlows);
+        return Task.CompletedTask;
     }
 }

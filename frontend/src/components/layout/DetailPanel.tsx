@@ -4,10 +4,11 @@ import { formatCurrency } from "../../utils/formatters";
 import HoldingsExplorer from "../holdings/HoldingsExplorer";
 import AdvancedAnalyticsDashboard from "../analytics/AdvancedAnalyticsDashboard";
 import RiskAnalyticsDashboard from "../analytics/RiskAnalyticsDashboard";
+import { AttributionAnalysisContainer } from "../analytics/AttributionAnalysisContainer";
 import type { ClientNodeDto, PortfolioNodeDto, AccountNodeDto } from "../../types/api";
 
 interface NodeSelection {
-  type: "client" | "portfolio" | "account";
+  type: "client" | "portfolio" | "account" | "analytics";
   id: string;
   name: string;
 }
@@ -24,6 +25,11 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
   onClose,
 }) => {
   const [activeTab, setActiveTab] = useState<"overview" | "analytics" | "holdings" | "risk">("overview");
+
+  if (selectedNode?.type === "analytics") {
+    return <AttributionAnalysisContainer />;
+  }
+
   if (!selectedNode || !nodeData) {
     return (
       <div className="h-full flex items-center justify-center bg-gray-50">

@@ -1,4 +1,4 @@
-using Application.Features.Common.Interfaces;
+using Domain.Interfaces;
 using Application.Features.Portfolio.DTOs;
 using Domain.Services;
 using Domain.ValueObjects;
@@ -20,7 +20,7 @@ public class GetPortfolioTreeHandler : IRequestHandler<GetPortfolioTreeQuery, Po
     public async Task<PortfolioTreeResponse> Handle(GetPortfolioTreeQuery request, CancellationToken cancellationToken)
     {
         var date = request.Date ?? DateOnly.FromDateTime(DateTime.Today);
-        var clients = await _repository.GetClientsWithPortfoliosAsync(request.ClientId);
+        var clients = await _repository.GetClientsWithPortfoliosAsync(request.ClientId, request.UserId);
 
         var clientNodes = new List<ClientNodeDto>();
         var totalValueAcrossAllClients = 0m;

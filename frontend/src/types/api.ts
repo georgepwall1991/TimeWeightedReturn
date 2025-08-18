@@ -226,3 +226,8 @@ export interface RiskRequest {
   endDate: string;
   riskFreeRate?: number;
 }
+
+export interface Benchmark {
+    id: string;
+    name: string;
+}

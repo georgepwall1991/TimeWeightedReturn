@@ -1,6 +1,7 @@
 using Application.Features.Analytics.DTOs;
-using Application.Features.Common.Interfaces;
+using Domain.Interfaces;
 using Domain.Services;
+using Application.Services;
 using Domain.ValueObjects;
 using MediatR;
 
@@ -11,15 +12,18 @@ public class CalculateContributionHandler : IRequestHandler<CalculateContributio
     private readonly ContributionAnalysisService _contributionService;
     private readonly IPortfolioRepository _repository;
     private readonly TimeWeightedReturnService _twrService;
+    private readonly IHoldingMapperService _holdingMapperService;
 
     public CalculateContributionHandler(
         IPortfolioRepository repository,
         ContributionAnalysisService contributionService,
-        TimeWeightedReturnService twrService)
+        TimeWeightedReturnService twrService,
+        IHoldingMapperService holdingMapperService)
     {
         _repository = repository;
         _contributionService = contributionService;
         _twrService = twrService;
+        _holdingMapperService = holdingMapperService;
     }
 
     public async Task<ContributionAnalysisResult> Handle(CalculateContributionQuery request,
@@ -29,10 +33,13 @@ public class CalculateContributionHandler : IRequestHandler<CalculateContributio
         if (account == null) throw new ArgumentException($"Account with ID {request.AccountId} not found");
 
         // Get holdings for start and end dates
-        var startHoldings =
+        var startHoldingsEntities =
             await _repository.GetAccountHoldingsWithInstrumentDetailsAsync(request.AccountId, request.StartDate);
-        var endHoldings =
+        var endHoldingsEntities =
             await _repository.GetAccountHoldingsWithInstrumentDetailsAsync(request.AccountId, request.EndDate);
+
+        var startHoldings = await _holdingMapperService.MapHoldingsToDtosAsync(startHoldingsEntities, request.StartDate);
+        var endHoldings = await _holdingMapperService.MapHoldingsToDtosAsync(endHoldingsEntities, request.EndDate);
 
         // Calculate total portfolio values
         var totalStartValue = startHoldings.Sum(h => h.ValueGBP);

@@ -33,7 +33,9 @@ public class TreeController : ControllerBase
     {
         try
         {
-            var query = new GetPortfolioTreeQuery(clientId, date, metricsFrom, metricsTo);
+            // TODO: Get UserId from User.Claims
+            var userId = "user1";
+            var query = new GetPortfolioTreeQuery(clientId, date, metricsFrom, metricsTo, userId);
             var result = await _mediator.Send(query);
 
             return Ok(result);
@@ -59,11 +61,14 @@ public class TreeController : ControllerBase
     {
         try
         {
+            // TODO: Get UserId from User.Claims
+            var userId = "user1";
             var query = new GetPortfolioTreeQuery(
                 clientId,
                 to, // Use end date for current values
                 from,
-                to);
+                to,
+                userId);
 
             var result = await _mediator.Send(query);
 
@@ -85,7 +90,9 @@ public class TreeController : ControllerBase
     {
         try
         {
-            var query = new GetPortfolioTreeQuery(Date: date);
+            // TODO: Get UserId from User.Claims
+            var userId = "user1";
+            var query = new GetPortfolioTreeQuery(Date: date, UserId: userId);
             var result = await _mediator.Send(query);
 
             return Ok(result);

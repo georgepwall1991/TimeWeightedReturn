@@ -130,11 +130,32 @@ public class PortfolioContext : DbContext
             // Unique constraint: one rate per currency pair per date
             entity.HasIndex(e => new { e.BaseCurrency, e.QuoteCurrency, e.Date }).IsUnique();
         });
+
+        // Benchmark Configuration
+        modelBuilder.Entity<Benchmark>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
+        });
+
+        // BenchmarkHolding Configuration
+        modelBuilder.Entity<BenchmarkHolding>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Weight).HasPrecision(18, 6);
+
+            entity.HasOne(e => e.Instrument)
+                .WithMany()
+                .HasForeignKey(e => e.InstrumentId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
     }
 
     // DbSets
     public DbSet<Client> Clients { get; set; }
     public DbSet<Portfolio> Portfolios { get; set; }
+    public DbSet<Benchmark> Benchmarks { get; set; }
+    public DbSet<BenchmarkHolding> BenchmarkHoldings { get; set; }
     public DbSet<Account> Accounts { get; set; }
     public DbSet<Instrument> Instruments { get; set; }
     public DbSet<Holding> Holdings { get; set; }

@@ -3,6 +3,7 @@ import { api } from "../../services/api";
 import { ClientNode, PortfolioNode, AccountNode } from "./TreeNode";
 import { Loader2, AlertCircle, TrendingUp } from "lucide-react";
 import { formatCurrency } from "../../utils/formatters";
+import { DatePicker } from "../common/DatePicker";
 import type {
   ClientNodeDto,
   PortfolioNodeDto,
@@ -10,7 +11,7 @@ import type {
 } from "../../types/api";
 
 interface NodeSelection {
-  type: "client" | "portfolio" | "account";
+  type: "client" | "portfolio" | "account" | "analytics";
   id: string;
   name: string;
 }
@@ -22,9 +23,10 @@ interface PortfolioTreeProps {
 const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
-  // Use the updated API hook with empty object as parameter
-  const { data, error, isLoading, refetch } = api.useGetPortfolioTreeQuery({});
+  // Use the updated API hook with the selected date
+  const { data, error, isLoading, refetch } = api.useGetPortfolioTreeQuery({ date: selectedDate });
 
   const toggleNode = useCallback((nodeId: string) => {
     const newExpanded = new Set(expandedNodes);
@@ -166,6 +168,7 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
           <h2 className="text-lg font-semibold text-gray-900">
             Portfolio Overview
           </h2>
+          <DatePicker selectedDate={selectedDate} onChange={setSelectedDate} />
           <div className="text-right">
             <div className="text-sm text-gray-500">Total Value</div>
             <div className="text-lg font-semibold currency">
@@ -180,6 +183,13 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
 
       {/* Tree content */}
       <div className="overflow-auto max-h-screen">
+        <div
+            className="flex items-center p-2 cursor-pointer hover:bg-gray-100"
+            onClick={() => onNodeSelect({ type: 'analytics', id: 'attribution', name: 'Performance Attribution' })}
+        >
+            <TrendingUp className="w-5 h-5 mr-2" />
+            <span className="font-semibold">Performance Attribution</span>
+        </div>
         {renderClientNodes(data.clients)}
       </div>
     </div>

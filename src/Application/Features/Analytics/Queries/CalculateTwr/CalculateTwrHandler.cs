@@ -1,5 +1,5 @@
 using Application.Features.Analytics.DTOs;
-using Application.Features.Common.Interfaces;
+using Domain.Interfaces;
 using Domain.Services;
 using Domain.ValueObjects;
 using MediatR;

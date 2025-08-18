@@ -6,7 +6,7 @@ import { api } from '../../services/api';
 import type { ClientNodeDto, PortfolioNodeDto, AccountNodeDto } from '../../types/api';
 
 interface NodeSelection {
-  type: 'client' | 'portfolio' | 'account';
+  type: 'client' | 'portfolio' | 'account' | 'analytics';
   id: string;
   name: string;
 }

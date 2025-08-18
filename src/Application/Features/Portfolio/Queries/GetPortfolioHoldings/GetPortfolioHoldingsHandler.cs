@@ -1,40 +1,30 @@
-using Application.Features.Common.Interfaces;
+using Application.Services;
+using Domain.Interfaces;
 using Application.Features.Portfolio.DTOs;
 using MediatR;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace Application.Features.Portfolio.Queries.GetPortfolioHoldings;
-
-public class GetPortfolioHoldingsHandler : IRequestHandler<GetPortfolioHoldingsQuery, GetPortfolioHoldingsResponse>
+namespace Application.Features.Portfolio.Queries.GetPortfolioHoldings
 {
-    private readonly IPortfolioRepository _portfolioRepository;
-
-    public GetPortfolioHoldingsHandler(IPortfolioRepository portfolioRepository)
+    public class GetPortfolioHoldingsHandler : IRequestHandler<GetPortfolioHoldingsQuery, GetPortfolioHoldingsResponse>
     {
-        _portfolioRepository = portfolioRepository;
-    }
+        private readonly IPortfolioRepository _portfolioRepository;
+        private readonly IHoldingMapperService _holdingMapperService;
 
-    public async Task<GetPortfolioHoldingsResponse> Handle(GetPortfolioHoldingsQuery request,
-        CancellationToken cancellationToken)
-    {
-        var holdingsData = await _portfolioRepository.GetPortfolioHoldingsAsync(request.PortfolioId, request.Date);
-
-        var holdings = holdingsData.Select(h => new HoldingDto
+        public GetPortfolioHoldingsHandler(IPortfolioRepository portfolioRepository, IHoldingMapperService holdingMapperService)
         {
-            HoldingId = h.HoldingId,
-            Ticker = h.Ticker,
-            Name = h.Name,
-            InstrumentType = h.InstrumentType,
-            Currency = h.Currency,
-            Units = h.Units,
-            Price = h.Price,
-            LocalValue = h.LocalValue,
-            FxRate = h.FxRate,
-            ValueGBP = h.ValueGBP,
-            Date = h.Date
-        }).ToList();
+            _portfolioRepository = portfolioRepository;
+            _holdingMapperService = holdingMapperService;
+        }
 
-        var totalValue = holdings.Sum(h => h.ValueGBP);
+        public async Task<GetPortfolioHoldingsResponse> Handle(GetPortfolioHoldingsQuery request, CancellationToken cancellationToken)
+        {
+            var holdings = await _portfolioRepository.GetPortfolioHoldingsAsync(request.PortfolioId, request.Date);
+            var holdingDtos = await _holdingMapperService.MapHoldingsToDtosAsync(holdings, request.Date);
+            var totalValue = holdingDtos.Sum(h => h.ValueGBP);
 
-        return new GetPortfolioHoldingsResponse(holdings, totalValue);
+            return new GetPortfolioHoldingsResponse(holdingDtos, totalValue);
+        }
     }
 }

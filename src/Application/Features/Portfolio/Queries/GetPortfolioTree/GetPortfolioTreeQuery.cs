@@ -7,5 +7,6 @@ public record GetPortfolioTreeQuery(
     Guid? ClientId = null,
     DateOnly? Date = null,
     DateOnly? MetricsStartDate = null,
-    DateOnly? MetricsEndDate = null
+    DateOnly? MetricsEndDate = null,
+    string? UserId = null
 ) : IRequest<PortfolioTreeResponse>;

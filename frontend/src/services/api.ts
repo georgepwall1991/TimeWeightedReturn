@@ -86,12 +86,12 @@ export const api = createApi({
   tagTypes: ['PortfolioTree', 'Holdings', 'AccountHoldings', 'TWR', 'Contribution', 'RiskMetrics'],
   endpoints: (builder) => ({
     // Portfolio Tree Navigation
-    getPortfolioTree: builder.query<PortfolioTreeResponse, { clientId?: string }>({
-      query: ({ clientId }) => ({
+    getPortfolioTree: builder.query<PortfolioTreeResponse, { clientId?: string, date: string }>({
+      query: ({ clientId, date }) => ({
         url: 'tree',
         params: {
           ...(clientId ? { clientId } : {}),
-          date: new Date().toISOString().split('T')[0] // Always include today's date
+          date,
         },
       }),
       providesTags: ['PortfolioTree'],
@@ -227,12 +227,23 @@ export const api = createApi({
 
     exportHoldings: builder.mutation<Blob, ExportHoldingsRequest>({
       query: ({ accountId, date, format }) => ({
-        url: `accounts/${accountId}/holdings/export`,
+        url: `account/${accountId}/holdings/export`,
         method: 'GET',
         params: { date, format },
         responseHandler: async (response) => response.blob()
       })
-    })
+    }),
+
+    // Attribution Analysis
+    getBenchmarks: builder.query<any[], void>({
+        query: () => 'benchmark',
+    }),
+    calculateAttribution: builder.mutation<any, { portfolioId: string; benchmarkId: string; startDate: string; endDate: string }>({
+        query: ({ portfolioId, benchmarkId, startDate, endDate }) => ({
+            url: `attribution/${portfolioId}`,
+            params: { benchmarkId, startDate, endDate },
+        }),
+    }),
   }),
 });
 
@@ -249,6 +260,8 @@ export const {
   useGetAccountDatesQuery,
   useGetAccountHoldingsHistoryQuery,
   useExportHoldingsMutation,
+  useGetBenchmarksQuery,
+  useCalculateAttributionMutation,
 } = api;
 
 // Export types for convenience

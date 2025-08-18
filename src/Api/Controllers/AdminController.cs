@@ -1,3 +1,4 @@
+using Hangfire;
 using Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,10 +10,12 @@ namespace Api.Controllers;
 public class AdminController : ControllerBase
 {
     private readonly PortfolioContext _context;
+    private readonly IBackgroundJobClient _backgroundJobClient;
 
-    public AdminController(PortfolioContext context)
+    public AdminController(PortfolioContext context, IBackgroundJobClient backgroundJobClient)
     {
         _context = context;
+        _backgroundJobClient = backgroundJobClient;
     }
 
     [HttpPost("seed-test-data")]
@@ -61,5 +64,12 @@ public class AdminController : ControllerBase
         {
             return BadRequest(new { error = ex.Message });
         }
+    }
+
+    [HttpPost("enqueue-job")]
+    public IActionResult EnqueueJob()
+    {
+        var jobId = _backgroundJobClient.Enqueue(() => Console.WriteLine("Hello, from Hangfire!"));
+        return Ok(new { message = "Job enqueued successfully", jobId });
     }
 }
