@@ -260,6 +260,25 @@ public class PortfolioRepository : IPortfolioRepository
             .CountAsync();
     }
 
+    public async Task<AssetBreakdownDto> GetAccountAssetBreakdownAsync(Guid accountId, DateOnly date)
+    {
+        var holdings = await GetAccountHoldingsAsync(accountId, date);
+
+        var cashValueGbp = holdings
+            .Where(h => h.InstrumentType == "Cash")
+            .Sum(h => h.ValueGBP);
+
+        var securityValueGbp = holdings
+            .Where(h => h.InstrumentType == "Security")
+            .Sum(h => h.ValueGBP);
+
+        return new AssetBreakdownDto
+        {
+            CashValueGbp = cashValueGbp,
+            SecurityValueGbp = securityValueGbp
+        };
+    }
+
     public async Task<Account?> GetAccountAsync(Guid accountId)
     {
         return await _context.Accounts

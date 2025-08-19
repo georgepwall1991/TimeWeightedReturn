@@ -44,7 +44,7 @@ const AssetTypeIndicators: React.FC<{
   if (safeTotalValue === 0) return null;
 
   const cashPercentage = Math.round((safeCashValue / safeTotalValue) * 100);
-  const securityPercentage = Math.round((safeSecurityValue / safeTotalValue) * 100);
+  const securityPercentage = 100 - cashPercentage;
 
   return (
     <div className="flex items-center space-x-1 ml-2">
@@ -184,7 +184,7 @@ export const ClientNode: React.FC<ClientNodeProps> = ({
       title={node.name}
       subtitle={subtitle}
       value={formatCurrency(node.totalValueGBP)}
-      rawValue={Number(node.totalValueGBP)}
+      rawValue={node.totalValueGBP}
     >
       {children}
     </BaseNode>
@@ -216,7 +216,7 @@ export const PortfolioNode: React.FC<PortfolioNodeProps> = ({
       title={node.name}
       subtitle={subtitle}
       value={formatCurrency(node.totalValueGBP)}
-      rawValue={Number(node.totalValueGBP)}
+      rawValue={node.totalValueGBP}
     >
       {children}
     </BaseNode>
@@ -225,13 +225,12 @@ export const PortfolioNode: React.FC<PortfolioNodeProps> = ({
 
 // Account Node
 export const AccountNode: React.FC<AccountNodeProps> = ({ node, ...props }) => {
-  // Safe mock asset breakdown - in real app this would come from the API
   const safeTotalValue = typeof node.totalValueGBP === 'number' && !isNaN(node.totalValueGBP) ? node.totalValueGBP : 0;
 
-  const mockAssetBreakdown = safeTotalValue > 0 ? {
-    cashValue: safeTotalValue * 0.2, // Assume 20% cash for demo
-    securityValue: safeTotalValue * 0.8, // Assume 80% securities for demo
-  } : undefined;
+  const assetBreakdown = {
+    cashValue: node.cashValueGBP,
+    securityValue: node.securityValueGBP,
+  };
 
   return (
     <BaseNode
@@ -246,7 +245,7 @@ export const AccountNode: React.FC<AccountNodeProps> = ({ node, ...props }) => {
       subtitle={node.accountNumber}
       value={formatCurrency(safeTotalValue)}
       rawValue={safeTotalValue}
-      assetBreakdown={mockAssetBreakdown}
+      assetBreakdown={assetBreakdown}
     />
   );
 };

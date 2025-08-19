@@ -49,6 +49,8 @@ public record AccountNodeDto : PortfolioTreeNodeDto
     public Guid PortfolioId { get; init; }
     public string AccountNumber { get; init; } = string.Empty;
     public string Currency { get; init; } = "GBP";
+    public decimal CashValueGBP { get; init; }
+    public decimal SecurityValueGBP { get; init; }
 }
 
 public record PerformanceMetricsDto

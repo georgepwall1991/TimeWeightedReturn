@@ -43,6 +43,7 @@ public class GetPortfolioTreeHandler : IRequestHandler<GetPortfolioTreeQuery, Po
                 {
                     var accountValue = await _repository.GetAccountValueAsync(account.Id, date);
                     var holdingCount = await _repository.GetHoldingCountAsync(account.Id, date);
+                    var assetBreakdown = await _repository.GetAccountAssetBreakdownAsync(account.Id, date);
 
                     var accountNode = new AccountNodeDto
                     {
@@ -53,6 +54,8 @@ public class GetPortfolioTreeHandler : IRequestHandler<GetPortfolioTreeQuery, Po
                         PortfolioId = portfolio.Id,
                         TotalValueGBP = accountValue,
                         HoldingsCount = holdingCount,
+                        CashValueGBP = assetBreakdown.CashValueGbp,
+                        SecurityValueGBP = assetBreakdown.SecurityValueGbp,
                         Metrics = request.MetricsStartDate.HasValue && request.MetricsEndDate.HasValue
                             ? await CalculateAccountMetrics(account.Id, request.MetricsStartDate.Value,
                                 request.MetricsEndDate.Value)

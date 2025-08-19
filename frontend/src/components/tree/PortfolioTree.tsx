@@ -19,6 +19,95 @@ interface PortfolioTreeProps {
   onNodeSelect: (selection: NodeSelection | null) => void;
 }
 
+// Helper functions for rendering nodes
+const renderAccountNodes = (
+  accounts: AccountNodeDto[],
+  level: number,
+  selectedNode: string | null,
+  selectNode: (selection: NodeSelection | null) => void
+) => {
+  return accounts.map((account) => (
+    <AccountNode
+      key={account.id}
+      node={account}
+      level={level}
+      isExpanded={false}
+      hasChildren={false}
+      onToggle={() => {}}
+      onSelect={() =>
+        selectNode({ type: "account", id: account.id, name: account.name })
+      }
+      isSelected={selectedNode === account.id}
+    />
+  ));
+};
+
+const renderPortfolioNodes = (
+  portfolios: PortfolioNodeDto[],
+  level: number,
+  expandedNodes: Set<string>,
+  selectedNode: string | null,
+  toggleNode: (nodeId: string) => void,
+  selectNode: (selection: NodeSelection | null) => void
+) => {
+  return portfolios.map((portfolio) => {
+    const isExpanded = expandedNodes.has(portfolio.id);
+    const hasChildren = portfolio.accounts.length > 0;
+
+    return (
+      <PortfolioNode
+        key={portfolio.id}
+        node={portfolio}
+        level={level}
+        isExpanded={isExpanded}
+        hasChildren={hasChildren}
+        onToggle={() => toggleNode(portfolio.id)}
+        onSelect={() =>
+          selectNode({
+            type: "portfolio",
+            id: portfolio.id,
+            name: portfolio.name,
+          })
+        }
+        isSelected={selectedNode === portfolio.id}
+      >
+        {isExpanded && renderAccountNodes(portfolio.accounts, level + 1, selectedNode, selectNode)}
+      </PortfolioNode>
+    );
+  });
+};
+
+const renderClientNodes = (
+  clients: ClientNodeDto[],
+  expandedNodes: Set<string>,
+  selectedNode: string | null,
+  toggleNode: (nodeId: string) => void,
+  selectNode: (selection: NodeSelection | null) => void
+) => {
+  return clients.map((client) => {
+    const isExpanded = expandedNodes.has(client.id);
+    const hasChildren = client.portfolios.length > 0;
+
+    return (
+      <ClientNode
+        key={client.id}
+        node={client}
+        level={0}
+        isExpanded={isExpanded}
+        hasChildren={hasChildren}
+        onToggle={() => toggleNode(client.id)}
+        onSelect={() =>
+          selectNode({ type: "client", id: client.id, name: client.name })
+        }
+        isSelected={selectedNode === client.id}
+      >
+        {isExpanded && renderPortfolioNodes(client.portfolios, 1, expandedNodes, selectedNode, toggleNode, selectNode)}
+      </ClientNode>
+    );
+  });
+};
+
+
 const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
@@ -43,87 +132,6 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
       onNodeSelect(selection);
     },
     [onNodeSelect]
-  );
-
-  // Render account nodes
-  const renderAccountNodes = useCallback(
-    (accounts: AccountNodeDto[], level: number) => {
-      return accounts.map((account) => (
-        <AccountNode
-          key={account.id}
-          node={account}
-          level={level}
-          isExpanded={false}
-          hasChildren={false}
-          onToggle={() => {}}
-          onSelect={() =>
-            selectNode({ type: "account", id: account.id, name: account.name })
-          }
-          isSelected={selectedNode === account.id}
-        />
-      ));
-    },
-    [selectedNode, selectNode]
-  );
-
-  // Render portfolio nodes
-  const renderPortfolioNodes = useCallback(
-    (portfolios: PortfolioNodeDto[], level: number) => {
-      return portfolios.map((portfolio) => {
-        const isExpanded = expandedNodes.has(portfolio.id);
-        const hasChildren = portfolio.accounts.length > 0;
-
-        return (
-          <PortfolioNode
-            key={portfolio.id}
-            node={portfolio}
-            level={level}
-            isExpanded={isExpanded}
-            hasChildren={hasChildren}
-            onToggle={() => toggleNode(portfolio.id)}
-            onSelect={() =>
-              selectNode({
-                type: "portfolio",
-                id: portfolio.id,
-                name: portfolio.name,
-              })
-            }
-            isSelected={selectedNode === portfolio.id}
-          >
-            {isExpanded && renderAccountNodes(portfolio.accounts, level + 1)}
-          </PortfolioNode>
-        );
-      });
-    },
-    [expandedNodes, selectedNode, toggleNode, selectNode, renderAccountNodes]
-  );
-
-  // Render client nodes
-  const renderClientNodes = useCallback(
-    (clients: ClientNodeDto[]) => {
-      return clients.map((client) => {
-        const isExpanded = expandedNodes.has(client.id);
-        const hasChildren = client.portfolios.length > 0;
-
-        return (
-          <ClientNode
-            key={client.id}
-            node={client}
-            level={0}
-            isExpanded={isExpanded}
-            hasChildren={hasChildren}
-            onToggle={() => toggleNode(client.id)}
-            onSelect={() =>
-              selectNode({ type: "client", id: client.id, name: client.name })
-            }
-            isSelected={selectedNode === client.id}
-          >
-            {isExpanded && renderPortfolioNodes(client.portfolios, 1)}
-          </ClientNode>
-        );
-      });
-    },
-    [expandedNodes, selectedNode, toggleNode, selectNode, renderPortfolioNodes]
   );
 
   if (isLoading) {
@@ -180,7 +188,7 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
 
       {/* Tree content */}
       <div className="overflow-auto max-h-screen">
-        {renderClientNodes(data.clients)}
+        {renderClientNodes(data.clients, expandedNodes, selectedNode, toggleNode, selectNode)}
       </div>
     </div>
   );

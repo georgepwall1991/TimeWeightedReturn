@@ -33,6 +33,8 @@ export interface AccountNodeDto {
   holdingsCount: number;
   nodeType: string;
   metrics?: PerformanceMetricsDto;
+  cashValueGBP: number;
+  securityValueGBP: number;
 }
 
 export interface PortfolioNodeDto {
