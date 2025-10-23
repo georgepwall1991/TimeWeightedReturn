@@ -10,6 +10,13 @@ import type {
   RiskRequest,
   HoldingDto,
 } from '../types/api';
+import type {
+  RegisterRequest,
+  LoginRequest,
+  RefreshTokenRequest,
+  AuthResponse,
+  UserInfo,
+} from '../types/auth';
 
 // Account holdings response interface
 interface GetAccountHoldingsResponse {
@@ -77,13 +84,20 @@ export const api = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:5011/api',
-    prepareHeaders: (headers) => {
+    prepareHeaders: (headers, { getState }) => {
+      // Get token from state
+      const token = (getState() as any).auth?.accessToken;
+
+      if (token) {
+        headers.set('authorization', `Bearer ${token}`);
+      }
+
       headers.set('accept', 'application/json');
       headers.set('content-type', 'application/json');
       return headers;
     },
   }),
-  tagTypes: ['PortfolioTree', 'Holdings', 'AccountHoldings', 'TWR', 'Contribution', 'RiskMetrics'],
+  tagTypes: ['PortfolioTree', 'Holdings', 'AccountHoldings', 'TWR', 'Contribution', 'RiskMetrics', 'Auth'],
   endpoints: (builder) => ({
     // Portfolio Tree Navigation
     getPortfolioTree: builder.query<PortfolioTreeResponse, { clientId?: string }>({
@@ -232,6 +246,47 @@ export const api = createApi({
         params: { date, format },
         responseHandler: async (response) => response.blob()
       })
+    }),
+
+    // Authentication endpoints
+    register: builder.mutation<AuthResponse, RegisterRequest>({
+      query: (credentials) => ({
+        url: 'auth/register',
+        method: 'POST',
+        body: credentials
+      }),
+      invalidatesTags: ['Auth']
+    }),
+
+    login: builder.mutation<AuthResponse, LoginRequest>({
+      query: (credentials) => ({
+        url: 'auth/login',
+        method: 'POST',
+        body: credentials
+      }),
+      invalidatesTags: ['Auth']
+    }),
+
+    refreshToken: builder.mutation<AuthResponse, RefreshTokenRequest>({
+      query: (tokens) => ({
+        url: 'auth/refresh',
+        method: 'POST',
+        body: tokens
+      }),
+      invalidatesTags: ['Auth']
+    }),
+
+    logout: builder.mutation<void, void>({
+      query: () => ({
+        url: 'auth/logout',
+        method: 'POST'
+      }),
+      invalidatesTags: ['Auth']
+    }),
+
+    getCurrentUser: builder.query<UserInfo, void>({
+      query: () => 'auth/me',
+      providesTags: ['Auth']
     })
   }),
 });
@@ -249,6 +304,11 @@ export const {
   useGetAccountDatesQuery,
   useGetAccountHoldingsHistoryQuery,
   useExportHoldingsMutation,
+  useRegisterMutation,
+  useLoginMutation,
+  useRefreshTokenMutation,
+  useLogoutMutation,
+  useGetCurrentUserQuery,
 } = api;
 
 // Export types for convenience
