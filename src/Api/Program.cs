@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using JwtSettings = Application.Services.JwtSettings;
 
 var builder = WebApplication.CreateBuilder(args);
 
