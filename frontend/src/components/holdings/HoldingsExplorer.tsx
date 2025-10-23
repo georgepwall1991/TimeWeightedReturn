@@ -51,6 +51,7 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
     compareDate: ''
   });
   const [showExportOptions, setShowExportOptions] = useState(false);
+  const [exportHoldings] = api.useExportHoldingsMutation();
 
   // Fetch available dates
   const { data: datesData, isLoading: isLoadingDates } = api.useGetAccountDatesQuery({ accountId });
@@ -217,6 +218,31 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
     } else {
       setSortField(field);
       setSortDirection("desc");
+    }
+  };
+
+  const handleExport = async (format: 'csv' | 'excel') => {
+    try {
+      const result = await exportHoldings({
+        accountId,
+        date: selectedDate,
+        format,
+      }).unwrap();
+
+      // Create a download link for the blob
+      const url = window.URL.createObjectURL(result);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `holdings_${accountName}_${selectedDate}.${format === 'excel' ? 'xlsx' : 'csv'}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      setShowExportOptions(false);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export holdings. Please try again.');
     }
   };
 

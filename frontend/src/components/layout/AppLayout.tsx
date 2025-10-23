@@ -2,6 +2,8 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Menu, X, TrendingUp, GripVertical, MoreVertical, RotateCcw } from 'lucide-react';
 import PortfolioTree from '../tree/PortfolioTree';
 import DetailPanel from './DetailPanel';
+import { UserMenu } from './UserMenu';
+import { useTokenRefresh } from '../../hooks/useTokenRefresh';
 import { api } from '../../services/api';
 import type { ClientNodeDto, PortfolioNodeDto, AccountNodeDto } from '../../types/api';
 
@@ -12,6 +14,9 @@ interface NodeSelection {
 }
 
 const AppLayout: React.FC = () => {
+  // Set up automatic token refresh
+  useTokenRefresh();
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     // Load saved width from localStorage or use default
@@ -307,12 +312,7 @@ const AppLayout: React.FC = () => {
 
           {/* Actions */}
           <div className="flex items-center space-x-2">
-            <button className="btn-secondary text-sm">
-              Export
-            </button>
-            <button className="btn-primary text-sm">
-              Refresh
-            </button>
+            <UserMenu />
           </div>
         </div>
 
