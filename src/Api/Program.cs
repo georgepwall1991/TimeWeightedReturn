@@ -1,4 +1,5 @@
 using System.Text;
+using Api.Authorization;
 using Api.Configuration;
 using Api.Middleware;
 using Application;
@@ -12,6 +13,7 @@ using Infrastructure.Identity;
 using Infrastructure.Repositories;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -86,6 +88,19 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Assem
 // Add FluentValidation
 builder.Services.AddValidatorsFromAssemblyContaining<AssemblyReference>();
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+// Configure Authorization Policies
+builder.Services.AddAuthorization(options =>
+{
+    // Role-based policies
+    options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("RequirePortfolioManagerRole", policy => policy.RequireRole("Admin", "PortfolioManager"));
+    options.AddPolicy("RequireAnalystRole", policy => policy.RequireRole("Admin", "PortfolioManager", "Analyst"));
+    options.AddPolicy("RequireViewerRole", policy => policy.RequireRole("Admin", "PortfolioManager", "Analyst", "Viewer"));
+});
+
+// Register authorization handlers
+builder.Services.AddSingleton<IAuthorizationHandler, ClientAuthorizationHandler>();
 
 // Add repositories and services
 builder.Services.AddScoped<IPortfolioRepository, PortfolioRepository>();
