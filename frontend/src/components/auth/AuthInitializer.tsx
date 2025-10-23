@@ -30,12 +30,12 @@ export const AuthInitializer: React.FC = () => {
       }
 
       // If we have a refresh token but no access token, try to refresh
-      if (refreshToken) {
+      if (refreshToken && accessToken) {
         try {
-          // We need a dummy access token for the refresh request
-          // The API will validate the refresh token
+          // Use the stored (possibly expired) access token for the refresh request
+          // The backend needs it to extract the userId
           const response = await refreshTokenMutation({
-            accessToken: '', // Empty string as placeholder
+            accessToken,
             refreshToken,
           }).unwrap();
 
@@ -45,6 +45,10 @@ export const AuthInitializer: React.FC = () => {
           // If refresh fails, clear everything
           dispatch(logout());
         }
+      } else if (refreshToken && !accessToken) {
+        // Have refresh token but no access token (shouldn't happen with new storage)
+        // Clear the orphaned refresh token
+        dispatch(logout());
       }
 
       setIsInitialized(true);
