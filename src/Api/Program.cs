@@ -36,7 +36,7 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 // Configure Entity Framework
 builder.Services.AddDbContext<PortfolioContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Configure Identity
 var identitySettings = builder.Configuration.GetSection(IdentitySettings.SectionName).Get<IdentitySettings>() ?? new IdentitySettings();

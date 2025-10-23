@@ -98,4 +98,6 @@ coverage/
 *.suo
 *.user
 *.userosscache
-*.sln.docstates
+*.sln.docstates*.db
+*.db-shm
+*.db-wal
