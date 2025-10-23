@@ -6,10 +6,12 @@ using Application.Features.Common.Interfaces;
 using Application.Features.Portfolio.DTOs;
 using ClosedXML.Excel;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class AccountController : ControllerBase

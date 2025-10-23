@@ -1,11 +1,13 @@
 using Application.Features.Portfolio.Queries.GetPortfolioHoldings;
 using Infrastructure.Data;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class PortfolioController : ControllerBase
