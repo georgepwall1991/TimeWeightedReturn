@@ -11,12 +11,12 @@ public interface IPortfolioRepository
     Task<List<DateOnly>> GetHoldingDatesInRangeAsync(Guid accountId, DateOnly startDate, DateOnly endDate);
 
     // Tree structure queries
-    Task<IEnumerable<Client>> GetClientsWithPortfoliosAsync(Guid? clientId = null);
+    Task<IEnumerable<Domain.Entities.Client>> GetClientsWithPortfoliosAsync(Guid? clientId = null);
     Task<IEnumerable<Domain.Entities.Portfolio>> GetPortfoliosWithAccountsAsync(Guid clientId);
-    Task<IEnumerable<Account>> GetAccountsAsync(Guid portfolioId);
+    Task<IEnumerable<Domain.Entities.Account>> GetAccountsAsync(Guid portfolioId);
     Task<int> GetHoldingCountAsync(Guid accountId, DateOnly date);
 
     // Contribution analysis queries
-    Task<Account?> GetAccountAsync(Guid accountId);
+    Task<Domain.Entities.Account?> GetAccountAsync(Guid accountId);
     Task<List<HoldingDto>> GetAccountHoldingsWithInstrumentDetailsAsync(Guid accountId, DateOnly date);
 }

@@ -1,5 +1,10 @@
 using System.Text;
+using Application.Features.Account.Commands.CreateAccount;
+using Application.Features.Account.Commands.DeleteAccount;
+using Application.Features.Account.Commands.UpdateAccount;
+using Application.Features.Account.Queries.GetAccount;
 using Application.Features.Analytics.Queries.CalculateContribution;
+using Application.Features.Analytics.Queries.CalculateEnhancedTwr;
 using Application.Features.Analytics.Queries.CalculateRiskMetrics;
 using Application.Features.Analytics.Queries.CalculateTwr;
 using Application.Features.Common.Interfaces;
@@ -11,19 +16,77 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
 
-[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class AccountController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly IPortfolioRepository _portfolioRepository;
+    private readonly ILogger<AccountController> _logger;
 
-    public AccountController(IMediator mediator, IPortfolioRepository portfolioRepository)
+    public AccountController(
+        IMediator mediator,
+        IPortfolioRepository portfolioRepository,
+        ILogger<AccountController> logger)
     {
         _mediator = mediator;
         _portfolioRepository = portfolioRepository;
+        _logger = logger;
     }
+
+    // CRUD Endpoints
+
+    [Authorize(Policy = "RequirePortfolioManagerRole")]
+    [HttpGet]
+    public async Task<IActionResult> GetAllAccounts([FromQuery] Guid? portfolioId = null)
+    {
+        var query = new GetAccountQuery(null, portfolioId);
+        var result = await _mediator.Send(query);
+        return Ok(result);
+    }
+
+    [Authorize(Policy = "RequirePortfolioManagerRole")]
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetAccountById(Guid id)
+    {
+        var query = new GetAccountQuery(id);
+        var result = await _mediator.Send(query);
+
+        if (!result.Accounts.Any())
+        {
+            return NotFound(new { message = $"Account with ID {id} not found" });
+        }
+
+        return Ok(result.Accounts.First());
+    }
+
+    [Authorize(Policy = "RequirePortfolioManagerRole")]
+    [HttpPost]
+    public async Task<IActionResult> CreateAccount([FromBody] CreateAccountCommand command)
+    {
+        var result = await _mediator.Send(command);
+        return CreatedAtAction(nameof(GetAccountById), new { id = result.Id }, result);
+    }
+
+    [Authorize(Policy = "RequirePortfolioManagerRole")]
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateAccount(Guid id, [FromBody] UpdateAccountRequest request)
+    {
+        var command = new UpdateAccountCommand(id, request.Name, request.AccountNumber, request.Currency, request.PortfolioId);
+        var result = await _mediator.Send(command);
+        return Ok(result);
+    }
+
+    [Authorize(Policy = "RequirePortfolioManagerRole")]
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteAccount(Guid id)
+    {
+        var command = new DeleteAccountCommand(id);
+        var result = await _mediator.Send(command);
+        return Ok(result);
+    }
+
+    // Analytics and Data Endpoints
 
     /// <summary>
     ///     Get holdings for a specific account on a specific date
@@ -31,6 +94,7 @@ public class AccountController : ControllerBase
     /// <param name="accountId">Account ID</param>
     /// <param name="date">Date for holdings (defaults to today)</param>
     /// <returns>Account holdings with valuations</returns>
+    [Authorize(Policy = "RequireAnalystRole")]
     [HttpGet("{accountId}/holdings")]
     public async Task<IActionResult> GetAccountHoldings(
         Guid accountId,
@@ -120,43 +184,17 @@ public class AccountController : ControllerBase
         }
     }
 
-    /// <summary>
-    ///     Get account information
-    /// </summary>
-    /// <param name="accountId">Account ID</param>
-    /// <returns>Account details</returns>
-    [HttpGet("{accountId}")]
-    public async Task<IActionResult> GetAccount(Guid accountId)
-    {
-        try
-        {
-            var account = await _portfolioRepository.GetAccountAsync(accountId);
-            if (account == null) return NotFound($"Account with ID {accountId} not found");
-
-            return Ok(new
-            {
-                account.Id,
-                account.Name,
-                account.AccountNumber,
-                account.Currency,
-                account.PortfolioId,
-                account.CreatedAt
-            });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500,
-                new { error = "An error occurred while retrieving account details", details = ex.Message });
-        }
-    }
+    // This endpoint has been consolidated with GetAccountById above to avoid route conflicts
+    // Analytics endpoints use the CRUD endpoint for basic account details
 
     /// <summary>
-    ///     Calculate Time Weighted Return for an account
+    ///     Calculate Time Weighted Return for an account (basic calculation without cash flow analysis)
     /// </summary>
     /// <param name="accountId">Account ID</param>
     /// <param name="from">Start date (YYYY-MM-DD)</param>
     /// <param name="to">End date (YYYY-MM-DD)</param>
     /// <returns>Time weighted return calculation</returns>
+    [Authorize(Policy = "RequireAnalystRole")]
     [HttpGet("{accountId}/twr")]
     public async Task<IActionResult> CalculateTimeWeightedReturn(
         Guid accountId,
@@ -189,11 +227,81 @@ public class AccountController : ControllerBase
     }
 
     /// <summary>
+    ///     Calculate Enhanced Time Weighted Return with proper cash flow handling (GIPS-compliant)
+    /// </summary>
+    /// <param name="accountId">Account ID</param>
+    /// <param name="from">Start date (YYYY-MM-DD)</param>
+    /// <param name="to">End date (YYYY-MM-DD)</param>
+    /// <returns>Enhanced TWR calculation with sub-period breakdown and cash flow categorization</returns>
+    /// <remarks>
+    /// This endpoint uses the Enhanced TWR methodology which:
+    /// - Categorizes cash flows by GIPS standards (External, Performance-Influencing, Internal)
+    /// - Breaks calculation into sub-periods at external cash flow dates
+    /// - Includes performance-influencing flows in return calculations
+    /// - Provides detailed sub-period analysis
+    /// </remarks>
+    [Authorize(Policy = "RequireAnalystRole")]
+    [HttpGet("{accountId}/twr/enhanced")]
+    public async Task<IActionResult> CalculateEnhancedTimeWeightedReturn(
+        Guid accountId,
+        [FromQuery] string from,
+        [FromQuery] string to)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to))
+            {
+                return BadRequest(new
+                {
+                    error = "Both 'from' and 'to' date parameters are required",
+                    example = "?from=2024-01-01&to=2024-12-31"
+                });
+            }
+
+            if (!DateOnly.TryParse(from, out var startDate))
+            {
+                return BadRequest(new { error = "Invalid 'from' date format. Use YYYY-MM-DD" });
+            }
+
+            if (!DateOnly.TryParse(to, out var endDate))
+            {
+                return BadRequest(new { error = "Invalid 'to' date format. Use YYYY-MM-DD" });
+            }
+
+            if (startDate >= endDate)
+            {
+                return BadRequest(new { error = "Start date must be before end date" });
+            }
+
+            var query = new CalculateEnhancedTwrQuery(accountId, startDate, endDate);
+            var result = await _mediator.Send(query);
+
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning("Invalid operation calculating enhanced TWR for account {AccountId}: {Message}",
+                accountId, ex.Message);
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error calculating enhanced TWR for account {AccountId}", accountId);
+            return StatusCode(500, new { error = "An error occurred while calculating enhanced TWR" });
+        }
+    }
+
+    /// <summary>
     ///     Get account value on a specific date
     /// </summary>
     /// <param name="accountId">Account ID</param>
     /// <param name="date">Valuation date (defaults to today)</param>
     /// <returns>Account value in GBP</returns>
+    [Authorize(Policy = "RequireAnalystRole")]
     [HttpGet("{accountId}/value")]
     public async Task<IActionResult> GetAccountValue(
         Guid accountId,
@@ -232,6 +340,7 @@ public class AccountController : ControllerBase
     /// <param name="from">Start date (YYYY-MM-DD)</param>
     /// <param name="to">End date (YYYY-MM-DD)</param>
     /// <returns>Contribution analysis with instrument-level breakdown</returns>
+    [Authorize(Policy = "RequireAnalystRole")]
     [HttpGet("{accountId}/contribution")]
     public async Task<IActionResult> CalculateContribution(
         Guid accountId,
@@ -272,6 +381,7 @@ public class AccountController : ControllerBase
     /// <param name="to">End date (YYYY-MM-DD)</param>
     /// <param name="riskFreeRate">Risk-free rate (optional, defaults to 2%)</param>
     /// <returns>Comprehensive risk analysis including volatility, Sharpe ratio, drawdowns</returns>
+    [Authorize(Policy = "RequireAnalystRole")]
     [HttpGet("{accountId}/risk")]
     public async Task<IActionResult> CalculateRiskMetrics(
         Guid accountId,
@@ -310,6 +420,7 @@ public class AccountController : ControllerBase
     /// </summary>
     /// <param name="accountId">Account ID</param>
     /// <returns>List of dates where holdings data is available</returns>
+    [Authorize(Policy = "RequireAnalystRole")]
     [HttpGet("{accountId}/dates")]
     public async Task<IActionResult> GetAccountDates(Guid accountId)
     {
@@ -347,6 +458,7 @@ public class AccountController : ControllerBase
     /// <param name="startDate">Start date (YYYY-MM-DD)</param>
     /// <param name="endDate">End date (YYYY-MM-DD)</param>
     /// <returns>Historical holdings data with valuations</returns>
+    [Authorize(Policy = "RequireAnalystRole")]
     [HttpGet("{accountId}/holdings/history")]
     public async Task<IActionResult> GetAccountHoldingsHistory(
         Guid accountId,
@@ -427,6 +539,7 @@ public class AccountController : ControllerBase
         }
     }
 
+    [Authorize(Policy = "RequireAnalystRole")]
     [HttpGet("s/{accountId}/holdings/export")]
     public async Task<IActionResult> ExportHoldings(
         Guid accountId,
@@ -442,13 +555,13 @@ public class AccountController : ControllerBase
 
             return await ExportToCsv(holdings, date);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return StatusCode(500, new { message = "An error occurred while exporting holdings" });
         }
     }
 
-    private async Task<IActionResult> ExportToExcel(List<HoldingDto> holdings, DateOnly date)
+    private Task<IActionResult> ExportToExcel(List<HoldingDto> holdings, DateOnly date)
     {
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Holdings");
@@ -490,14 +603,14 @@ public class AccountController : ControllerBase
         workbook.SaveAs(stream);
         stream.Position = 0;
 
-        return File(
+        return Task.FromResult<IActionResult>(File(
             stream.ToArray(),
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             $"holdings-{date:yyyy-MM-dd}.xlsx"
-        );
+        ));
     }
 
-    private async Task<IActionResult> ExportToCsv(List<HoldingDto> holdings, DateOnly date)
+    private Task<IActionResult> ExportToCsv(List<HoldingDto> holdings, DateOnly date)
     {
         var csv = new StringBuilder();
         csv.AppendLine("Ticker,Name,Units,Price,Currency,Value (GBP),Type");
@@ -512,7 +625,7 @@ public class AccountController : ControllerBase
                            $"{holding.InstrumentType}");
 
         var bytes = Encoding.UTF8.GetBytes(csv.ToString());
-        return File(bytes, "text/csv", $"holdings-{date:yyyy-MM-dd}.csv");
+        return Task.FromResult<IActionResult>(File(bytes, "text/csv", $"holdings-{date:yyyy-MM-dd}.csv"));
     }
 
     private string EscapeCsvField(string field)
@@ -548,3 +661,5 @@ public class DateRangeInfo
     public string Latest { get; set; } = string.Empty;
     public int TotalDates { get; set; }
 }
+
+public record UpdateAccountRequest(string Name, string AccountNumber, string Currency, Guid? PortfolioId = null);

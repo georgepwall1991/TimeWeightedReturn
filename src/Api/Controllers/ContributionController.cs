@@ -1,12 +1,14 @@
 using Application.Features.Analytics.DTOs;
 using Application.Features.Analytics.Queries.CalculateContribution;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Policy = "RequireAnalystRole")]
 public class ContributionController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -29,27 +31,12 @@ public class ContributionController : ControllerBase
         [FromQuery] DateOnly from,
         [FromQuery] DateOnly to)
     {
-        try
-        {
-            if (from >= to) return BadRequest(new { error = "Start date must be before end date" });
+        if (from >= to)
+            return BadRequest(new { error = "Start date must be before end date" });
 
-            var query = new CalculateContributionQuery(accountId, from, to);
-            var result = await _mediator.Send(query);
-
-            return Ok(result);
-        }
-        catch (ArgumentException ex)
-        {
-            return NotFound(new { error = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { error = "Missing market data", details = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { error = "Failed to calculate contribution analysis", details = ex.Message });
-        }
+        var query = new CalculateContributionQuery(accountId, from, to);
+        var result = await _mediator.Send(query);
+        return Ok(result);
     }
 
     /// <summary>
@@ -65,42 +52,31 @@ public class ContributionController : ControllerBase
         [FromQuery] DateOnly from,
         [FromQuery] DateOnly to)
     {
-        try
-        {
-            var query = new CalculateContributionQuery(accountId, from, to);
-            var result = await _mediator.Send(query);
+        var query = new CalculateContributionQuery(accountId, from, to);
+        var result = await _mediator.Send(query);
 
-            var summary = new
+        var summary = new
+        {
+            result.AccountId,
+            result.AccountName,
+            result.StartDate,
+            result.EndDate,
+            result.TotalPortfolioReturn,
+            result.AnnualizedReturn,
+            TopContributor = new
             {
-                result.AccountId,
-                result.AccountName,
-                result.StartDate,
-                result.EndDate,
-                result.TotalPortfolioReturn,
-                result.AnnualizedReturn,
-                TopContributor = new
-                {
-                    Ticker = result.TopContributorTicker,
-                    Contribution = result.TopContributorReturn
-                },
-                WorstContributor = new
-                {
-                    Ticker = result.WorstContributorTicker,
-                    Contribution = result.WorstContributorReturn
-                },
-                InstrumentCount = result.InstrumentContributions.Count,
-                TotalValueGBP = result.EndValueGBP
-            };
+                Ticker = result.TopContributorTicker,
+                Contribution = result.TopContributorReturn
+            },
+            WorstContributor = new
+            {
+                Ticker = result.WorstContributorTicker,
+                Contribution = result.WorstContributorReturn
+            },
+            InstrumentCount = result.InstrumentContributions.Count,
+            TotalValueGBP = result.EndValueGBP
+        };
 
-            return Ok(summary);
-        }
-        catch (ArgumentException ex)
-        {
-            return NotFound(new { error = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { error = "Failed to get contribution summary", details = ex.Message });
-        }
+        return Ok(summary);
     }
 }

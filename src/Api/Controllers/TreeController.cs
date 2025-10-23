@@ -1,12 +1,14 @@
 using Application.Features.Portfolio.DTOs;
 using Application.Features.Portfolio.Queries.GetPortfolioTree;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Policy = "RequireViewerRole")]
 public class TreeController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -31,17 +33,9 @@ public class TreeController : ControllerBase
         [FromQuery] DateOnly? metricsFrom = null,
         [FromQuery] DateOnly? metricsTo = null)
     {
-        try
-        {
-            var query = new GetPortfolioTreeQuery(clientId, date, metricsFrom, metricsTo);
-            var result = await _mediator.Send(query);
-
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { error = "Failed to retrieve portfolio tree", details = ex.Message });
-        }
+        var query = new GetPortfolioTreeQuery(clientId, date, metricsFrom, metricsTo);
+        var result = await _mediator.Send(query);
+        return Ok(result);
     }
 
     /// <summary>
@@ -57,22 +51,14 @@ public class TreeController : ControllerBase
         [FromQuery] DateOnly from,
         [FromQuery] DateOnly to)
     {
-        try
-        {
-            var query = new GetPortfolioTreeQuery(
-                clientId,
-                to, // Use end date for current values
-                from,
-                to);
+        var query = new GetPortfolioTreeQuery(
+            clientId,
+            to, // Use end date for current values
+            from,
+            to);
 
-            var result = await _mediator.Send(query);
-
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { error = "Failed to retrieve client tree", details = ex.Message });
-        }
+        var result = await _mediator.Send(query);
+        return Ok(result);
     }
 
     /// <summary>
@@ -83,16 +69,8 @@ public class TreeController : ControllerBase
     [HttpGet("current")]
     public async Task<ActionResult<PortfolioTreeResponse>> GetCurrentTree([FromQuery] DateOnly? date = null)
     {
-        try
-        {
-            var query = new GetPortfolioTreeQuery(Date: date);
-            var result = await _mediator.Send(query);
-
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { error = "Failed to retrieve current tree", details = ex.Message });
-        }
+        var query = new GetPortfolioTreeQuery(Date: date);
+        var result = await _mediator.Send(query);
+        return Ok(result);
     }
 }

@@ -91,9 +91,22 @@ export const Login: React.FC = () => {
           </div>
         </form>
 
-        <div className="text-xs text-gray-500 text-center mt-4">
-          <p>Default admin credentials:</p>
-          <p className="font-mono">admin@timeweightedreturn.com / Admin@123</p>
+        {/* Demo credentials only shown in development environment */}
+        {import.meta.env.DEV && import.meta.env.VITE_SHOW_DEMO_CREDENTIALS === 'true' && (
+          <div className="text-xs text-gray-500 text-center mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+            <p className="font-semibold text-yellow-800">Development Mode</p>
+            <p className="mt-1">Demo credentials:</p>
+            <p className="font-mono text-yellow-900">
+              {import.meta.env.VITE_DEMO_EMAIL || 'Not configured'} /
+              {import.meta.env.VITE_DEMO_PASSWORD || 'Not configured'}
+            </p>
+          </div>
+        )}
+
+        <div className="text-sm text-center mt-4">
+          <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
+            Forgot your password?
+          </a>
         </div>
       </div>
     </div>

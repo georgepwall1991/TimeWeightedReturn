@@ -5,7 +5,7 @@ namespace Application.Services;
 public interface ICurrencyConversionService
 {
     decimal ConvertToGbp(decimal amount, string fromCurrency, DateOnly date, IEnumerable<FxRate> fxRates);
-    decimal GetFxRate(string fromCurrency, DateOnly date, IEnumerable<FxRate> fxRates);
+    decimal? GetFxRate(string fromCurrency, DateOnly date, IEnumerable<FxRate> fxRates);
 }
 
 public class CurrencyConversionService : ICurrencyConversionService
@@ -16,10 +16,15 @@ public class CurrencyConversionService : ICurrencyConversionService
             return amount;
 
         var fxRate = GetFxRate(fromCurrency, date, fxRates);
-        return amount / fxRate; // Convert from quote currency to base (GBP)
+        if (!fxRate.HasValue)
+            throw new InvalidOperationException(
+                $"No FX rate found for {fromCurrency} to GBP on {date}. " +
+                "Please ensure FX rates are loaded for all required currencies and dates.");
+
+        return amount / fxRate.Value; // Convert from quote currency to base (GBP)
     }
 
-    public decimal GetFxRate(string fromCurrency, DateOnly date, IEnumerable<FxRate> fxRates)
+    public decimal? GetFxRate(string fromCurrency, DateOnly date, IEnumerable<FxRate> fxRates)
     {
         if (fromCurrency == "GBP")
             return 1.0m;
@@ -29,11 +34,6 @@ public class CurrencyConversionService : ICurrencyConversionService
             fx.QuoteCurrency == fromCurrency &&
             fx.Date == date);
 
-        if (fxRate == null)
-            throw new InvalidOperationException(
-                $"No FX rate found for {fromCurrency} to GBP on {date}. " +
-                "Please ensure FX rates are loaded for all required currencies and dates.");
-
-        return fxRate.Rate;
+        return fxRate?.Rate;
     }
 }

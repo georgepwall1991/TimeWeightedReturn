@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using JwtSettings = Application.Services.JwtSettings;
 
@@ -26,6 +27,7 @@ builder.Services.Configure<PortfolioSettings>(builder.Configuration.GetSection(P
 builder.Services.Configure<CorsSettings>(builder.Configuration.GetSection(CorsSettings.SectionName));
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
 builder.Services.Configure<IdentitySettings>(builder.Configuration.GetSection(IdentitySettings.SectionName));
+builder.Services.Configure<AdminSeedSettings>(builder.Configuration.GetSection(AdminSeedSettings.SectionName));
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -105,14 +107,20 @@ builder.Services.AddSingleton<IAuthorizationHandler, ClientAuthorizationHandler>
 
 // Add repositories and services
 builder.Services.AddScoped<IPortfolioRepository, PortfolioRepository>();
+builder.Services.AddScoped<Application.Interfaces.IClientRepository, ClientRepository>();
+builder.Services.AddScoped<Application.Interfaces.IPortfolioManagementRepository, PortfolioManagementRepository>();
+builder.Services.AddScoped<Application.Interfaces.IAccountRepository, AccountRepository>();
+builder.Services.AddScoped<Application.Interfaces.ICashFlowRepository, CashFlowRepository>();
 builder.Services.AddScoped<ICurrencyConversionService, CurrencyConversionService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<DataSeeder>();
 
 // Register domain services
 builder.Services.AddScoped<TimeWeightedReturnService>();
+builder.Services.AddScoped<EnhancedTimeWeightedReturnService>();
 builder.Services.AddScoped<ContributionAnalysisService>();
 builder.Services.AddScoped<RiskMetricsService>();
+builder.Services.AddScoped<AttributionAnalysisService>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -184,8 +192,8 @@ var app = builder.Build();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
-// Seed data in development
-if (app.Environment.IsDevelopment())
+// Seed data in development (skip in testing environment)
+if (app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing"))
 {
     using var scope = app.Services.CreateScope();
 
@@ -193,7 +201,17 @@ if (app.Environment.IsDevelopment())
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<IdentitySeeder>>();
-    var identitySeeder = new IdentitySeeder(userManager, roleManager, logger);
+    var adminSeedSettings = scope.ServiceProvider.GetRequiredService<IOptions<AdminSeedSettings>>().Value;
+
+    var identitySeeder = new IdentitySeeder(
+        userManager,
+        roleManager,
+        logger,
+        adminSeedSettings.Email,
+        adminSeedSettings.Password,
+        adminSeedSettings.FirstName,
+        adminSeedSettings.LastName,
+        adminSeedSettings.EnableSeeding);
     await identitySeeder.SeedAsync();
 
     // Seed portfolio data
@@ -216,3 +234,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Make the implicit Program class accessible for testing
+public partial class Program { }

@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -28,10 +29,12 @@ public interface IJwtTokenService
 public class JwtTokenService : IJwtTokenService
 {
     private readonly JwtSettings _jwtSettings;
+    private readonly ILogger<JwtTokenService> _logger;
 
-    public JwtTokenService(IOptions<JwtSettings> jwtSettings)
+    public JwtTokenService(IOptions<JwtSettings> jwtSettings, ILogger<JwtTokenService> logger)
     {
         _jwtSettings = jwtSettings.Value;
+        _logger = logger;
     }
 
     public string GenerateAccessToken(Guid userId, string email, string fullName, IList<string> roles, Guid? clientId)
@@ -95,14 +98,49 @@ public class JwtTokenService : IJwtTokenService
             if (securityToken is not JwtSecurityToken jwtSecurityToken ||
                 !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
             {
+                _logger.LogWarning("Invalid JWT token: algorithm mismatch. Expected {ExpectedAlg}, got {ActualAlg}",
+                    SecurityAlgorithms.HmacSha256,
+                    securityToken is JwtSecurityToken jwt ? jwt.Header.Alg : "unknown");
                 return null;
             }
 
             return principal;
         }
-        catch
+        catch (SecurityTokenExpiredException ex)
         {
+            // Token expired - this is expected for refresh token flow
+            _logger.LogDebug("Token expired: {Message}", ex.Message);
+            throw; // Let caller handle expired tokens
+        }
+        catch (SecurityTokenInvalidSignatureException ex)
+        {
+            // Token signature is invalid - possible tampering
+            _logger.LogWarning(ex, "Invalid token signature detected. Possible token tampering attempt");
             return null;
+        }
+        catch (SecurityTokenMalformedException ex)
+        {
+            // Token is malformed
+            _logger.LogWarning(ex, "Malformed JWT token received");
+            return null;
+        }
+        catch (SecurityTokenException ex)
+        {
+            // Other security token exceptions
+            _logger.LogWarning(ex, "Security token validation failed: {Message}", ex.Message);
+            return null;
+        }
+        catch (ArgumentException ex)
+        {
+            // Invalid arguments (e.g., null or empty token)
+            _logger.LogWarning(ex, "Invalid token argument: {Message}", ex.Message);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            // Unexpected exceptions - log as error and rethrow
+            _logger.LogError(ex, "Unexpected error during JWT token validation");
+            throw;
         }
     }
 }

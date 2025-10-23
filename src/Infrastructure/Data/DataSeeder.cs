@@ -471,7 +471,7 @@ public class DataSeeder
         await _context.SaveChangesAsync();
     }
 
-    private async Task<(List<FxRate> FxRates, List<DateOnly> MarketDates)> GenerateMarketData()
+    private Task<(List<FxRate> FxRates, List<DateOnly> MarketDates)> GenerateMarketData()
     {
         var fxRates = new List<FxRate>();
         var marketDates = new List<DateOnly>();
@@ -551,7 +551,7 @@ public class DataSeeder
             }
         }
 
-        return (fxRates, marketDates);
+        return Task.FromResult((fxRates, marketDates));
     }
 
     private bool IsHoliday(DateOnly date)
@@ -600,7 +600,7 @@ public class DataSeeder
         return holidays.Contains(date);
     }
 
-    private async Task SeedCashFlows(Guid isaAccountId, Guid giaAccountId, Instrument[] instruments)
+    private Task SeedCashFlows(Guid isaAccountId, Guid giaAccountId, Instrument[] instruments)
     {
         var cashFlows = new List<CashFlow>();
 
@@ -747,5 +747,6 @@ public class DataSeeder
         ]);
 
         _context.CashFlows.AddRange(cashFlows);
+        return Task.CompletedTask;
     }
 }

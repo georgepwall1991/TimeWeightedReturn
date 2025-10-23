@@ -154,6 +154,37 @@ public class PortfolioContext : IdentityDbContext<ApplicationUser, IdentityRole<
             entity.HasIndex(e => e.Token).IsUnique();
             entity.HasIndex(e => e.UserId);
         });
+
+        // Benchmark Configuration
+        modelBuilder.Entity<Benchmark>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.IndexSymbol).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.Currency).IsRequired().HasMaxLength(3);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.UpdatedAt).IsRequired();
+
+            entity.HasIndex(e => e.IndexSymbol).IsUnique();
+        });
+
+        // BenchmarkPrice Configuration
+        modelBuilder.Entity<BenchmarkPrice>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Value).HasPrecision(18, 6);
+            entity.Property(e => e.DailyReturn).HasPrecision(18, 6);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.UpdatedAt).IsRequired();
+
+            entity.HasOne(e => e.Benchmark)
+                .WithMany(e => e.Prices)
+                .HasForeignKey(e => e.BenchmarkId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Unique constraint: one price per benchmark per date
+            entity.HasIndex(e => new { e.BenchmarkId, e.Date }).IsUnique();
+        });
     }
 
     // DbSets
@@ -165,4 +196,6 @@ public class PortfolioContext : IdentityDbContext<ApplicationUser, IdentityRole<
     public DbSet<Price> Prices { get; set; }
     public DbSet<FxRate> FxRates { get; set; }
     public DbSet<CashFlow> CashFlows { get; set; }
+    public DbSet<Benchmark> Benchmarks { get; set; }
+    public DbSet<BenchmarkPrice> BenchmarkPrices { get; set; }
 }

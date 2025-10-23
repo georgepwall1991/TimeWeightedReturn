@@ -103,6 +103,47 @@ public class GlobalExceptionHandler : IExceptionHandler
                 };
                 break;
 
+            case FormatException formatEx:
+                problemDetails = new ProblemDetails
+                {
+                    Status = StatusCodes.Status400BadRequest,
+                    Title = "Invalid Format",
+                    Detail = "The provided data format is invalid. Please check your input and try again.",
+                    Extensions = { ["correlationId"] = correlationId }
+                };
+                break;
+
+            case ArgumentException argEx:
+                problemDetails = new ProblemDetails
+                {
+                    Status = StatusCodes.Status400BadRequest,
+                    Title = "Invalid Argument",
+                    Detail = argEx.Message,
+                    Extensions = { ["correlationId"] = correlationId }
+                };
+                break;
+
+            case NotImplementedException notImplEx:
+                _logger.LogWarning(notImplEx, "Feature not yet implemented");
+                problemDetails = new ProblemDetails
+                {
+                    Status = StatusCodes.Status501NotImplemented,
+                    Title = "Feature Not Implemented",
+                    Detail = "This feature is currently under development and not yet available.",
+                    Extensions = { ["correlationId"] = correlationId }
+                };
+                break;
+
+            case KeyNotFoundException keyNotFoundEx:
+                problemDetails = new ProblemDetails
+                {
+                    Status = StatusCodes.Status404NotFound,
+                    Title = "Resource Not Found",
+                    Detail = keyNotFoundEx.Message,
+                    Extensions = { ["correlationId"] = correlationId }
+                };
+                break;
+
             default:
                 problemDetails = new ProblemDetails
                 {

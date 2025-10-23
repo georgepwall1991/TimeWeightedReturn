@@ -56,6 +56,81 @@ namespace Infrastructure.Migrations
                     b.ToTable("Accounts");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Benchmark", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("IndexSymbol")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IndexSymbol")
+                        .IsUnique();
+
+                    b.ToTable("Benchmarks");
+                });
+
+            modelBuilder.Entity("Domain.Entities.BenchmarkPrice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("BenchmarkId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("DailyReturn")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Value")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BenchmarkId", "Date")
+                        .IsUnique();
+
+                    b.ToTable("BenchmarkPrices");
+                });
+
             modelBuilder.Entity("Domain.Entities.CashFlow", b =>
                 {
                     b.Property<Guid>("Id")
@@ -546,6 +621,17 @@ namespace Infrastructure.Migrations
                     b.Navigation("Portfolio");
                 });
 
+            modelBuilder.Entity("Domain.Entities.BenchmarkPrice", b =>
+                {
+                    b.HasOne("Domain.Entities.Benchmark", "Benchmark")
+                        .WithMany("Prices")
+                        .HasForeignKey("BenchmarkId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Benchmark");
+                });
+
             modelBuilder.Entity("Domain.Entities.CashFlow", b =>
                 {
                     b.HasOne("Domain.Entities.Account", "Account")
@@ -665,6 +751,11 @@ namespace Infrastructure.Migrations
                     b.Navigation("CashFlows");
 
                     b.Navigation("Holdings");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Benchmark", b =>
+                {
+                    b.Navigation("Prices");
                 });
 
             modelBuilder.Entity("Domain.Entities.Client", b =>

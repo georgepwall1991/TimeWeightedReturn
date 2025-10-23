@@ -56,7 +56,7 @@ public class PortfolioRepository : IPortfolioRepository
                     $"No price found for instrument {holding.Instrument.Ticker} on {date}");
 
             var localValue = holding.Units * price.Value;
-            var fxRate = _currencyService.GetFxRate(holding.Instrument.Currency, date, fxRates);
+            var fxRate = _currencyService.GetFxRate(holding.Instrument.Currency, date, fxRates) ?? 1.0m;
             var valueGbp = _currencyService.ConvertToGbp(localValue, holding.Instrument.Currency, date, fxRates);
 
             result.Add(new HoldingDto
@@ -200,7 +200,7 @@ public class PortfolioRepository : IPortfolioRepository
                 Units = holding.Units,
                 Price = price.Value,
                 LocalValue = localValue,
-                FxRate = fxRate,
+                FxRate = fxRate.Value,
                 ValueGBP = valueGbp,
                 Date = holding.Date
             });
