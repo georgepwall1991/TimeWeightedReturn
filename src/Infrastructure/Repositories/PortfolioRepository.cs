@@ -121,16 +121,18 @@ public class PortfolioRepository : IPortfolioRepository
             .ToListAsync();
 
         // If any price is missing, try to get the latest available price on or before the date for each instrument
+        // FIXED: Batch query to avoid N+1 anti-pattern
         var missingPriceInstrumentIds = instrumentIds.Except(prices.Select(p => p.InstrumentId)).ToList();
         if (missingPriceInstrumentIds.Any())
-            foreach (var instrumentId in missingPriceInstrumentIds)
-            {
-                var latestPrice = await _context.Prices
-                    .Where(p => p.InstrumentId == instrumentId && p.Date <= date)
-                    .OrderByDescending(p => p.Date)
-                    .FirstOrDefaultAsync();
-                if (latestPrice != null) prices.Add(latestPrice);
-            }
+        {
+            var latestPrices = await _context.Prices
+                .Where(p => missingPriceInstrumentIds.Contains(p.InstrumentId) && p.Date <= date)
+                .GroupBy(p => p.InstrumentId)
+                .Select(g => g.OrderByDescending(p => p.Date).First())
+                .AsNoTracking()
+                .ToListAsync();
+            prices.AddRange(latestPrices);
+        }
 
         // Get FX rates for the specified date
         var currencies = holdings.Select(h => h.Instrument.Currency).Distinct().ToList();
@@ -140,16 +142,18 @@ public class PortfolioRepository : IPortfolioRepository
             .ToListAsync();
 
         // If any FX rate is missing, try to get the latest available FX rate on or before the date for each currency
+        // FIXED: Batch query to avoid N+1 anti-pattern
         var missingFxCurrencies = currencies.Except(fxRates.Select(fx => fx.QuoteCurrency)).ToList();
         if (missingFxCurrencies.Any())
-            foreach (var currency in missingFxCurrencies)
-            {
-                var latestFx = await _context.FxRates
-                    .Where(fx => fx.QuoteCurrency == currency && fx.Date <= date)
-                    .OrderByDescending(fx => fx.Date)
-                    .FirstOrDefaultAsync();
-                if (latestFx != null) fxRates.Add(latestFx);
-            }
+        {
+            var latestFxRates = await _context.FxRates
+                .Where(fx => missingFxCurrencies.Contains(fx.QuoteCurrency) && fx.Date <= date)
+                .GroupBy(fx => fx.QuoteCurrency)
+                .Select(g => g.OrderByDescending(fx => fx.Date).First())
+                .AsNoTracking()
+                .ToListAsync();
+            fxRates.AddRange(latestFxRates);
+        }
 
         // Build result DTOs
         var result = new List<HoldingDto>();

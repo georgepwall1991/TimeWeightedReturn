@@ -303,43 +303,8 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
     }
   };
 
-  const handleExport = async (format: 'csv' | 'excel') => {
-    try {
-      // Create CSV data from current holdings
-      const csvData = processedHoldings.map(holding => ({
-        Name: holding.name,
-        Ticker: holding.ticker,
-        Type: holding.instrumentType,
-        Units: holding.units,
-        Price: holding.price,
-        Value: holding.valueGBP,
-        Currency: holding.currency,
-        Date: selectedDate
-      }));
-
-      // Convert to CSV string
-      const headers = Object.keys(csvData[0] || {});
-      const csvContent = [
-        headers.join(','),
-        ...csvData.map(row => headers.map(header => `"${row[header as keyof typeof row]}"`).join(','))
-      ].join('\n');
-
-      // Download file
-      const blob = new Blob([csvContent], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `holdings_${accountName}_${selectedDate}.${format === 'excel' ? 'csv' : 'csv'}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      setShowExportOptions(false);
-    } catch (error) {
-      console.error('Export failed:', error);
-    }
-  };
+  // REMOVED: Unused frontend CSV export logic - use backend export endpoint instead
+  // The backend at /api/accounts/{accountId}/holdings/export provides proper CSV/Excel export
 
   const handleCompareDates = () => {
     if (!comparison.baseDate) {

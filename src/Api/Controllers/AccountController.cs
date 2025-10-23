@@ -425,7 +425,7 @@ public class AccountController : ControllerBase
         }
     }
 
-    [HttpGet("{accountId}/holdings/export")]
+    [HttpGet("s/{accountId}/holdings/export")]
     public async Task<IActionResult> ExportHoldings(
         Guid accountId,
         [FromQuery] DateOnly date,
