@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, useMemo } from "react";
 import { ChevronRight, ChevronDown, User, Briefcase, FolderOpen } from "lucide-react";
 import { formatCurrency } from "../../utils/formatters";
 import type {
@@ -31,41 +31,46 @@ interface AccountNodeProps extends TreeNodeProps {
 }
 
 // Asset type breakdown component for accounts
-const AssetTypeIndicators: React.FC<{
+const AssetTypeIndicators = memo<{
   cashValue?: number;
   securityValue?: number;
   totalValue: number;
-}> = ({ cashValue = 0, securityValue = 0, totalValue }) => {
+}>(({ cashValue = 0, securityValue = 0, totalValue }) => {
   // Safe number validation
   const safeCashValue = typeof cashValue === 'number' && !isNaN(cashValue) ? cashValue : 0;
   const safeSecurityValue = typeof securityValue === 'number' && !isNaN(securityValue) ? securityValue : 0;
   const safeTotalValue = typeof totalValue === 'number' && !isNaN(totalValue) && totalValue > 0 ? totalValue : 0;
 
-  if (safeTotalValue === 0) return null;
+  const percentages = useMemo(() => {
+    if (safeTotalValue === 0) return null;
+    return {
+      cash: Math.round((safeCashValue / safeTotalValue) * 100),
+      security: Math.round((safeSecurityValue / safeTotalValue) * 100),
+    };
+  }, [safeCashValue, safeSecurityValue, safeTotalValue]);
 
-  const cashPercentage = Math.round((safeCashValue / safeTotalValue) * 100);
-  const securityPercentage = Math.round((safeSecurityValue / safeTotalValue) * 100);
+  if (!percentages) return null;
 
   return (
     <div className="flex items-center space-x-1 ml-2">
       {safeCashValue > 0 && (
         <div className="flex items-center">
           <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-          <span className="text-xs text-gray-500 ml-1">{cashPercentage}%</span>
+          <span className="text-xs text-gray-500 ml-1">{percentages.cash}%</span>
         </div>
       )}
       {safeSecurityValue > 0 && (
         <div className="flex items-center">
           <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-          <span className="text-xs text-gray-500 ml-1">{securityPercentage}%</span>
+          <span className="text-xs text-gray-500 ml-1">{percentages.security}%</span>
         </div>
       )}
     </div>
   );
-};
+});
 
 // Base TreeNode component
-const BaseNode: React.FC<TreeNodeProps & {
+const BaseNode = memo<TreeNodeProps & {
   icon: React.ReactNode;
   title: string;
   subtitle?: string;
@@ -73,7 +78,7 @@ const BaseNode: React.FC<TreeNodeProps & {
   rawValue?: number; // Add raw value for calculations
   assetBreakdown?: { cashValue?: number; securityValue?: number; };
   children?: React.ReactNode;
-}> = ({
+}>(({
   level,
   isExpanded,
   hasChildren,
@@ -88,7 +93,7 @@ const BaseNode: React.FC<TreeNodeProps & {
   assetBreakdown,
   children,
 }) => {
-  const indentWidth = level * 20;
+  const indentWidth = useMemo(() => level * 20, [level]);
 
   return (
     <div>
@@ -157,10 +162,10 @@ const BaseNode: React.FC<TreeNodeProps & {
       {children && isExpanded && <div>{children}</div>}
     </div>
   );
-};
+});
 
 // Client Node
-export const ClientNode: React.FC<ClientNodeProps> = ({
+export const ClientNode = memo<ClientNodeProps>(({
   node,
   level,
   isExpanded,
@@ -170,7 +175,10 @@ export const ClientNode: React.FC<ClientNodeProps> = ({
   isSelected,
   children,
 }) => {
-  const subtitle = `${node.portfoliosCount} ${node.portfoliosCount === 1 ? 'portfolio' : 'portfolios'}`;
+  const subtitle = useMemo(
+    () => `${node.portfoliosCount} ${node.portfoliosCount === 1 ? 'portfolio' : 'portfolios'}`,
+    [node.portfoliosCount]
+  );
 
   return (
     <BaseNode
@@ -189,10 +197,10 @@ export const ClientNode: React.FC<ClientNodeProps> = ({
       {children}
     </BaseNode>
   );
-};
+});
 
 // Portfolio Node
-export const PortfolioNode: React.FC<PortfolioNodeProps> = ({
+export const PortfolioNode = memo<PortfolioNodeProps>(({
   node,
   level,
   isExpanded,
@@ -202,7 +210,10 @@ export const PortfolioNode: React.FC<PortfolioNodeProps> = ({
   isSelected,
   children,
 }) => {
-  const subtitle = `${node.accountsCount} ${node.accountsCount === 1 ? 'account' : 'accounts'}`;
+  const subtitle = useMemo(
+    () => `${node.accountsCount} ${node.accountsCount === 1 ? 'account' : 'accounts'}`,
+    [node.accountsCount]
+  );
 
   return (
     <BaseNode
@@ -221,17 +232,19 @@ export const PortfolioNode: React.FC<PortfolioNodeProps> = ({
       {children}
     </BaseNode>
   );
-};
+});
 
 // Account Node
-export const AccountNode: React.FC<AccountNodeProps> = ({ node, ...props }) => {
+export const AccountNode = memo<AccountNodeProps>(({ node, ...props }) => {
   // Safe mock asset breakdown - in real app this would come from the API
   const safeTotalValue = typeof node.totalValueGBP === 'number' && !isNaN(node.totalValueGBP) ? node.totalValueGBP : 0;
 
-  const mockAssetBreakdown = safeTotalValue > 0 ? {
-    cashValue: safeTotalValue * 0.2, // Assume 20% cash for demo
-    securityValue: safeTotalValue * 0.8, // Assume 80% securities for demo
-  } : undefined;
+  const mockAssetBreakdown = useMemo(() => {
+    return safeTotalValue > 0 ? {
+      cashValue: safeTotalValue * 0.2, // Assume 20% cash for demo
+      securityValue: safeTotalValue * 0.8, // Assume 80% securities for demo
+    } : undefined;
+  }, [safeTotalValue]);
 
   return (
     <BaseNode
@@ -249,4 +262,4 @@ export const AccountNode: React.FC<AccountNodeProps> = ({ node, ...props }) => {
       assetBreakdown={mockAssetBreakdown}
     />
   );
-};
+});

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectAccessToken, selectRefreshToken, updateAccessToken, logout } from '../store/authSlice';
 import { useRefreshTokenMutation } from '../services/api';
@@ -31,7 +31,7 @@ export const useTokenRefresh = () => {
     }
   };
 
-  const scheduleTokenRefresh = (token: string) => {
+  const scheduleTokenRefresh = useCallback((token: string) => {
     const payload = parseJwt(token);
     if (!payload || !payload.exp) {
       return;
@@ -78,7 +78,7 @@ export const useTokenRefresh = () => {
         dispatch(logout());
       }
     }, delay);
-  };
+  }, [accessToken, refreshToken, refreshTokenMutation, dispatch]);
 
   useEffect(() => {
     if (accessToken) {
@@ -91,7 +91,7 @@ export const useTokenRefresh = () => {
         clearTimeout(refreshTimeoutRef.current);
       }
     };
-  }, [accessToken, refreshToken]);
+  }, [accessToken, scheduleTokenRefresh]);
 
   return null;
 };

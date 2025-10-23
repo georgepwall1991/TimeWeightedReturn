@@ -6,6 +6,7 @@ using Application;
 using Application.Behaviors;
 using Application.Features.Common.Interfaces;
 using Application.Services;
+using AspNetCoreRateLimit;
 using Domain.Services;
 using FluentValidation;
 using Infrastructure.Data;
@@ -28,6 +29,7 @@ builder.Services.Configure<CorsSettings>(builder.Configuration.GetSection(CorsSe
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
 builder.Services.Configure<IdentitySettings>(builder.Configuration.GetSection(IdentitySettings.SectionName));
 builder.Services.Configure<AdminSeedSettings>(builder.Configuration.GetSection(AdminSeedSettings.SectionName));
+builder.Services.Configure<Application.Services.EmailSettings>(builder.Configuration.GetSection(Application.Services.EmailSettings.SectionName));
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -35,6 +37,13 @@ builder.Services.AddControllers();
 // Add Problem Details for standardized error responses (RFC 7807)
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+// Configure Rate Limiting
+builder.Services.AddMemoryCache();
+builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));
+builder.Services.Configure<IpRateLimitPolicies>(builder.Configuration.GetSection("IpRateLimitPolicies"));
+builder.Services.AddInMemoryRateLimiting();
+builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
 
 // Configure Entity Framework
 builder.Services.AddDbContext<PortfolioContext>(options =>
@@ -64,6 +73,22 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
 
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>() ?? new JwtSettings();
+
+// SECURITY: Validate JWT secret key in production
+if (builder.Environment.IsProduction())
+{
+    const string defaultSecretKey = "your-secret-key-change-this-in-production-min-32-characters-long";
+    if (string.IsNullOrWhiteSpace(jwtSettings.SecretKey) ||
+        jwtSettings.SecretKey == defaultSecretKey ||
+        jwtSettings.SecretKey.Length < 32)
+    {
+        throw new InvalidOperationException(
+            "SECURITY ERROR: Invalid JWT SecretKey configuration detected in production. " +
+            "The secret key must be at least 32 characters long and cannot be the default value. " +
+            "Please configure a strong secret key via environment variables or user secrets.");
+    }
+}
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -85,8 +110,12 @@ builder.Services.AddAuthentication(options =>
 });
 
 // Add MediatR
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AssemblyReference).Assembly));
+builder.Services.AddMediatR(cfg =>
+{
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(AssemblyReference).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(PortfolioContext).Assembly); // Register Infrastructure handlers
+});
 
 // Add FluentValidation
 builder.Services.AddValidatorsFromAssemblyContaining<AssemblyReference>();
@@ -111,8 +140,10 @@ builder.Services.AddScoped<Application.Interfaces.IClientRepository, ClientRepos
 builder.Services.AddScoped<Application.Interfaces.IPortfolioManagementRepository, PortfolioManagementRepository>();
 builder.Services.AddScoped<Application.Interfaces.IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<Application.Interfaces.ICashFlowRepository, CashFlowRepository>();
+builder.Services.AddScoped<Application.Interfaces.IBenchmarkRepository, BenchmarkRepository>();
 builder.Services.AddScoped<ICurrencyConversionService, CurrencyConversionService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddScoped<Application.Services.IEmailService, Infrastructure.Services.EmailService>();
 builder.Services.AddScoped<DataSeeder>();
 
 // Register domain services
@@ -227,6 +258,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowConfiguredOrigins");
+
+// Use IP Rate Limiting
+app.UseIpRateLimiting();
 
 app.UseHttpsRedirection();
 app.UseAuthentication();

@@ -4,6 +4,9 @@ import { formatCurrency } from "../../utils/formatters";
 import HoldingsExplorer from "../holdings/HoldingsExplorer";
 import AdvancedAnalyticsDashboard from "../analytics/AdvancedAnalyticsDashboard";
 import RiskAnalyticsDashboard from "../analytics/RiskAnalyticsDashboard";
+import AccountOverview from "../analytics/AccountOverview";
+import PortfolioOverview from "../analytics/PortfolioOverview";
+import ClientOverview from "../analytics/ClientOverview";
 import type { ClientNodeDto, PortfolioNodeDto, AccountNodeDto } from "../../types/api";
 
 interface NodeSelection {
@@ -237,26 +240,10 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
 
               {/* Tab Content */}
               {activeTab === "overview" && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <DollarSign className="w-5 h-5 text-blue-600" />
-                    <h3 className="text-sm font-semibold text-blue-800">
-                      Account Overview
-                    </h3>
-                  </div>
-                  <p className="text-sm text-blue-700 mb-3">
-                    Quick overview of account performance and key metrics.
-                  </p>
-                  <div className="text-xs text-blue-600">
-                    Coming soon:
-                    <ul className="list-disc list-inside mt-1 space-y-1">
-                      <li>Account performance summary</li>
-                      <li>Asset allocation breakdown</li>
-                      <li>Historical value chart</li>
-                      <li>Performance vs benchmark</li>
-                    </ul>
-                  </div>
-                </div>
+                <AccountOverview
+                  accountId={selectedNode.id}
+                  accountName={selectedNode.name}
+                />
               )}
 
               {activeTab === "holdings" && (
@@ -282,30 +269,19 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
             </div>
           )}
 
-          {/* Placeholder for Portfolio/Client level analytics */}
-          {selectedNode.type !== "account" && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <TrendingUp className="w-5 h-5 text-blue-600" />
-                <h3 className="text-sm font-semibold text-blue-800">
-                  Performance Analytics
-                </h3>
-              </div>
-              <p className="text-sm text-blue-700 mb-3">
-                {selectedNode.type === "portfolio"
-                  ? "Portfolio-level performance analytics will be available soon."
-                  : "Client-level performance analytics will be available soon."}
-              </p>
-              <div className="text-xs text-blue-600">
-                Features coming soon:
-                <ul className="list-disc list-inside mt-1 space-y-1">
-                  <li>Aggregate time-weighted returns</li>
-                  <li>Asset allocation analysis</li>
-                  <li>Performance attribution</li>
-                  <li>Risk metrics</li>
-                </ul>
-              </div>
-            </div>
+          {/* Portfolio/Client level analytics */}
+          {selectedNode.type === "portfolio" && (
+            <PortfolioOverview
+              portfolioId={selectedNode.id}
+              portfolioData={nodeData as PortfolioNodeDto}
+            />
+          )}
+
+          {selectedNode.type === "client" && (
+            <ClientOverview
+              clientId={selectedNode.id}
+              clientData={nodeData as ClientNodeDto}
+            />
           )}
 
           {/* Current Metrics (if available) */}

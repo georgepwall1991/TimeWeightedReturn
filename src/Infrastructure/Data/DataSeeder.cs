@@ -468,6 +468,9 @@ public class DataSeeder
         // Seed sample cash flows to demonstrate TWR calculation with flows
         await SeedCashFlows(account1.Id, account2.Id, instruments);
 
+        // Seed benchmark data
+        await SeedBenchmarksAsync(marketDates);
+
         await _context.SaveChangesAsync();
     }
 
@@ -748,5 +751,114 @@ public class DataSeeder
 
         _context.CashFlows.AddRange(cashFlows);
         return Task.CompletedTask;
+    }
+
+    private async Task SeedBenchmarksAsync(List<DateOnly> marketDates)
+    {
+        var random = new Random(42);
+        var now = DateTime.UtcNow;
+
+        // S&P 500 Benchmark
+        var sp500 = new Benchmark
+        {
+            Id = Guid.NewGuid(),
+            Name = "S&P 500",
+            IndexSymbol = "SPY",
+            Description = "Standard & Poor's 500 Index - tracks 500 large-cap US companies",
+            Currency = "USD",
+            IsActive = true,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        // FTSE 100 Benchmark
+        var ftse100 = new Benchmark
+        {
+            Id = Guid.NewGuid(),
+            Name = "FTSE 100",
+            IndexSymbol = "^FTSE",
+            Description = "Financial Times Stock Exchange 100 Index - tracks 100 largest UK companies",
+            Currency = "GBP",
+            IsActive = true,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        // MSCI World Benchmark
+        var msciWorld = new Benchmark
+        {
+            Id = Guid.NewGuid(),
+            Name = "MSCI World",
+            IndexSymbol = "URTH",
+            Description = "MSCI World Index - global equity index of developed markets",
+            Currency = "USD",
+            IsActive = true,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        _context.Benchmarks.AddRange(sp500, ftse100, msciWorld);
+        await _context.SaveChangesAsync();
+
+        // Generate historical prices for benchmarks
+        var sp500Prices = new List<BenchmarkPrice>();
+        var ftse100Prices = new List<BenchmarkPrice>();
+        var msciWorldPrices = new List<BenchmarkPrice>();
+
+        decimal sp500Value = 4500m; // Starting value
+        decimal ftse100Value = 7500m; // Starting value
+        decimal msciWorldValue = 3000m; // Starting value
+
+        foreach (var date in marketDates.OrderBy(d => d))
+        {
+            // S&P 500: Simulate ~10% annual growth with volatility
+            var sp500DailyReturn = (decimal)(random.NextDouble() * 0.02 - 0.005); // -0.5% to +1.5%
+            sp500Value *= (1 + sp500DailyReturn);
+
+            sp500Prices.Add(new BenchmarkPrice
+            {
+                Id = Guid.NewGuid(),
+                BenchmarkId = sp500.Id,
+                Date = date,
+                Value = Math.Round(sp500Value, 2),
+                DailyReturn = sp500DailyReturn,
+                CreatedAt = now,
+                UpdatedAt = now
+            });
+
+            // FTSE 100: Simulate ~7% annual growth with volatility
+            var ftse100DailyReturn = (decimal)(random.NextDouble() * 0.015 - 0.004); // -0.4% to +1.1%
+            ftse100Value *= (1 + ftse100DailyReturn);
+
+            ftse100Prices.Add(new BenchmarkPrice
+            {
+                Id = Guid.NewGuid(),
+                BenchmarkId = ftse100.Id,
+                Date = date,
+                Value = Math.Round(ftse100Value, 2),
+                DailyReturn = ftse100DailyReturn,
+                CreatedAt = now,
+                UpdatedAt = now
+            });
+
+            // MSCI World: Simulate ~9% annual growth with volatility
+            var msciWorldDailyReturn = (decimal)(random.NextDouble() * 0.018 - 0.0045); // -0.45% to +1.35%
+            msciWorldValue *= (1 + msciWorldDailyReturn);
+
+            msciWorldPrices.Add(new BenchmarkPrice
+            {
+                Id = Guid.NewGuid(),
+                BenchmarkId = msciWorld.Id,
+                Date = date,
+                Value = Math.Round(msciWorldValue, 2),
+                DailyReturn = msciWorldDailyReturn,
+                CreatedAt = now,
+                UpdatedAt = now
+            });
+        }
+
+        _context.BenchmarkPrices.AddRange(sp500Prices);
+        _context.BenchmarkPrices.AddRange(ftse100Prices);
+        _context.BenchmarkPrices.AddRange(msciWorldPrices);
     }
 }

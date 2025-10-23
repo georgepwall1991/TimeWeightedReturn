@@ -1,8 +1,9 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo, memo } from "react";
 import { api } from "../../services/api";
 import { ClientNode, PortfolioNode, AccountNode } from "./TreeNode";
-import { Loader2, AlertCircle, TrendingUp } from "lucide-react";
+import { AlertCircle, TrendingUp } from "lucide-react";
 import { formatCurrency } from "../../utils/formatters";
+import { TreeNodeSkeleton } from "../common/Skeleton";
 import type {
   ClientNodeDto,
   PortfolioNodeDto,
@@ -126,11 +127,23 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
     [expandedNodes, selectedNode, toggleNode, selectNode, renderPortfolioNodes]
   );
 
+  // Memoize expensive operations (must be before conditional returns)
+  const lastUpdatedFormatted = useMemo(
+    () => data ? new Date(data.lastUpdated).toLocaleString("en-GB") : "",
+    [data]
+  );
+
+  const clientsRendered = useMemo(
+    () => data ? renderClientNodes(data.clients) : null,
+    [data, renderClientNodes]
+  );
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="w-6 h-6 animate-spin mr-2" />
-        <span className="text-gray-600">Loading portfolio tree...</span>
+      <div className="h-full overflow-y-auto">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <TreeNodeSkeleton key={i} />
+        ))}
       </div>
     );
   }
@@ -174,16 +187,16 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
           </div>
         </div>
         <div className="text-xs text-gray-500 mt-1">
-          Last updated: {new Date(data.lastUpdated).toLocaleString("en-GB")}
+          Last updated: {lastUpdatedFormatted}
         </div>
       </div>
 
       {/* Tree content */}
       <div className="overflow-auto max-h-screen">
-        {renderClientNodes(data.clients)}
+        {clientsRendered}
       </div>
     </div>
   );
 };
 
-export default PortfolioTree;
+export default memo(PortfolioTree);

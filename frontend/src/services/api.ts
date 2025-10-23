@@ -18,6 +18,12 @@ import type {
   AuthResponse,
   UserInfo,
 } from '../types/auth';
+import type {
+  BenchmarkDto,
+  BenchmarkComparisonDto,
+  CreateBenchmarkRequest,
+  UpdateBenchmarkRequest,
+} from '../types/benchmark';
 
 // Account holdings response interface
 interface GetAccountHoldingsResponse {
@@ -155,7 +161,7 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['PortfolioTree', 'Holdings', 'AccountHoldings', 'TWR', 'Contribution', 'RiskMetrics', 'Auth'],
+  tagTypes: ['PortfolioTree', 'Holdings', 'AccountHoldings', 'TWR', 'Contribution', 'RiskMetrics', 'Auth', 'Benchmark'],
   endpoints: (builder) => ({
     // Portfolio Tree Navigation
     getPortfolioTree: builder.query<PortfolioTreeResponse, { clientId?: string }>({
@@ -345,7 +351,96 @@ export const api = createApi({
     getCurrentUser: builder.query<UserInfo, void>({
       query: () => 'auth/me',
       providesTags: ['Auth']
-    })
+    }),
+
+    // Email verification
+    verifyEmail: builder.mutation<{ message: string }, { token: string }>({
+      query: (body) => ({
+        url: 'auth/verify-email',
+        method: 'POST',
+        body
+      }),
+      invalidatesTags: ['Auth']
+    }),
+
+    // Password reset
+    forgotPassword: builder.mutation<{ message: string }, { email: string }>({
+      query: (body) => ({
+        url: 'auth/forgot-password',
+        method: 'POST',
+        body
+      })
+    }),
+
+    resetPassword: builder.mutation<{ message: string }, { token: string; newPassword: string }>({
+      query: (body) => ({
+        url: 'auth/reset-password',
+        method: 'POST',
+        body
+      }),
+      invalidatesTags: ['Auth']
+    }),
+
+    // Benchmark endpoints
+    getBenchmarks: builder.query<BenchmarkDto[], void>({
+      query: () => 'benchmark',
+      providesTags: ['Benchmark'],
+      keepUnusedDataFor: 600, // Cache for 10 minutes
+    }),
+
+    getBenchmarkById: builder.query<BenchmarkDto, { benchmarkId: string }>({
+      query: ({ benchmarkId }) => `benchmark/${benchmarkId}`,
+      providesTags: (_result, _error, { benchmarkId }) => [
+        { type: 'Benchmark', id: benchmarkId },
+        'Benchmark',
+      ],
+      keepUnusedDataFor: 600, // Cache for 10 minutes
+    }),
+
+    createBenchmark: builder.mutation<BenchmarkDto, CreateBenchmarkRequest>({
+      query: (body) => ({
+        url: 'benchmark',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Benchmark'],
+    }),
+
+    updateBenchmark: builder.mutation<BenchmarkDto, { benchmarkId: string; body: UpdateBenchmarkRequest }>({
+      query: ({ benchmarkId, body }) => ({
+        url: `benchmark/${benchmarkId}`,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: (_result, _error, { benchmarkId }) => [
+        { type: 'Benchmark', id: benchmarkId },
+        'Benchmark',
+      ],
+    }),
+
+    deleteBenchmark: builder.mutation<void, { benchmarkId: string }>({
+      query: ({ benchmarkId }) => ({
+        url: `benchmark/${benchmarkId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Benchmark'],
+    }),
+
+    compareToBenchmark: builder.query<BenchmarkComparisonDto, {
+      accountId: string;
+      benchmarkId: string;
+      startDate: string;
+      endDate: string;
+    }>({
+      query: ({ accountId, benchmarkId, startDate, endDate }) => ({
+        url: `benchmark/compare/${accountId}`,
+        params: { benchmarkId, startDate, endDate },
+      }),
+      providesTags: (_result, _error, { accountId, benchmarkId }) => [
+        { type: 'Benchmark', id: `${accountId}-${benchmarkId}` },
+      ],
+      keepUnusedDataFor: 600, // Cache for 10 minutes
+    }),
   }),
 });
 
@@ -367,6 +462,15 @@ export const {
   useRefreshTokenMutation,
   useLogoutMutation,
   useGetCurrentUserQuery,
+  useVerifyEmailMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
+  useGetBenchmarksQuery,
+  useGetBenchmarkByIdQuery,
+  useCreateBenchmarkMutation,
+  useUpdateBenchmarkMutation,
+  useDeleteBenchmarkMutation,
+  useCompareToBenchmarkQuery,
 } = api;
 
 // Export types for convenience

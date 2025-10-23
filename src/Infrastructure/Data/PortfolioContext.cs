@@ -17,6 +17,8 @@ public class PortfolioContext : IdentityDbContext<ApplicationUser, IdentityRole<
 
     // Identity tables
     public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<EmailVerificationToken> EmailVerificationTokens { get; set; }
+    public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -184,6 +186,31 @@ public class PortfolioContext : IdentityDbContext<ApplicationUser, IdentityRole<
 
             // Unique constraint: one price per benchmark per date
             entity.HasIndex(e => new { e.BenchmarkId, e.Date }).IsUnique();
+        });
+
+        // EmailVerificationToken Configuration
+        modelBuilder.Entity<EmailVerificationToken>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Token).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.ExpiresAt).IsRequired();
+
+            entity.HasIndex(e => e.Token).IsUnique();
+            entity.HasIndex(e => e.UserId);
+        });
+
+        // PasswordResetToken Configuration
+        modelBuilder.Entity<PasswordResetToken>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Token).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.ExpiresAt).IsRequired();
+            entity.Property(e => e.IpAddress).HasMaxLength(45);
+
+            entity.HasIndex(e => e.Token).IsUnique();
+            entity.HasIndex(e => e.UserId);
         });
     }
 

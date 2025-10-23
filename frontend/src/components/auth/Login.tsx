@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useLoginMutation } from '../../services/api';
 import { setCredentials } from '../../store/authSlice';
@@ -85,9 +85,9 @@ export const Login: React.FC = () => {
           </div>
 
           <div className="text-sm text-center">
-            <a href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
+            <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
               Don't have an account? Register
-            </a>
+            </Link>
           </div>
         </form>
 
@@ -104,9 +104,9 @@ export const Login: React.FC = () => {
         )}
 
         <div className="text-sm text-center mt-4">
-          <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
+          <Link to="/forgot-password" className="font-medium text-indigo-600 hover:text-indigo-500">
             Forgot your password?
-          </a>
+          </Link>
         </div>
       </div>
     </div>

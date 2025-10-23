@@ -100,88 +100,76 @@ public class AccountController : ControllerBase
         Guid accountId,
         [FromQuery] string? date = null)
     {
-        try
-        {
-            // Default to today if no date provided
-            var targetDate = string.IsNullOrEmpty(date)
-                ? DateOnly.FromDateTime(DateTime.Today)
-                : DateOnly.Parse(date);
+        // Default to today if no date provided
+        var targetDate = string.IsNullOrEmpty(date)
+            ? DateOnly.FromDateTime(DateTime.Today)
+            : DateOnly.Parse(date);
 
-            var account = await _portfolioRepository.GetAccountAsync(accountId);
-            if (account == null) return NotFound($"Account with ID {accountId} not found");
+        var account = await _portfolioRepository.GetAccountAsync(accountId);
+        if (account == null) return NotFound($"Account with ID {accountId} not found");
 
-            // Get available dates to find the nearest date with data
-            var endDate = DateOnly.FromDateTime(DateTime.Today);
-            var startDate = endDate.AddYears(-2);
-            var availableDates = await _portfolioRepository.GetHoldingDatesInRangeAsync(accountId, startDate, endDate);
+        // Get available dates to find the nearest date with data
+        var endDate = DateOnly.FromDateTime(DateTime.Today);
+        var startDate = endDate.AddYears(-2);
+        var availableDates = await _portfolioRepository.GetHoldingDatesInRangeAsync(accountId, startDate, endDate);
 
-            if (!availableDates.Any())
-                return Ok(new
-                {
-                    AccountId = accountId,
-                    AccountName = account.Name,
-                    Date = targetDate.ToString("yyyy-MM-dd"),
-                    Holdings = Array.Empty<object>(),
-                    TotalValueGBP = 0m,
-                    Count = 0,
-                    Message = "No holdings data available for this account",
-                    DataStatus = "NoData"
-                });
-
-            // Find the nearest available date
-            var nearestDate = availableDates
-                .Where(d => d <= targetDate)
-                .OrderByDescending(d => d)
-                .FirstOrDefault();
-
-            // If no date before target, use earliest available date
-            if (nearestDate == default) nearestDate = availableDates.Min();
-
-            var holdings =
-                await _portfolioRepository.GetAccountHoldingsWithInstrumentDetailsAsync(accountId, nearestDate);
-            var totalValue = holdings.Sum(h => h.ValueGBP);
-
-            var response = new
+        if (!availableDates.Any())
+            return Ok(new
             {
                 AccountId = accountId,
                 AccountName = account.Name,
-                RequestedDate = targetDate.ToString("yyyy-MM-dd"),
-                ActualDate = nearestDate.ToString("yyyy-MM-dd"),
-                Holdings = holdings.Select(h => new
-                {
-                    InstrumentId = h.HoldingId.ToString(),
-                    h.Ticker,
-                    Name = h.Name,
-                    h.Units,
-                    h.Price,
-                    h.ValueGBP,
-                    h.InstrumentType,
-                    h.Currency,
-                    h.LocalValue,
-                    h.FxRate
-                }),
-                TotalValueGBP = totalValue,
-                Count = holdings.Count(),
-                DataStatus = nearestDate == targetDate ? "Exact" : "Nearest",
-                AvailableDateRange = new
-                {
-                    Earliest = availableDates.Min().ToString("yyyy-MM-dd"),
-                    Latest = availableDates.Max().ToString("yyyy-MM-dd"),
-                    TotalDates = availableDates.Count()
-                }
-            };
+                Date = targetDate.ToString("yyyy-MM-dd"),
+                Holdings = Array.Empty<object>(),
+                TotalValueGBP = 0m,
+                Count = 0,
+                Message = "No holdings data available for this account",
+                DataStatus = "NoData"
+            });
 
-            return Ok(response);
-        }
-        catch (FormatException)
+        // Find the nearest available date
+        var nearestDate = availableDates
+            .Where(d => d <= targetDate)
+            .OrderByDescending(d => d)
+            .FirstOrDefault();
+
+        // If no date before target, use earliest available date
+        if (nearestDate == default) nearestDate = availableDates.Min();
+
+        var holdings =
+            await _portfolioRepository.GetAccountHoldingsWithInstrumentDetailsAsync(accountId, nearestDate);
+        var totalValue = holdings.Sum(h => h.ValueGBP);
+
+        var response = new
         {
-            return BadRequest("Invalid date format. Please use YYYY-MM-DD format.");
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500,
-                new { error = "An error occurred while retrieving account holdings", details = ex.Message });
-        }
+            AccountId = accountId,
+            AccountName = account.Name,
+            RequestedDate = targetDate.ToString("yyyy-MM-dd"),
+            ActualDate = nearestDate.ToString("yyyy-MM-dd"),
+            Holdings = holdings.Select(h => new
+            {
+                InstrumentId = h.HoldingId.ToString(),
+                h.Ticker,
+                Name = h.Name,
+                h.Units,
+                h.Price,
+                h.ValueGBP,
+                h.InstrumentType,
+                h.Currency,
+                h.LocalValue,
+                h.FxRate
+            }),
+            TotalValueGBP = totalValue,
+            Count = holdings.Count(),
+            DataStatus = nearestDate == targetDate ? "Exact" : "Nearest",
+            AvailableDateRange = new
+            {
+                Earliest = availableDates.Min().ToString("yyyy-MM-dd"),
+                Latest = availableDates.Max().ToString("yyyy-MM-dd"),
+                TotalDates = availableDates.Count()
+            }
+        };
+
+        return Ok(response);
     }
 
     // This endpoint has been consolidated with GetAccountById above to avoid route conflicts
@@ -201,29 +189,19 @@ public class AccountController : ControllerBase
         [FromQuery] string from,
         [FromQuery] string to)
     {
-        try
-        {
-            if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to))
-                return BadRequest("Both 'from' and 'to' date parameters are required");
+        if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to))
+            return BadRequest("Both 'from' and 'to' date parameters are required");
 
-            var startDate = DateOnly.Parse(from);
-            var endDate = DateOnly.Parse(to);
+        var startDate = DateOnly.Parse(from);
+        var endDate = DateOnly.Parse(to);
 
-            if (startDate >= endDate) return BadRequest("Start date must be before end date");
+        if (startDate >= endDate)
+            return BadRequest("Start date must be before end date");
 
-            var query = new CalculateTwrQuery(accountId, startDate, endDate);
-            var result = await _mediator.Send(query);
+        var query = new CalculateTwrQuery(accountId, startDate, endDate);
+        var result = await _mediator.Send(query);
 
-            return Ok(result);
-        }
-        catch (FormatException)
-        {
-            return BadRequest("Invalid date format. Please use YYYY-MM-DD format.");
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { error = "An error occurred while calculating TWR", details = ex.Message });
-        }
+        return Ok(result);
     }
 
     /// <summary>
@@ -247,52 +225,28 @@ public class AccountController : ControllerBase
         [FromQuery] string from,
         [FromQuery] string to)
     {
-        try
+        if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to))
         {
-            if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to))
+            return BadRequest(new
             {
-                return BadRequest(new
-                {
-                    error = "Both 'from' and 'to' date parameters are required",
-                    example = "?from=2024-01-01&to=2024-12-31"
-                });
-            }
-
-            if (!DateOnly.TryParse(from, out var startDate))
-            {
-                return BadRequest(new { error = "Invalid 'from' date format. Use YYYY-MM-DD" });
-            }
-
-            if (!DateOnly.TryParse(to, out var endDate))
-            {
-                return BadRequest(new { error = "Invalid 'to' date format. Use YYYY-MM-DD" });
-            }
-
-            if (startDate >= endDate)
-            {
-                return BadRequest(new { error = "Start date must be before end date" });
-            }
-
-            var query = new CalculateEnhancedTwrQuery(accountId, startDate, endDate);
-            var result = await _mediator.Send(query);
-
-            return Ok(result);
+                error = "Both 'from' and 'to' date parameters are required",
+                example = "?from=2024-01-01&to=2024-12-31"
+            });
         }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { error = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogWarning("Invalid operation calculating enhanced TWR for account {AccountId}: {Message}",
-                accountId, ex.Message);
-            return BadRequest(new { error = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error calculating enhanced TWR for account {AccountId}", accountId);
-            return StatusCode(500, new { error = "An error occurred while calculating enhanced TWR" });
-        }
+
+        if (!DateOnly.TryParse(from, out var startDate))
+            return BadRequest(new { error = "Invalid 'from' date format. Use YYYY-MM-DD" });
+
+        if (!DateOnly.TryParse(to, out var endDate))
+            return BadRequest(new { error = "Invalid 'to' date format. Use YYYY-MM-DD" });
+
+        if (startDate >= endDate)
+            return BadRequest(new { error = "Start date must be before end date" });
+
+        var query = new CalculateEnhancedTwrQuery(accountId, startDate, endDate);
+        var result = await _mediator.Send(query);
+
+        return Ok(result);
     }
 
     /// <summary>
@@ -307,30 +261,18 @@ public class AccountController : ControllerBase
         Guid accountId,
         [FromQuery] string? date = null)
     {
-        try
-        {
-            var targetDate = string.IsNullOrEmpty(date)
-                ? DateOnly.FromDateTime(DateTime.Today)
-                : DateOnly.Parse(date);
+        var targetDate = string.IsNullOrEmpty(date)
+            ? DateOnly.FromDateTime(DateTime.Today)
+            : DateOnly.Parse(date);
 
-            var value = await _portfolioRepository.GetAccountValueAsync(accountId, targetDate);
+        var value = await _portfolioRepository.GetAccountValueAsync(accountId, targetDate);
 
-            return Ok(new
-            {
-                AccountId = accountId,
-                Date = targetDate.ToString("yyyy-MM-dd"),
-                ValueGBP = value
-            });
-        }
-        catch (FormatException)
+        return Ok(new
         {
-            return BadRequest("Invalid date format. Please use YYYY-MM-DD format.");
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500,
-                new { error = "An error occurred while retrieving account value", details = ex.Message });
-        }
+            AccountId = accountId,
+            Date = targetDate.ToString("yyyy-MM-dd"),
+            ValueGBP = value
+        });
     }
 
     /// <summary>
@@ -347,30 +289,18 @@ public class AccountController : ControllerBase
         [FromQuery] string from,
         [FromQuery] string to)
     {
-        try
-        {
-            if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to))
-                return BadRequest("Both 'from' and 'to' date parameters are required");
+        if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to))
+            return BadRequest("Both 'from' and 'to' date parameters are required");
 
-            var startDate = DateOnly.Parse(from);
-            var endDate = DateOnly.Parse(to);
+        var startDate = DateOnly.Parse(from);
+        var endDate = DateOnly.Parse(to);
 
-            if (startDate >= endDate) return BadRequest("Start date must be before end date");
+        if (startDate >= endDate) return BadRequest("Start date must be before end date");
 
-            var query = new CalculateContributionQuery(accountId, startDate, endDate);
-            var result = await _mediator.Send(query);
+        var query = new CalculateContributionQuery(accountId, startDate, endDate);
+        var result = await _mediator.Send(query);
 
-            return Ok(result);
-        }
-        catch (FormatException)
-        {
-            return BadRequest("Invalid date format. Please use YYYY-MM-DD format.");
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500,
-                new { error = "An error occurred while calculating contribution analysis", details = ex.Message });
-        }
+        return Ok(result);
     }
 
     /// <summary>
@@ -389,30 +319,18 @@ public class AccountController : ControllerBase
         [FromQuery] string to,
         [FromQuery] decimal? riskFreeRate = null)
     {
-        try
-        {
-            if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to))
-                return BadRequest("Both 'from' and 'to' date parameters are required");
+        if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to))
+            return BadRequest("Both 'from' and 'to' date parameters are required");
 
-            var startDate = DateOnly.Parse(from);
-            var endDate = DateOnly.Parse(to);
+        var startDate = DateOnly.Parse(from);
+        var endDate = DateOnly.Parse(to);
 
-            if (startDate >= endDate) return BadRequest("Start date must be before end date");
+        if (startDate >= endDate) return BadRequest("Start date must be before end date");
 
-            var query = new CalculateRiskMetricsQuery(accountId, startDate, endDate, riskFreeRate);
-            var result = await _mediator.Send(query);
+        var query = new CalculateRiskMetricsQuery(accountId, startDate, endDate, riskFreeRate);
+        var result = await _mediator.Send(query);
 
-            return Ok(result);
-        }
-        catch (FormatException)
-        {
-            return BadRequest("Invalid date format. Please use YYYY-MM-DD format.");
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500,
-                new { error = "An error occurred while calculating risk metrics", details = ex.Message });
-        }
+        return Ok(result);
     }
 
     /// <summary>
@@ -424,31 +342,23 @@ public class AccountController : ControllerBase
     [HttpGet("{accountId}/dates")]
     public async Task<IActionResult> GetAccountDates(Guid accountId)
     {
-        try
+        var account = await _portfolioRepository.GetAccountAsync(accountId);
+        if (account == null) return NotFound($"Account with ID {accountId} not found");
+
+        // Get dates from 2 years ago to today
+        var endDate = DateOnly.FromDateTime(DateTime.Today);
+        var startDate = endDate.AddYears(-2);
+
+        var dates = await _portfolioRepository.GetHoldingDatesInRangeAsync(accountId, startDate, endDate);
+
+        return Ok(new
         {
-            var account = await _portfolioRepository.GetAccountAsync(accountId);
-            if (account == null) return NotFound($"Account with ID {accountId} not found");
-
-            // Get dates from 2 years ago to today
-            var endDate = DateOnly.FromDateTime(DateTime.Today);
-            var startDate = endDate.AddYears(-2);
-
-            var dates = await _portfolioRepository.GetHoldingDatesInRangeAsync(accountId, startDate, endDate);
-
-            return Ok(new
-            {
-                AccountId = accountId,
-                AccountName = account.Name,
-                Dates = dates.Select(d => d.ToString("yyyy-MM-dd")).ToList(),
-                StartDate = startDate.ToString("yyyy-MM-dd"),
-                EndDate = endDate.ToString("yyyy-MM-dd")
-            });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500,
-                new { error = "An error occurred while retrieving account dates", details = ex.Message });
-        }
+            AccountId = accountId,
+            AccountName = account.Name,
+            Dates = dates.Select(d => d.ToString("yyyy-MM-dd")).ToList(),
+            StartDate = startDate.ToString("yyyy-MM-dd"),
+            EndDate = endDate.ToString("yyyy-MM-dd")
+        });
     }
 
     /// <summary>
@@ -465,78 +375,66 @@ public class AccountController : ControllerBase
         [FromQuery] string startDate,
         [FromQuery] string endDate)
     {
-        try
-        {
-            if (string.IsNullOrEmpty(startDate) || string.IsNullOrEmpty(endDate))
-                return BadRequest("Both 'startDate' and 'endDate' parameters are required");
+        if (string.IsNullOrEmpty(startDate) || string.IsNullOrEmpty(endDate))
+            return BadRequest("Both 'startDate' and 'endDate' parameters are required");
 
-            var start = DateOnly.Parse(startDate);
-            var end = DateOnly.Parse(endDate);
+        var start = DateOnly.Parse(startDate);
+        var end = DateOnly.Parse(endDate);
 
-            if (start >= end) return BadRequest("Start date must be before end date");
+        if (start >= end) return BadRequest("Start date must be before end date");
 
-            var account = await _portfolioRepository.GetAccountAsync(accountId);
-            if (account == null) return NotFound($"Account with ID {accountId} not found");
+        var account = await _portfolioRepository.GetAccountAsync(accountId);
+        if (account == null) return NotFound($"Account with ID {accountId} not found");
 
-            // Get all dates where holdings exist in the period
-            var availableDates = await _portfolioRepository.GetHoldingDatesInRangeAsync(accountId, start, end);
+        // Get all dates where holdings exist in the period
+        var availableDates = await _portfolioRepository.GetHoldingDatesInRangeAsync(accountId, start, end);
 
-            if (!availableDates.Any())
-                return Ok(new GetAccountHoldingsHistoryResponse
-                {
-                    AccountId = accountId.ToString(),
-                    AccountName = account.Name,
-                    StartDate = startDate,
-                    EndDate = endDate,
-                    HistoricalData = [],
-                    AvailableDateRange = new DateRangeInfo
-                    {
-                        Earliest = startDate,
-                        Latest = endDate,
-                        TotalDates = 0
-                    }
-                });
-
-            // Get holdings for each date
-            var historicalData = new List<HistoricalDataPoint>();
-            foreach (var date in availableDates)
-            {
-                var holdings = await _portfolioRepository.GetAccountHoldingsWithInstrumentDetailsAsync(accountId, date);
-                var totalValue = holdings.Sum(h => h.ValueGBP);
-
-                historicalData.Add(new HistoricalDataPoint
-                {
-                    Date = date.ToString("yyyy-MM-dd"),
-                    Holdings = holdings,
-                    TotalValueGBP = totalValue,
-                    Count = holdings.Count
-                });
-            }
-
+        if (!availableDates.Any())
             return Ok(new GetAccountHoldingsHistoryResponse
             {
                 AccountId = accountId.ToString(),
                 AccountName = account.Name,
                 StartDate = startDate,
                 EndDate = endDate,
-                HistoricalData = historicalData,
+                HistoricalData = [],
                 AvailableDateRange = new DateRangeInfo
                 {
-                    Earliest = availableDates.Min().ToString("yyyy-MM-dd"),
-                    Latest = availableDates.Max().ToString("yyyy-MM-dd"),
-                    TotalDates = availableDates.Count
+                    Earliest = startDate,
+                    Latest = endDate,
+                    TotalDates = 0
                 }
             });
-        }
-        catch (FormatException)
+
+        // Get holdings for each date
+        var historicalData = new List<HistoricalDataPoint>();
+        foreach (var date in availableDates)
         {
-            return BadRequest("Invalid date format. Please use YYYY-MM-DD format.");
+            var holdings = await _portfolioRepository.GetAccountHoldingsWithInstrumentDetailsAsync(accountId, date);
+            var totalValue = holdings.Sum(h => h.ValueGBP);
+
+            historicalData.Add(new HistoricalDataPoint
+            {
+                Date = date.ToString("yyyy-MM-dd"),
+                Holdings = holdings,
+                TotalValueGBP = totalValue,
+                Count = holdings.Count
+            });
         }
-        catch (Exception ex)
+
+        return Ok(new GetAccountHoldingsHistoryResponse
         {
-            return StatusCode(500,
-                new { error = "An error occurred while retrieving historical holdings data", details = ex.Message });
-        }
+            AccountId = accountId.ToString(),
+            AccountName = account.Name,
+            StartDate = startDate,
+            EndDate = endDate,
+            HistoricalData = historicalData,
+            AvailableDateRange = new DateRangeInfo
+            {
+                Earliest = availableDates.Min().ToString("yyyy-MM-dd"),
+                Latest = availableDates.Max().ToString("yyyy-MM-dd"),
+                TotalDates = availableDates.Count
+            }
+        });
     }
 
     [Authorize(Policy = "RequireAnalystRole")]
@@ -546,19 +444,12 @@ public class AccountController : ControllerBase
         [FromQuery] DateOnly date,
         [FromQuery] string format = "csv")
     {
-        try
-        {
-            var holdings = await _portfolioRepository.GetAccountHoldingsWithInstrumentDetailsAsync(accountId, date);
-            if (!holdings.Any()) return NotFound(new { message = "No holdings data available for the specified date" });
+        var holdings = await _portfolioRepository.GetAccountHoldingsWithInstrumentDetailsAsync(accountId, date);
+        if (!holdings.Any()) return NotFound(new { message = "No holdings data available for the specified date" });
 
-            if (format.ToLower() == "excel") return await ExportToExcel(holdings, date);
+        if (format.ToLower() == "excel") return await ExportToExcel(holdings, date);
 
-            return await ExportToCsv(holdings, date);
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { message = "An error occurred while exporting holdings" });
-        }
+        return await ExportToCsv(holdings, date);
     }
 
     private Task<IActionResult> ExportToExcel(List<HoldingDto> holdings, DateOnly date)

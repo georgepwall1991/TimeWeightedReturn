@@ -1,7 +1,13 @@
+using System.Security.Cryptography;
+using Application.Features.Auth.Commands.ForgotPassword;
+using Application.Features.Auth.Commands.ResetPassword;
+using Application.Features.Auth.Commands.VerifyEmail;
 using Application.Features.Auth.DTOs;
 using Application.Services;
+using Domain.Entities;
 using Infrastructure.Data;
 using Infrastructure.Identity;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -16,21 +22,27 @@ public class AuthController : ControllerBase
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IJwtTokenService _jwtTokenService;
+    private readonly IEmailService _emailService;
     private readonly PortfolioContext _context;
     private readonly ILogger<AuthController> _logger;
+    private readonly IMediator _mediator;
 
     public AuthController(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
         IJwtTokenService jwtTokenService,
+        IEmailService emailService,
         PortfolioContext context,
-        ILogger<AuthController> logger)
+        ILogger<AuthController> logger,
+        IMediator mediator)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _jwtTokenService = jwtTokenService;
+        _emailService = emailService;
         _context = context;
         _logger = logger;
+        _mediator = mediator;
     }
 
     [HttpPost("register")]
@@ -49,7 +61,7 @@ public class AuthController : ControllerBase
             FirstName = request.FirstName,
             LastName = request.LastName,
             ClientId = request.ClientId,
-            EmailConfirmed = true // Auto-confirm for now
+            EmailConfirmed = false // Require email confirmation
         };
 
         var result = await _userManager.CreateAsync(user, request.Password);
@@ -62,9 +74,41 @@ public class AuthController : ControllerBase
         // Assign default role
         await _userManager.AddToRoleAsync(user, "Viewer");
 
-        _logger.LogInformation("User {Email} registered successfully", request.Email);
+        // Generate email verification token
+        var tokenBytes = new byte[64];
+        using (var rng = RandomNumberGenerator.Create())
+        {
+            rng.GetBytes(tokenBytes);
+        }
+        var verificationToken = Convert.ToBase64String(tokenBytes);
 
-        return await GenerateAuthResponse(user);
+        var emailToken = new EmailVerificationToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            Token = verificationToken,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(7) // Token valid for 7 days
+        };
+
+        _context.EmailVerificationTokens.Add(emailToken);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("User {Email} registered successfully. Email verification required.", request.Email);
+
+        // Send email verification
+        try
+        {
+            await _emailService.SendEmailVerificationAsync(request.Email, verificationToken);
+            _logger.LogInformation("Verification email sent to {Email}", request.Email);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send verification email to {Email}", request.Email);
+            // Continue - user can request a new verification email later
+        }
+
+        return Ok(new { message = "Registration successful. Please check your email to verify your account." });
     }
 
     [HttpPost("login")]
@@ -74,6 +118,12 @@ public class AuthController : ControllerBase
         if (user == null || !user.IsActive)
         {
             return Unauthorized(new { message = "Invalid email or password" });
+        }
+
+        // Check if email is confirmed
+        if (!user.EmailConfirmed)
+        {
+            return Unauthorized(new { message = "Please verify your email address before logging in" });
         }
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
@@ -191,6 +241,44 @@ public class AuthController : ControllerBase
         );
     }
 
+    [HttpPost("verify-email")]
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request)
+    {
+        var command = new VerifyEmailCommand(request.Token);
+        var result = await _mediator.Send(command);
+
+        if (!result.Success)
+        {
+            return BadRequest(new { message = result.Message });
+        }
+
+        return Ok(new { message = result.Message });
+    }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        var command = new ForgotPasswordCommand(request.Email);
+        var result = await _mediator.Send(command);
+
+        // Always return success to prevent email enumeration
+        return Ok(new { message = result.Message });
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+        var command = new ResetPasswordCommand(request.Token, request.NewPassword);
+        var result = await _mediator.Send(command);
+
+        if (!result.Success)
+        {
+            return BadRequest(new { message = result.Message });
+        }
+
+        return Ok(new { message = result.Message });
+    }
+
     private async Task<AuthResponse> GenerateAuthResponse(ApplicationUser user)
     {
         var roles = await _userManager.GetRolesAsync(user);
@@ -225,3 +313,8 @@ public class AuthController : ControllerBase
         );
     }
 }
+
+// DTOs for new endpoints
+public record VerifyEmailRequest(string Token);
+public record ForgotPasswordRequest(string Email);
+public record ResetPasswordRequest(string Token, string NewPassword);

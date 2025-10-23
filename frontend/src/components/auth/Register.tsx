@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { Link } from 'react-router-dom';
 import { useRegisterMutation } from '../../services/api';
-import { setCredentials } from '../../store/authSlice';
+import { useToast } from '../../contexts/ToastContext';
 
 interface FormErrors {
   email?: string;
@@ -20,8 +19,8 @@ export const Register: React.FC = () => {
   const [lastName, setLastName] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [register, { isLoading, error }] = useRegisterMutation();
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const { success: showSuccess } = useToast();
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -81,19 +80,57 @@ export const Register: React.FC = () => {
     }
 
     try {
-      const response = await register({
+      await register({
         email,
         password,
         firstName,
         lastName,
       }).unwrap();
 
-      dispatch(setCredentials(response));
-      navigate('/');
+      // Show success message
+      showSuccess('Registration successful! Please check your email to verify your account.');
+      setRegistrationSuccess(true);
     } catch (err) {
       console.error('Registration failed:', err);
     }
   };
+
+  if (registrationSuccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+              Check Your Email
+            </h2>
+          </div>
+          <div className="bg-white shadow-md rounded-lg p-8 text-center">
+            <svg className="mx-auto h-16 w-16 text-green-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Registration Successful!</h3>
+            <p className="text-gray-600 mb-6">
+              We've sent a verification email to <strong>{email}</strong>. Please check your inbox and click the verification link to activate your account.
+            </p>
+            <p className="text-sm text-gray-500 mb-4">
+              The verification link will expire in 7 days. If you don't see the email, check your spam folder.
+            </p>
+            {import.meta.env.DEV && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4">
+                <p className="text-xs text-yellow-800 font-semibold">Development Mode</p>
+                <p className="text-xs text-yellow-700 mt-1">
+                  Check the API console logs for the verification token.
+                </p>
+              </div>
+            )}
+            <Link to="/login" className="btn-primary inline-block">
+              Go to Login
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -238,9 +275,9 @@ export const Register: React.FC = () => {
           </div>
 
           <div className="text-sm text-center">
-            <a href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+            <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
               Already have an account? Sign in
-            </a>
+            </Link>
           </div>
         </form>
       </div>
