@@ -1,16 +1,22 @@
 using System.Globalization;
 using Domain.Entities;
+using Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Data;
 
-public class PortfolioContext : DbContext
+public class PortfolioContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
 {
     public PortfolioContext(DbContextOptions<PortfolioContext> options) : base(options)
     {
         // Ensure invariant culture is used for database operations
         Database.SetCommandTimeout(TimeSpan.FromMinutes(5));
     }
+
+    // Identity tables
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -129,6 +135,24 @@ public class PortfolioContext : DbContext
 
             // Unique constraint: one rate per currency pair per date
             entity.HasIndex(e => new { e.BaseCurrency, e.QuoteCurrency, e.Date }).IsUnique();
+        });
+
+        // RefreshToken Configuration
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Token).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.ExpiresAt).IsRequired();
+            entity.Property(e => e.IpAddress).HasMaxLength(45);
+
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.RefreshTokens)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.Token).IsUnique();
+            entity.HasIndex(e => e.UserId);
         });
     }
 
