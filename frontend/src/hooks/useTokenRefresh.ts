@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectAccessToken, selectRefreshToken, updateAccessToken, logout } from '../store/authSlice';
 import { useRefreshTokenMutation } from '../services/api';
+import logger from '../services/logger';
 
 /**
  * Hook that automatically refreshes the access token before it expires
@@ -26,7 +27,7 @@ export const useTokenRefresh = () => {
       );
       return JSON.parse(jsonPayload);
     } catch (error) {
-      console.error('Error parsing JWT:', error);
+      logger.error('Error parsing JWT', error);
       return null;
     }
   };
@@ -73,7 +74,7 @@ export const useTokenRefresh = () => {
         // Schedule next refresh
         scheduleTokenRefresh(response.accessToken);
       } catch (error) {
-        console.error('Token refresh failed:', error);
+        logger.error('Token refresh failed', error);
         // If refresh fails, log the user out
         dispatch(logout());
       }

@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, memo } from "react";
 import { api } from "../../services/api";
 import { ClientNode, PortfolioNode, AccountNode } from "./TreeNode";
-import { AlertCircle, TrendingUp } from "lucide-react";
+import { AlertCircle, TrendingUp, Search, X } from "lucide-react";
 import { formatCurrency } from "../../utils/formatters";
 import { TreeNodeSkeleton } from "../common/Skeleton";
 import type {
@@ -23,6 +23,7 @@ interface PortfolioTreeProps {
 const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   // Use the updated API hook with empty object as parameter
   const { data, error, isLoading, refetch } = api.useGetPortfolioTreeQuery({});
@@ -45,6 +46,56 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
     },
     [onNodeSelect]
   );
+
+  // Filter function for search
+  const filterMatches = useCallback((item: { name: string }, term: string): boolean => {
+    return item.name.toLowerCase().includes(term.toLowerCase());
+  }, []);
+
+  // Filter clients based on search term
+  const filteredClients = useMemo(() => {
+    if (!data || !searchTerm.trim()) return data?.clients || [];
+
+    const term = searchTerm.trim();
+    return data.clients.filter(client => {
+      // Check if client name matches
+      if (filterMatches(client, term)) return true;
+
+      // Check if any portfolio matches
+      const hasMatchingPortfolio = client.portfolios.some(portfolio => {
+        if (filterMatches(portfolio, term)) return true;
+
+        // Check if any account matches
+        return portfolio.accounts?.some(account => filterMatches(account, term));
+      });
+
+      return hasMatchingPortfolio;
+    }).map(client => ({
+      ...client,
+      portfolios: client.portfolios.filter(portfolio => {
+        // Keep portfolio if it matches or has matching accounts
+        if (filterMatches(portfolio, term)) return true;
+        return portfolio.accounts?.some(account => filterMatches(account, term));
+      }).map(portfolio => ({
+        ...portfolio,
+        accounts: portfolio.accounts?.filter(account => filterMatches(account, term))
+      }))
+    }));
+  }, [data, searchTerm, filterMatches]);
+
+  // Auto-expand nodes when searching
+  const autoExpandedNodes = useMemo(() => {
+    if (!searchTerm.trim() || !filteredClients.length) return expandedNodes;
+
+    const expanded = new Set(expandedNodes);
+    filteredClients.forEach(client => {
+      expanded.add(client.id);
+      client.portfolios.forEach(portfolio => {
+        expanded.add(portfolio.id);
+      });
+    });
+    return expanded;
+  }, [filteredClients, searchTerm, expandedNodes]);
 
   // Render account nodes
   const renderAccountNodes = useCallback(
@@ -70,8 +121,10 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
   // Render portfolio nodes
   const renderPortfolioNodes = useCallback(
     (portfolios: PortfolioNodeDto[], level: number) => {
+      const nodesToUse = searchTerm.trim() ? autoExpandedNodes : expandedNodes;
+
       return portfolios.map((portfolio) => {
-        const isExpanded = expandedNodes.has(portfolio.id);
+        const isExpanded = nodesToUse.has(portfolio.id);
         const hasChildren = portfolio.accounts.length > 0;
 
         return (
@@ -96,14 +149,16 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
         );
       });
     },
-    [expandedNodes, selectedNode, toggleNode, selectNode, renderAccountNodes]
+    [expandedNodes, autoExpandedNodes, searchTerm, selectedNode, toggleNode, selectNode, renderAccountNodes]
   );
 
   // Render client nodes
   const renderClientNodes = useCallback(
     (clients: ClientNodeDto[]) => {
+      const nodesToUse = searchTerm.trim() ? autoExpandedNodes : expandedNodes;
+
       return clients.map((client) => {
-        const isExpanded = expandedNodes.has(client.id);
+        const isExpanded = nodesToUse.has(client.id);
         const hasChildren = client.portfolios.length > 0;
 
         return (
@@ -124,7 +179,7 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
         );
       });
     },
-    [expandedNodes, selectedNode, toggleNode, selectNode, renderPortfolioNodes]
+    [expandedNodes, autoExpandedNodes, searchTerm, selectedNode, toggleNode, selectNode, renderPortfolioNodes]
   );
 
   // Memoize expensive operations (must be before conditional returns)
@@ -134,8 +189,8 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
   );
 
   const clientsRendered = useMemo(
-    () => data ? renderClientNodes(data.clients) : null,
-    [data, renderClientNodes]
+    () => filteredClients.length ? renderClientNodes(filteredClients) : null,
+    [filteredClients, renderClientNodes]
   );
 
   if (isLoading) {
@@ -175,7 +230,7 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
     <div className="portfolio-tree">
       {/* Header with summary */}
       <div className="p-4 border-b border-gray-200 bg-gray-50">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold text-gray-900">
             Portfolio Overview
           </h2>
@@ -186,6 +241,31 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
             </div>
           </div>
         </div>
+
+        {/* Search Box */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search clients, portfolios, accounts..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-10 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+        {searchTerm && (
+          <div className="mt-2 text-xs text-gray-600">
+            Found {filteredClients.length} {filteredClients.length === 1 ? 'result' : 'results'}
+          </div>
+        )}
         <div className="text-xs text-gray-500 mt-1">
           Last updated: {lastUpdatedFormatted}
         </div>
