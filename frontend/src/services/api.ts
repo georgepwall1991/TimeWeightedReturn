@@ -1,4 +1,5 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi, fetchBaseQuery, type BaseQueryFn, type FetchArgs, type FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
+import { updateAccessToken, logout } from '../store/authSlice';
 import type {
   PortfolioTreeResponse,
   GetPortfolioHoldingsResponse,
@@ -79,24 +80,81 @@ export interface ExportHoldingsRequest {
   format: 'csv' | 'excel';
 }
 
+// Create base query
+const baseQuery = fetchBaseQuery({
+  baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:5011/api',
+  prepareHeaders: (headers, { getState }) => {
+    // Get token from state
+    const token = (getState() as any).auth?.accessToken;
+
+    if (token) {
+      headers.set('authorization', `Bearer ${token}`);
+    }
+
+    headers.set('accept', 'application/json');
+    headers.set('content-type', 'application/json');
+    return headers;
+  },
+});
+
+// Create base query with automatic token refresh on 401
+const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
+  args,
+  api,
+  extraOptions
+) => {
+  let result = await baseQuery(args, api, extraOptions);
+
+  // If we get a 401 error, try to refresh the token
+  if (result.error && result.error.status === 401) {
+    const state = api.getState() as any;
+    const refreshToken = state.auth?.refreshToken;
+    const accessToken = state.auth?.accessToken;
+
+    if (refreshToken && accessToken) {
+      // Try to refresh the token
+      const refreshResult = await baseQuery(
+        {
+          url: 'auth/refresh',
+          method: 'POST',
+          body: {
+            accessToken,
+            refreshToken,
+          },
+        },
+        api,
+        extraOptions
+      );
+
+      if (refreshResult.data) {
+        // Store the new token
+        const newTokens = refreshResult.data as AuthResponse;
+        api.dispatch(
+          updateAccessToken({
+            accessToken: newTokens.accessToken,
+            expiresAt: newTokens.expiresAt,
+          })
+        );
+
+        // Retry the original query with the new token
+        result = await baseQuery(args, api, extraOptions);
+      } else {
+        // Refresh failed, log out the user
+        api.dispatch(logout());
+      }
+    } else {
+      // No refresh token available, log out
+      api.dispatch(logout());
+    }
+  }
+
+  return result;
+};
+
 // Base API configuration
 export const api = createApi({
   reducerPath: 'api',
-  baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:5011/api',
-    prepareHeaders: (headers, { getState }) => {
-      // Get token from state
-      const token = (getState() as any).auth?.accessToken;
-
-      if (token) {
-        headers.set('authorization', `Bearer ${token}`);
-      }
-
-      headers.set('accept', 'application/json');
-      headers.set('content-type', 'application/json');
-      return headers;
-    },
-  }),
+  baseQuery: baseQueryWithReauth,
   tagTypes: ['PortfolioTree', 'Holdings', 'AccountHoldings', 'TWR', 'Contribution', 'RiskMetrics', 'Auth'],
   endpoints: (builder) => ({
     // Portfolio Tree Navigation

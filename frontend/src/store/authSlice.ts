@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { UserInfo } from '../types/auth';
 
 interface AuthState {
@@ -10,10 +10,10 @@ interface AuthState {
 }
 
 const initialState: AuthState = {
-  accessToken: null,
+  accessToken: localStorage.getItem('accessToken'),
   refreshToken: localStorage.getItem('refreshToken'),
   user: null,
-  expiresAt: null,
+  expiresAt: localStorage.getItem('expiresAt'),
   isAuthenticated: false,
 };
 
@@ -36,8 +36,10 @@ const authSlice = createSlice({
       state.expiresAt = action.payload.expiresAt;
       state.isAuthenticated = true;
 
-      // Store refresh token in localStorage
+      // Store tokens in localStorage for persistence
+      localStorage.setItem('accessToken', action.payload.accessToken);
       localStorage.setItem('refreshToken', action.payload.refreshToken);
+      localStorage.setItem('expiresAt', action.payload.expiresAt);
     },
     updateAccessToken: (
       state,
@@ -45,6 +47,10 @@ const authSlice = createSlice({
     ) => {
       state.accessToken = action.payload.accessToken;
       state.expiresAt = action.payload.expiresAt;
+
+      // Update localStorage
+      localStorage.setItem('accessToken', action.payload.accessToken);
+      localStorage.setItem('expiresAt', action.payload.expiresAt);
     },
     logout: (state) => {
       state.accessToken = null;
@@ -53,8 +59,10 @@ const authSlice = createSlice({
       state.expiresAt = null;
       state.isAuthenticated = false;
 
-      // Remove refresh token from localStorage
+      // Remove all auth data from localStorage
+      localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
+      localStorage.removeItem('expiresAt');
     },
   },
 });
