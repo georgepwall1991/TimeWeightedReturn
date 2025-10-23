@@ -76,7 +76,7 @@ export interface ExportHoldingsRequest {
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'http://localhost:5011/api',
+    baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:5011/api',
     prepareHeaders: (headers) => {
       headers.set('accept', 'application/json');
       headers.set('content-type', 'application/json');

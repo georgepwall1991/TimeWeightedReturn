@@ -2,8 +2,6 @@ namespace Application.Interfaces;
 
 public interface IPortfolioRepository
 {
-    // ... existing methods ...
-
     Task<List<DateOnly>> GetHoldingDatesInRangeAsync(Guid accountId, DateOnly startDate, DateOnly endDate);
     Task<List<HoldingDto>> GetAccountHoldingsWithInstrumentDetailsAsync(Guid accountId, DateOnly date);
     Task<Dictionary<Guid, decimal>> GetPricesForHoldingsAsync(IEnumerable<Guid> holdingIds);

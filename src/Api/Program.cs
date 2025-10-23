@@ -1,7 +1,11 @@
+using Api.Configuration;
+using Api.Middleware;
 using Application;
+using Application.Behaviors;
 using Application.Features.Common.Interfaces;
 using Application.Services;
 using Domain.Services;
+using FluentValidation;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
 using MediatR;
@@ -9,8 +13,16 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure strongly-typed settings
+builder.Services.Configure<PortfolioSettings>(builder.Configuration.GetSection(PortfolioSettings.SectionName));
+builder.Services.Configure<CorsSettings>(builder.Configuration.GetSection(CorsSettings.SectionName));
+
 // Add services to the container.
 builder.Services.AddControllers();
+
+// Add Problem Details for standardized error responses (RFC 7807)
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 // Configure Entity Framework
 builder.Services.AddDbContext<PortfolioContext>(options =>
@@ -19,6 +31,10 @@ builder.Services.AddDbContext<PortfolioContext>(options =>
 // Add MediatR
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AssemblyReference).Assembly));
+
+// Add FluentValidation
+builder.Services.AddValidatorsFromAssemblyContaining<AssemblyReference>();
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
 // Add repositories and services
 builder.Services.AddScoped<IPortfolioRepository, PortfolioRepository>();
@@ -34,17 +50,22 @@ builder.Services.AddScoped<RiskMetricsService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Add CORS for development
+// Add CORS
+var corsSettings = builder.Configuration.GetSection(CorsSettings.SectionName).Get<CorsSettings>() ?? new CorsSettings();
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("DevelopmentCors", policy =>
-        policy.WithOrigins("http://localhost:3000", "http://localhost:5173") // React dev servers
+    options.AddPolicy("AllowConfiguredOrigins", policy =>
+        policy.WithOrigins(corsSettings.AllowedOrigins)
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials());
 });
 
 var app = builder.Build();
+
+// Use exception handler and status code pages for Problem Details
+app.UseExceptionHandler();
+app.UseStatusCodePages();
 
 // Seed data in development
 if (app.Environment.IsDevelopment())
@@ -59,8 +80,9 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    app.UseCors("DevelopmentCors");
 }
+
+app.UseCors("AllowConfiguredOrigins");
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
