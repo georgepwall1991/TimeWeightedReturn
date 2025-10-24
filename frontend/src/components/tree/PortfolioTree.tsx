@@ -1,9 +1,10 @@
-import React, { useState, useCallback, useMemo, memo } from "react";
+import React, { useState, useCallback, useMemo, memo, useEffect } from "react";
 import { api } from "../../services/api";
 import { ClientNode, PortfolioNode, AccountNode } from "./TreeNode";
-import { AlertCircle, TrendingUp, Search, X } from "lucide-react";
+import { AlertCircle, TrendingUp, Search, X, ChevronsDown, ChevronsUp } from "lucide-react";
 import { formatCurrency } from "../../utils/formatters";
 import { TreeNodeSkeleton } from "../common/Skeleton";
+import { useKeyboardNavigation } from "../../hooks/useKeyboardNavigation";
 import type {
   ClientNodeDto,
   PortfolioNodeDto,
@@ -24,9 +25,19 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
 
   // Use the updated API hook with empty object as parameter
   const { data, error, isLoading, refetch } = api.useGetPortfolioTreeQuery({});
+
+  // Debounce search term (300ms delay)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
 
   const toggleNode = useCallback((nodeId: string) => {
     const newExpanded = new Set(expandedNodes);
@@ -37,6 +48,24 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
     }
     setExpandedNodes(newExpanded);
   }, [expandedNodes]);
+
+  // Expand all nodes
+  const expandAll = useCallback(() => {
+    if (!data) return;
+    const allNodeIds = new Set<string>();
+    data.clients.forEach(client => {
+      allNodeIds.add(client.id);
+      client.portfolios.forEach(portfolio => {
+        allNodeIds.add(portfolio.id);
+      });
+    });
+    setExpandedNodes(allNodeIds);
+  }, [data]);
+
+  // Collapse all nodes
+  const collapseAll = useCallback(() => {
+    setExpandedNodes(new Set());
+  }, []);
 
   // Select node
   const selectNode = useCallback(
@@ -52,11 +81,11 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
     return item.name.toLowerCase().includes(term.toLowerCase());
   }, []);
 
-  // Filter clients based on search term
+  // Filter clients based on search term (using debounced value)
   const filteredClients = useMemo(() => {
-    if (!data || !searchTerm.trim()) return data?.clients || [];
+    if (!data || !debouncedSearchTerm.trim()) return data?.clients || [];
 
-    const term = searchTerm.trim();
+    const term = debouncedSearchTerm.trim();
     return data.clients.filter(client => {
       // Check if client name matches
       if (filterMatches(client, term)) return true;
@@ -81,11 +110,11 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
         accounts: portfolio.accounts?.filter(account => filterMatches(account, term))
       }))
     }));
-  }, [data, searchTerm, filterMatches]);
+  }, [data, debouncedSearchTerm, filterMatches]);
 
   // Auto-expand nodes when searching
   const autoExpandedNodes = useMemo(() => {
-    if (!searchTerm.trim() || !filteredClients.length) return expandedNodes;
+    if (!debouncedSearchTerm.trim() || !filteredClients.length) return expandedNodes;
 
     const expanded = new Set(expandedNodes);
     filteredClients.forEach(client => {
@@ -95,7 +124,32 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
       });
     });
     return expanded;
-  }, [filteredClients, searchTerm, expandedNodes]);
+  }, [filteredClients, debouncedSearchTerm, expandedNodes]);
+
+  // Flatten filtered items for keyboard navigation
+  const filteredNavigableItems = useMemo(() => {
+    const items: Array<{ id: string; type: 'client' | 'portfolio' | 'account'; name: string }> = [];
+
+    filteredClients.forEach(client => {
+      items.push({ id: client.id, type: 'client', name: client.name });
+      client.portfolios.forEach(portfolio => {
+        items.push({ id: portfolio.id, type: 'portfolio', name: portfolio.name });
+        portfolio.accounts?.forEach(account => {
+          items.push({ id: account.id, type: 'account', name: account.name });
+        });
+      });
+    });
+
+    return items;
+  }, [filteredClients]);
+
+  // Keyboard navigation
+  const { highlightedItem } = useKeyboardNavigation({
+    items: filteredNavigableItems,
+    onSelect: selectNode,
+    onClear: () => setSearchTerm(""),
+    enabled: true,
+  });
 
   // Render account nodes
   const renderAccountNodes = useCallback(
@@ -112,16 +166,18 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
             selectNode({ type: "account", id: account.id, name: account.name })
           }
           isSelected={selectedNode === account.id}
+          searchTerm={debouncedSearchTerm}
+          isKeyboardHighlighted={highlightedItem?.id === account.id}
         />
       ));
     },
-    [selectedNode, selectNode]
+    [selectedNode, selectNode, debouncedSearchTerm, highlightedItem]
   );
 
   // Render portfolio nodes
   const renderPortfolioNodes = useCallback(
     (portfolios: PortfolioNodeDto[], level: number) => {
-      const nodesToUse = searchTerm.trim() ? autoExpandedNodes : expandedNodes;
+      const nodesToUse = debouncedSearchTerm.trim() ? autoExpandedNodes : expandedNodes;
 
       return portfolios.map((portfolio) => {
         const isExpanded = nodesToUse.has(portfolio.id);
@@ -143,19 +199,21 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
               })
             }
             isSelected={selectedNode === portfolio.id}
+            searchTerm={debouncedSearchTerm}
+            isKeyboardHighlighted={highlightedItem?.id === portfolio.id}
           >
             {isExpanded && renderAccountNodes(portfolio.accounts, level + 1)}
           </PortfolioNode>
         );
       });
     },
-    [expandedNodes, autoExpandedNodes, searchTerm, selectedNode, toggleNode, selectNode, renderAccountNodes]
+    [expandedNodes, autoExpandedNodes, debouncedSearchTerm, selectedNode, toggleNode, selectNode, renderAccountNodes, highlightedItem]
   );
 
   // Render client nodes
   const renderClientNodes = useCallback(
     (clients: ClientNodeDto[]) => {
-      const nodesToUse = searchTerm.trim() ? autoExpandedNodes : expandedNodes;
+      const nodesToUse = debouncedSearchTerm.trim() ? autoExpandedNodes : expandedNodes;
 
       return clients.map((client) => {
         const isExpanded = nodesToUse.has(client.id);
@@ -173,13 +231,15 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
               selectNode({ type: "client", id: client.id, name: client.name })
             }
             isSelected={selectedNode === client.id}
+            searchTerm={debouncedSearchTerm}
+            isKeyboardHighlighted={highlightedItem?.id === client.id}
           >
             {isExpanded && renderPortfolioNodes(client.portfolios, 1)}
           </ClientNode>
         );
       });
     },
-    [expandedNodes, autoExpandedNodes, searchTerm, selectedNode, toggleNode, selectNode, renderPortfolioNodes]
+    [expandedNodes, autoExpandedNodes, debouncedSearchTerm, selectedNode, toggleNode, selectNode, renderPortfolioNodes, highlightedItem]
   );
 
   // Memoize expensive operations (must be before conditional returns)
@@ -242,24 +302,43 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
           </div>
         </div>
 
-        {/* Search Box */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search clients, portfolios, accounts..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-10 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm("")}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
+        {/* Search Box and Expand/Collapse Buttons */}
+        <div className="flex gap-2 mb-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search clients, portfolios, accounts..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              data-search-input="true"
+              className="w-full pl-10 pr-10 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          <button
+            onClick={expandAll}
+            className="px-3 py-2 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-100 hover:border-gray-400 flex items-center gap-1.5 text-gray-700 transition-colors"
+            title="Expand all nodes"
+          >
+            <ChevronsDown className="w-4 h-4" />
+            <span className="hidden sm:inline">Expand</span>
+          </button>
+          <button
+            onClick={collapseAll}
+            className="px-3 py-2 text-xs font-medium border border-gray-300 rounded-lg hover:bg-gray-100 hover:border-gray-400 flex items-center gap-1.5 text-gray-700 transition-colors"
+            title="Collapse all nodes"
+          >
+            <ChevronsUp className="w-4 h-4" />
+            <span className="hidden sm:inline">Collapse</span>
+          </button>
         </div>
         {searchTerm && (
           <div className="mt-2 text-xs text-gray-600">
@@ -273,7 +352,23 @@ const PortfolioTree: React.FC<PortfolioTreeProps> = ({ onNodeSelect }) => {
 
       {/* Tree content */}
       <div className="overflow-auto max-h-screen">
-        {clientsRendered}
+        {searchTerm && filteredClients.length === 0 ? (
+          <div className="p-8 text-center">
+            <Search className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <h3 className="text-sm font-medium text-gray-900 mb-1">No results found</h3>
+            <p className="text-xs text-gray-500 mb-4">
+              No clients, portfolios, or accounts match "{searchTerm}"
+            </p>
+            <button
+              onClick={() => setSearchTerm("")}
+              className="text-xs text-blue-600 hover:text-blue-800"
+            >
+              Clear search
+            </button>
+          </div>
+        ) : (
+          clientsRendered
+        )}
       </div>
     </div>
   );

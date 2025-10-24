@@ -1,6 +1,7 @@
 import React, { memo, useMemo } from "react";
 import { ChevronRight, ChevronDown, User, Briefcase, FolderOpen } from "lucide-react";
 import { formatCurrency } from "../../utils/formatters";
+import { HighlightText } from "../common/HighlightText";
 import type {
   ClientNodeDto,
   PortfolioNodeDto,
@@ -14,6 +15,8 @@ interface TreeNodeProps {
   onToggle: () => void;
   onSelect: () => void;
   isSelected: boolean;
+  searchTerm?: string;
+  isKeyboardHighlighted?: boolean;
 }
 
 interface ClientNodeProps extends TreeNodeProps {
@@ -85,6 +88,8 @@ const BaseNode = memo<TreeNodeProps & {
   onToggle,
   onSelect,
   isSelected,
+  searchTerm,
+  isKeyboardHighlighted,
   icon,
   title,
   subtitle,
@@ -100,6 +105,8 @@ const BaseNode = memo<TreeNodeProps & {
       <div
         className={`flex items-center py-2 px-3 cursor-pointer hover:bg-gray-50 transition-colors ${
           isSelected ? "bg-blue-50 border-r-2 border-blue-500" : ""
+        } ${
+          isKeyboardHighlighted ? "ring-2 ring-blue-300 bg-blue-50" : ""
         }`}
         style={{ paddingLeft: `${12 + indentWidth}px` }}
         onClick={onSelect}
@@ -132,10 +139,20 @@ const BaseNode = memo<TreeNodeProps & {
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium text-gray-900 truncate">
-                {title}
+                {searchTerm ? (
+                  <HighlightText text={title} highlight={searchTerm} />
+                ) : (
+                  title
+                )}
               </div>
               {subtitle && (
-                <div className="text-xs text-gray-500 truncate">{subtitle}</div>
+                <div className="text-xs text-gray-500 truncate">
+                  {searchTerm ? (
+                    <HighlightText text={subtitle} highlight={searchTerm} />
+                  ) : (
+                    subtitle
+                  )}
+                </div>
               )}
             </div>
             <div className="flex items-center space-x-2 ml-4">
@@ -173,6 +190,8 @@ export const ClientNode = memo<ClientNodeProps>(({
   onToggle,
   onSelect,
   isSelected,
+  searchTerm,
+  isKeyboardHighlighted,
   children,
 }) => {
   const subtitle = useMemo(
@@ -188,6 +207,8 @@ export const ClientNode = memo<ClientNodeProps>(({
       onToggle={onToggle}
       onSelect={onSelect}
       isSelected={isSelected}
+      searchTerm={searchTerm}
+      isKeyboardHighlighted={isKeyboardHighlighted}
       icon={<User className="w-4 h-4" />}
       title={node.name}
       subtitle={subtitle}
@@ -208,6 +229,8 @@ export const PortfolioNode = memo<PortfolioNodeProps>(({
   onToggle,
   onSelect,
   isSelected,
+  searchTerm,
+  isKeyboardHighlighted,
   children,
 }) => {
   const subtitle = useMemo(
@@ -223,6 +246,8 @@ export const PortfolioNode = memo<PortfolioNodeProps>(({
       onToggle={onToggle}
       onSelect={onSelect}
       isSelected={isSelected}
+      searchTerm={searchTerm}
+      isKeyboardHighlighted={isKeyboardHighlighted}
       icon={<FolderOpen className="w-4 h-4" />}
       title={node.name}
       subtitle={subtitle}
@@ -254,6 +279,8 @@ export const AccountNode = memo<AccountNodeProps>(({ node, ...props }) => {
       onToggle={props.onToggle}
       onSelect={props.onSelect}
       isSelected={props.isSelected}
+      searchTerm={props.searchTerm}
+      isKeyboardHighlighted={props.isKeyboardHighlighted}
       icon={<Briefcase className="w-4 h-4" />}
       title={node.name}
       subtitle={node.accountNumber}
