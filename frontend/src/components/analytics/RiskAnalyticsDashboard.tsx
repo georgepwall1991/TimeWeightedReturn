@@ -4,6 +4,7 @@ import { useCalculateRiskMetricsQuery } from "../../services/api";
 import { formatPercentage } from "../../utils/formatters";
 import { RiskMetricsChart } from "../charts";
 import { CalculationErrorBoundary } from "../layout/CalculationErrorBoundary";
+import { RadarChart } from "../charts/advanced";
 
 interface RiskAnalyticsDashboardProps {
   accountId: string;
@@ -342,11 +343,36 @@ const RiskAnalyticsDashboard: React.FC<RiskAnalyticsDashboardProps> = ({
           </div>
         </div>
 
+        {/* Risk Metrics Radar Chart */}
+        <RadarChart
+          indicators={[
+            { name: 'Returns', max: 100 },
+            { name: 'Sharpe Ratio', max: 3 },
+            { name: 'Low Volatility', max: 100 },
+            { name: 'Low Drawdown', max: 100 },
+            { name: 'Risk Score', max: 10 },
+          ]}
+          series={[
+            {
+              name: accountName,
+              values: [
+                Math.max(0, Math.min(100, (riskData.annualizedReturn + 0.5) * 100)), // Normalized returns
+                Math.max(0, Math.min(3, riskData.sharpeRatio)),
+                Math.max(0, Math.min(100, (1 - riskData.annualizedVolatility) * 100)), // Inverse volatility
+                Math.max(0, Math.min(100, (1 + riskData.maximumDrawdown) * 100)), // Inverse drawdown
+                riskData.riskAssessment.riskScore,
+              ],
+            },
+          ]}
+          title="Risk Profile Overview"
+          height={400}
+        />
+
         {/* Data Info */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
           <div className="flex items-start">
-            <Info className="w-4 h-4 text-blue-600 mr-2 mt-0.5" />
-            <div className="text-sm text-blue-700">
+            <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mr-2 mt-0.5" />
+            <div className="text-sm text-blue-700 dark:text-blue-300">
               <p className="font-medium mb-1">Risk Analysis Period</p>
               <p>
                 Analysis covers {riskData.days} days from {new Date(riskData.startDate).toLocaleDateString()}

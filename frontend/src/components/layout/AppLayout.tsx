@@ -181,21 +181,23 @@ const AppLayout: React.FC = () => {
   }, [showSidebarMenu]);
 
   return (
-    <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="flex h-screen bg-gradient-to-br from-gray-50 via-purple-50/30 to-indigo-50/50 dark:from-gray-900 dark:via-purple-950/20 dark:to-indigo-950/30">
       {/* Sidebar */}
       <div
         ref={sidebarRef}
-        className="relative bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300 ease-in-out"
+        className="relative bg-gradient-to-b from-white via-purple-50/10 to-indigo-50/20 dark:from-gray-800 dark:via-purple-950/10 dark:to-indigo-950/20 border-r-2 border-purple-200 dark:border-purple-900/30 overflow-hidden transition-all duration-300 ease-in-out shadow-lg"
         style={{
           width: sidebarOpen ? `${sidebarWidth}px` : '0px',
         }}
       >
         <div className="h-full flex flex-col">
           {/* Sidebar Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between p-4 border-b-2 border-gradient-to-r from-purple-200 via-indigo-200 to-blue-200 dark:from-purple-800/30 dark:via-indigo-800/30 dark:to-blue-800/30 bg-gradient-to-r from-purple-50/50 via-indigo-50/50 to-blue-50/50 dark:from-purple-950/30 dark:via-indigo-950/30 dark:to-blue-950/30">
             <div className="flex items-center min-w-0">
-              <TrendingUp className="w-6 h-6 text-primary dark:text-indigo-400 mr-2 shrink-0" />
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
+              <div className="p-2 bg-gradient-to-br from-purple-500 via-indigo-600 to-blue-600 rounded-lg shadow-lg mr-3 shrink-0">
+                <TrendingUp className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="text-lg font-bold bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 bg-clip-text text-transparent truncate">
                 Portfolio Analytics
               </h1>
             </div>
@@ -247,19 +249,23 @@ const AppLayout: React.FC = () => {
         {/* Resize Handle */}
         {sidebarOpen && (
           <div
-            className={`absolute top-0 right-0 w-1 h-full cursor-col-resize group hover:bg-blue-500 transition-colors ${
-              isResizing ? 'bg-blue-500' : 'bg-gray-200 hover:bg-blue-400'
+            className={`absolute top-0 right-0 w-1 h-full cursor-col-resize group transition-all duration-300 ${
+              isResizing ? 'bg-gradient-to-b from-purple-500 via-indigo-500 to-blue-500 shadow-glow' : 'bg-purple-200 dark:bg-purple-800/30 hover:bg-gradient-to-b hover:from-purple-400 hover:via-indigo-400 hover:to-blue-400'
             }`}
             onMouseDown={handleMouseDown}
             title="Drag to resize sidebar"
           >
             {/* Visual indicator */}
             <div className="absolute top-1/2 right-0 transform -translate-y-1/2 translate-x-1/2">
-              <GripVertical
-                className={`w-3 h-6 text-gray-400 group-hover:text-white transition-colors ${
-                  isResizing ? 'text-white' : ''
-                }`}
-              />
+              <div className={`p-1 rounded-full transition-all duration-300 ${
+                isResizing ? 'bg-gradient-to-br from-purple-500 to-indigo-600 shadow-glow-lg' : 'bg-purple-100 dark:bg-purple-900/50 group-hover:bg-gradient-to-br group-hover:from-purple-400 group-hover:to-indigo-500'
+              }`}>
+                <GripVertical
+                  className={`w-3 h-6 transition-colors ${
+                    isResizing ? 'text-white' : 'text-purple-600 dark:text-purple-400 group-hover:text-white'
+                  }`}
+                />
+              </div>
             </div>
 
             {/* Hover area - wider for easier grabbing */}
@@ -267,7 +273,7 @@ const AppLayout: React.FC = () => {
 
             {/* Subtle indicator line when not hovering */}
             {!isResizing && (
-              <div className="absolute top-1/4 right-0 w-px h-1/2 bg-gray-300 group-hover:bg-transparent transition-colors" />
+              <div className="absolute top-1/4 right-0 w-px h-1/2 bg-purple-300 dark:bg-purple-700 group-hover:bg-transparent transition-colors" />
             )}
           </div>
         )}
@@ -276,33 +282,33 @@ const AppLayout: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-white via-purple-50/20 to-indigo-50/30 dark:from-gray-800 dark:via-purple-950/20 dark:to-indigo-950/30 border-b-2 border-purple-200 dark:border-purple-900/30 px-4 py-3 flex items-center justify-between shadow-md">
           <div className="flex items-center">
             {!sidebarOpen && (
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-sm transition-colors mr-3"
+                className="p-2 bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 hover:from-purple-200 hover:to-indigo-200 dark:hover:from-purple-800/40 dark:hover:to-indigo-800/40 rounded-lg transition-all duration-300 mr-3 border border-purple-200 dark:border-purple-800/50"
               >
-                <Menu className="w-5 h-5 dark:text-gray-300" />
+                <Menu className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               </button>
             )}
 
             <div>
               {selectedNode ? (
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  <h2 className="text-lg font-bold bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 bg-clip-text text-transparent">
                     {selectedNode.name}
                   </h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">
+                  <p className="text-sm text-gray-600 dark:text-gray-300 capitalize font-medium">
                     {selectedNode.type} Analytics
                   </p>
                 </div>
               ) : (
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  <h2 className="text-lg font-bold bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 bg-clip-text text-transparent">
                     Portfolio Analytics
                   </h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">
                     Select a client, portfolio, or account to view details
                   </p>
                 </div>

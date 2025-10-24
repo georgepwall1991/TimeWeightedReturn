@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { X, User, Briefcase, Building, Calculator, TrendingUp, BarChart3, DollarSign } from "lucide-react";
-import { formatCurrency } from "../../utils/formatters";
+import { X, User, Briefcase, Building, Calculator, TrendingUp, BarChart3, DollarSign, Shield, Target, Sparkles, Home } from "lucide-react";
 import HoldingsExplorer from "../holdings/HoldingsExplorer";
-import AdvancedAnalyticsDashboard from "../analytics/AdvancedAnalyticsDashboard";
+import AccountDashboard from "../analytics/AccountDashboard";
+import PerformanceDashboard from "../analytics/PerformanceDashboard";
+import ContributionAnalysis from "../analytics/ContributionAnalysis";
+import AttributionAnalysis from "../analytics/AttributionAnalysis";
 import RiskAnalyticsDashboard from "../analytics/RiskAnalyticsDashboard";
-import AccountOverview from "../analytics/AccountOverview";
+import AdvancedChartsGallery from "../analytics/AdvancedChartsGallery";
 import PortfolioOverview from "../analytics/PortfolioOverview";
 import ClientOverview from "../analytics/ClientOverview";
 import type { ClientNodeDto, PortfolioNodeDto, AccountNodeDto } from "../../types/api";
@@ -26,7 +28,12 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
   nodeData,
   onClose,
 }) => {
-  const [activeTab, setActiveTab] = useState<"overview" | "analytics" | "holdings" | "risk">("overview");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "performance" | "holdings" | "contributions" | "attribution" | "risk" | "advanced">("dashboard");
+
+  const handleNavigateToTab = (tab: string) => {
+    setActiveTab(tab as typeof activeTab);
+  };
+
   if (!selectedNode || !nodeData) {
     return (
       <div className="h-full flex items-center justify-center bg-gray-50">
@@ -113,134 +120,116 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-6 space-y-6">
-          {/* Basic Information */}
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-gray-800 mb-3">
-              Basic Information
-            </h3>
-            <div className="grid grid-cols-1 gap-3">
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Name:</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {nodeData.name}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Total Value:</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {formatCurrency(nodeData.totalValueGBP)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Holdings Count:</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {nodeData.holdingsCount}
-                </span>
-              </div>
-
-              {/* Account-specific details */}
-              {selectedNode.type === "account" && (
-                <>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Account Number:</span>
-                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {(nodeData as AccountNodeDto).accountNumber}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Currency:</span>
-                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {(nodeData as AccountNodeDto).currency}
-                    </span>
-                  </div>
-                </>
-              )}
-
-              {/* Portfolio-specific details */}
-              {selectedNode.type === "portfolio" && (
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Accounts Count:</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {(nodeData as PortfolioNodeDto).accountsCount}
-                  </span>
-                </div>
-              )}
-
-              {/* Client-specific details */}
-              {selectedNode.type === "client" && (
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Portfolios Count:</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {(nodeData as ClientNodeDto).portfoliosCount}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Tab Navigation - Only for accounts */}
+          {/* Tab Navigation - 7 Tabs for accounts */}
           {selectedNode.type === "account" && (
             <div>
-              <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
-                <nav className="-mb-px flex space-x-2 sm:space-x-4 md:space-x-8 overflow-x-auto">
+              <div className="border-b-2 border-gradient-to-r from-purple-200 via-indigo-200 to-blue-200 dark:from-purple-800/30 dark:via-indigo-800/30 dark:to-blue-800/30 mb-6 bg-gradient-to-r from-purple-50/20 via-indigo-50/20 to-blue-50/20 dark:from-purple-950/10 dark:via-indigo-950/10 dark:to-blue-950/10 rounded-t-lg">
+                <nav className="-mb-0.5 flex space-x-1 sm:space-x-2 overflow-x-auto px-2">
                   <button
-                    onClick={() => setActiveTab("overview")}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
-                      activeTab === "overview"
-                        ? "border-purple-500 text-purple-600 dark:text-purple-400"
-                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
+                    onClick={() => setActiveTab("dashboard")}
+                    className={`py-3 px-4 border-b-3 font-semibold text-sm whitespace-nowrap transition-all duration-300 rounded-t-lg ${
+                      activeTab === "dashboard"
+                        ? "border-purple-500 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 bg-clip-text text-transparent shadow-glow"
+                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-950/30"
                     }`}
                   >
                     <div className="flex items-center">
-                      <DollarSign className="w-4 h-4 mr-1 sm:mr-2" />
-                      <span className="text-xs sm:text-sm">Overview</span>
+                      <Home className={`w-4 h-4 mr-2 ${activeTab === "dashboard" ? "text-purple-600 dark:text-purple-400" : ""}`} />
+                      <span className="text-xs sm:text-sm">Dashboard</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("performance")}
+                    className={`py-3 px-4 border-b-3 font-semibold text-sm whitespace-nowrap transition-all duration-300 rounded-t-lg ${
+                      activeTab === "performance"
+                        ? "border-blue-500 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent shadow-glow"
+                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-950/30"
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <TrendingUp className={`w-4 h-4 mr-2 ${activeTab === "performance" ? "text-blue-600 dark:text-blue-400" : ""}`} />
+                      <span className="text-xs sm:text-sm">Performance</span>
                     </div>
                   </button>
                   <button
                     onClick={() => setActiveTab("holdings")}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                    className={`py-3 px-4 border-b-3 font-semibold text-sm whitespace-nowrap transition-all duration-300 rounded-t-lg ${
                       activeTab === "holdings"
-                        ? "border-purple-500 text-purple-600 dark:text-purple-400"
-                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
+                        ? "border-fuchsia-500 bg-gradient-to-r from-fuchsia-600 to-purple-600 bg-clip-text text-transparent shadow-glow"
+                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-fuchsia-600 dark:hover:text-fuchsia-400 hover:bg-fuchsia-50/50 dark:hover:bg-fuchsia-950/30"
                     }`}
                   >
                     <div className="flex items-center">
-                      <BarChart3 className="w-4 h-4 mr-1 sm:mr-2" />
+                      <BarChart3 className={`w-4 h-4 mr-2 ${activeTab === "holdings" ? "text-fuchsia-600 dark:text-fuchsia-400" : ""}`} />
                       <span className="text-xs sm:text-sm">Holdings</span>
                     </div>
                   </button>
                   <button
-                    onClick={() => setActiveTab("analytics")}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
-                      activeTab === "analytics"
-                        ? "border-purple-500 text-purple-600 dark:text-purple-400"
-                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
+                    onClick={() => setActiveTab("contributions")}
+                    className={`py-3 px-4 border-b-3 font-semibold text-sm whitespace-nowrap transition-all duration-300 rounded-t-lg ${
+                      activeTab === "contributions"
+                        ? "border-emerald-500 bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent shadow-glow"
+                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30"
                     }`}
                   >
                     <div className="flex items-center">
-                      <Calculator className="w-4 h-4 mr-1 sm:mr-2" />
-                      <span className="text-xs sm:text-sm">Analytics</span>
+                      <DollarSign className={`w-4 h-4 mr-2 ${activeTab === "contributions" ? "text-emerald-600 dark:text-emerald-400" : ""}`} />
+                      <span className="text-xs sm:text-sm">Contributions</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("attribution")}
+                    className={`py-3 px-4 border-b-3 font-semibold text-sm whitespace-nowrap transition-all duration-300 rounded-t-lg ${
+                      activeTab === "attribution"
+                        ? "border-amber-500 bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent shadow-glow"
+                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50/50 dark:hover:bg-amber-950/30"
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <Target className={`w-4 h-4 mr-2 ${activeTab === "attribution" ? "text-amber-600 dark:text-amber-400" : ""}`} />
+                      <span className="text-xs sm:text-sm">Attribution</span>
                     </div>
                   </button>
                   <button
                     onClick={() => setActiveTab("risk")}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                    className={`py-3 px-4 border-b-3 font-semibold text-sm whitespace-nowrap transition-all duration-300 rounded-t-lg ${
                       activeTab === "risk"
-                        ? "border-purple-500 text-purple-600 dark:text-purple-400"
-                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
+                        ? "border-red-500 bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent shadow-glow"
+                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50/50 dark:hover:bg-red-950/30"
                     }`}
                   >
                     <div className="flex items-center">
-                      <TrendingUp className="w-4 h-4 mr-1 sm:mr-2" />
+                      <Shield className={`w-4 h-4 mr-2 ${activeTab === "risk" ? "text-red-600 dark:text-red-400" : ""}`} />
                       <span className="text-xs sm:text-sm">Risk</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("advanced")}
+                    className={`py-3 px-4 border-b-3 font-semibold text-sm whitespace-nowrap transition-all duration-300 rounded-t-lg ${
+                      activeTab === "advanced"
+                        ? "border-indigo-500 bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent shadow-glow"
+                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30"
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <Sparkles className={`w-4 h-4 mr-2 ${activeTab === "advanced" ? "text-indigo-600 dark:text-indigo-400" : ""}`} />
+                      <span className="text-xs sm:text-sm">Advanced</span>
                     </div>
                   </button>
                 </nav>
               </div>
 
               {/* Tab Content */}
-              {activeTab === "overview" && (
-                <AccountOverview
+              {activeTab === "dashboard" && (
+                <AccountDashboard
+                  accountId={selectedNode.id}
+                  accountName={selectedNode.name}
+                  onNavigateToTab={handleNavigateToTab}
+                />
+              )}
+
+              {activeTab === "performance" && (
+                <PerformanceDashboard
                   accountId={selectedNode.id}
                   accountName={selectedNode.name}
                 />
@@ -253,15 +242,30 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
                 />
               )}
 
-              {activeTab === "analytics" && (
-                <AdvancedAnalyticsDashboard
+              {activeTab === "contributions" && (
+                <ContributionAnalysis
                   accountId={selectedNode.id}
                   accountName={selectedNode.name}
                 />
               )}
 
+              {activeTab === "attribution" && (
+                <AttributionAnalysis
+                  data={[]}
+                  accountName={selectedNode.name}
+                  period="90 days"
+                />
+              )}
+
               {activeTab === "risk" && (
                 <RiskAnalyticsDashboard
+                  accountId={selectedNode.id}
+                  accountName={selectedNode.name}
+                />
+              )}
+
+              {activeTab === "advanced" && (
+                <AdvancedChartsGallery
                   accountId={selectedNode.id}
                   accountName={selectedNode.name}
                 />

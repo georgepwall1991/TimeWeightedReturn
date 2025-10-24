@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { TrendingUp, TrendingDown, Target, BarChart3, PieChart, Info, Calculator } from 'lucide-react';
 import { formatPercentage } from '../../utils/formatters';
+import { WaterfallChart } from '../charts/advanced';
 
 interface AttributionData {
   sector: string;
@@ -193,6 +194,20 @@ const AttributionAnalysis: React.FC<AttributionAnalysisProps> = ({
           ))}
         </div>
       </div>
+
+      {/* Waterfall Chart */}
+      <WaterfallChart
+        data={[
+          { name: 'Benchmark', value: 0, isTotal: true },
+          { name: 'Allocation', value: totals.allocationEffect },
+          { name: 'Selection', value: totals.selectionEffect },
+          { name: 'Interaction', value: totals.interactionEffect },
+          { name: 'Portfolio', value: totals.totalEffect, isTotal: true },
+        ]}
+        title="Attribution Waterfall Analysis"
+        height={400}
+        valueType="percentage"
+      />
 
       {/* Attribution Table */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">

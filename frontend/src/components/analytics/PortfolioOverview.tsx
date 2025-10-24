@@ -54,9 +54,11 @@ const PortfolioOverview: React.FC<PortfolioOverviewProps> = ({ portfolioId, port
 
   if (!portfolioStats) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 dark:border-green-400"></div>
-        <span className="ml-3 text-gray-600 dark:text-gray-400">Loading portfolio overview...</span>
+      <div className="flex items-center justify-center py-12 bg-gradient-to-br from-white via-green-50/20 to-emerald-50/30 dark:from-gray-800 dark:via-green-950/10 dark:to-emerald-950/20 rounded-xl border border-green-200 dark:border-green-900/30 shadow-lg">
+        <div className="relative">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-3 border-b-3 border-green-600 dark:border-green-400"></div>
+        </div>
+        <span className="ml-3 font-medium bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Loading portfolio overview...</span>
       </div>
     );
   }
@@ -64,13 +66,15 @@ const PortfolioOverview: React.FC<PortfolioOverviewProps> = ({ portfolioId, port
   return (
     <div className="space-y-6">
       {/* Header Card */}
-      <div className="bg-linear-to-r from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 rounded-lg border border-green-200 dark:border-green-700 p-6">
+      <div className="bg-gradient-to-br from-white via-green-50/30 to-emerald-50/50 dark:from-gray-800 dark:via-green-950/20 dark:to-emerald-950/30 rounded-xl border-2 border-green-200 dark:border-green-800/50 p-6 shadow-lg">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <Briefcase className="w-8 h-8 text-green-600 dark:text-green-400" />
+            <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg">
+              <Briefcase className="w-8 h-8 text-white" />
+            </div>
             <div>
-              <h2 className="text-2xl font-bold text-green-900 dark:text-green-300">{portfolioData.name}</h2>
-              <p className="text-sm text-green-700 dark:text-green-400">Portfolio Overview</p>
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 bg-clip-text text-transparent">{portfolioData.name}</h2>
+              <p className="text-sm font-medium text-green-700 dark:text-green-400">Portfolio Overview</p>
             </div>
           </div>
           <RefreshPricesButton size="sm" variant="secondary" />
@@ -80,43 +84,49 @@ const PortfolioOverview: React.FC<PortfolioOverviewProps> = ({ portfolioId, port
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Total Value */}
-        <div className="bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
+        <div className="group bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/50 dark:from-gray-800 dark:via-blue-950/20 dark:to-indigo-950/30 rounded-xl p-6 border border-blue-200 dark:border-blue-900/30 shadow-lg hover:shadow-glow-lg transition-all duration-300 hover:scale-105">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-blue-700 dark:text-blue-400">Total Value</span>
-            <DollarSign className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <span className="text-sm font-semibold text-gray-600 dark:text-gray-300">Total Value</span>
+            <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-lg">
+              <DollarSign className="w-5 h-5 text-white" />
+            </div>
           </div>
-          <div className="text-2xl font-bold text-blue-900 dark:text-blue-300">
+          <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
             {formatCurrency(portfolioStats.totalValue)}
           </div>
-          <div className="text-xs text-blue-600 mt-1">
+          <div className="text-xs text-blue-600 dark:text-blue-400 mt-1 font-medium">
             Across {portfolioStats.accountsCount} accounts
           </div>
         </div>
 
         {/* Total Holdings */}
-        <div className="bg-linear-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+        <div className="group bg-gradient-to-br from-white via-purple-50/30 to-fuchsia-50/50 dark:from-gray-800 dark:via-purple-950/20 dark:to-fuchsia-950/30 rounded-xl p-6 border border-purple-200 dark:border-purple-900/30 shadow-lg hover:shadow-glow-lg transition-all duration-300 hover:scale-105">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-purple-700 dark:text-purple-400">Total Holdings</span>
-            <BarChart3 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <span className="text-sm font-semibold text-gray-600 dark:text-gray-300">Total Holdings</span>
+            <div className="p-2 bg-gradient-to-br from-purple-500 to-fuchsia-600 rounded-lg shadow-lg">
+              <BarChart3 className="w-5 h-5 text-white" />
+            </div>
           </div>
-          <div className="text-2xl font-bold text-purple-900 dark:text-purple-300">
+          <div className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-fuchsia-600 bg-clip-text text-transparent">
             {portfolioStats.totalHoldings}
           </div>
-          <div className="text-xs text-purple-600 mt-1">
+          <div className="text-xs text-purple-600 dark:text-purple-400 mt-1 font-medium">
             Instruments tracked
           </div>
         </div>
 
         {/* Accounts Count */}
-        <div className="bg-linear-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 rounded-lg p-4 border border-green-200 dark:border-green-700">
+        <div className="group bg-gradient-to-br from-white via-green-50/30 to-emerald-50/50 dark:from-gray-800 dark:via-green-950/20 dark:to-emerald-950/30 rounded-xl p-6 border border-green-200 dark:border-green-900/30 shadow-lg hover:shadow-glow-lg transition-all duration-300 hover:scale-105">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-green-700 dark:text-green-400">Accounts</span>
-            <Briefcase className="w-5 h-5 text-green-600 dark:text-green-400" />
+            <span className="text-sm font-semibold text-gray-600 dark:text-gray-300">Accounts</span>
+            <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg shadow-lg">
+              <Briefcase className="w-5 h-5 text-white" />
+            </div>
           </div>
-          <div className="text-2xl font-bold text-green-900 dark:text-green-300">
+          <div className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
             {portfolioStats.accountsCount}
           </div>
-          <div className="text-xs text-green-600 mt-1">
+          <div className="text-xs text-green-600 dark:text-green-400 mt-1 font-medium">
             Active accounts
           </div>
         </div>
@@ -125,10 +135,12 @@ const PortfolioOverview: React.FC<PortfolioOverviewProps> = ({ portfolioId, port
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Account Value Distribution */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-gradient-to-br from-white via-green-50/20 to-emerald-50/30 dark:from-gray-800 dark:via-green-950/10 dark:to-emerald-950/20 rounded-xl border border-green-200 dark:border-green-900/30 p-6 shadow-lg hover:shadow-glow transition-all duration-300">
           <div className="flex items-center gap-2 mb-4">
-            <PieChart className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Value by Account</h3>
+            <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg shadow-lg">
+              <PieChart className="w-5 h-5 text-white" />
+            </div>
+            <h3 className="text-lg font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Value by Account</h3>
           </div>
           {portfolioStats.accounts.length > 0 ? (
             <ResponsiveContainer width="100%" height={250}>
@@ -159,10 +171,12 @@ const PortfolioOverview: React.FC<PortfolioOverviewProps> = ({ portfolioId, port
         </div>
 
         {/* Account Comparison Bar Chart */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-gradient-to-br from-white via-teal-50/20 to-cyan-50/30 dark:from-gray-800 dark:via-teal-950/10 dark:to-cyan-950/20 rounded-xl border border-teal-200 dark:border-teal-900/30 p-6 shadow-lg hover:shadow-glow transition-all duration-300">
           <div className="flex items-center gap-2 mb-4">
-            <BarChart3 className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Account Comparison</h3>
+            <div className="p-2 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg shadow-lg">
+              <BarChart3 className="w-5 h-5 text-white" />
+            </div>
+            <h3 className="text-lg font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">Account Comparison</h3>
           </div>
           {portfolioStats.accounts.length > 0 ? (
             <ResponsiveContainer width="100%" height={250}>
@@ -198,8 +212,8 @@ const PortfolioOverview: React.FC<PortfolioOverviewProps> = ({ portfolioId, port
       </div>
 
       {/* Accounts Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Details</h3>
+      <div className="bg-gradient-to-br from-white via-purple-50/10 to-indigo-50/20 dark:from-gray-800 dark:via-purple-950/5 dark:to-indigo-950/10 rounded-xl border border-purple-200 dark:border-purple-900/30 p-6 shadow-lg">
+        <h3 className="text-lg font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-4">Account Details</h3>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-900">
@@ -253,8 +267,8 @@ const PortfolioOverview: React.FC<PortfolioOverviewProps> = ({ portfolioId, port
       </div>
 
       {/* Summary */}
-      <div className="bg-linear-to-r from-gray-50 to-gray-100 dark:from-gray-800/50 dark:to-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600 p-4">
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">Portfolio Summary</h3>
+      <div className="bg-gradient-to-br from-white via-gray-50 to-green-50/30 dark:from-gray-800 dark:via-gray-800/50 dark:to-green-950/20 rounded-xl border-2 border-gray-200 dark:border-gray-700 p-6 shadow-lg">
+        <h3 className="text-lg font-bold bg-gradient-to-r from-gray-700 via-green-600 to-emerald-600 bg-clip-text text-transparent mb-4">Portfolio Summary</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
             <div className="text-xs text-gray-600 dark:text-gray-400">Portfolio Name</div>
