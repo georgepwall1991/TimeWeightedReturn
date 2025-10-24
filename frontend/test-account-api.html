@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Account API Diagnostics</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        pre { background: #f5f5f5; padding: 10px; overflow: auto; }
+    </style>
+</head>
+<body>
+    <h1>Account API Diagnostics</h1>
+    <div id="results"></div>
+
+    <script>
+        const results = document.getElementById('results');
+
+        async function testAPI() {
+            // First, login to get token
+            results.innerHTML += '<p class="info">Step 1: Logging in...</p>';
+
+            try {
+                const loginResp = await fetch('http://localhost:5011/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'admin@timeweightedreturn.com',
+                        password: 'Admin@123'
+                    })
+                });
+
+                const loginData = await loginResp.json();
+                const token = loginData.accessToken;
+                results.innerHTML += '<p class="success">✓ Login successful</p>';
+
+                // Get portfolio tree
+                results.innerHTML += '<p class="info">Step 2: Fetching portfolio tree...</p>';
+                const treeResp = await fetch('http://localhost:5011/api/tree', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const tree = await treeResp.json();
+
+                if (tree.clients && tree.clients.length > 0) {
+                    const client = tree.clients[0];
+                    const portfolio = client.portfolios[0];
+                    const account = portfolio.accounts[0];
+
+                    results.innerHTML += `<p class="success">✓ Found account: ${account.name} (ID: ${account.id})</p>`;
+                    results.innerHTML += `<pre>${JSON.stringify(account, null, 2)}</pre>`;
+
+                    // Test account details endpoint
+                    results.innerHTML += '<p class="info">Step 3: Fetching account details...</p>';
+                    const accountResp = await fetch(`http://localhost:5011/api/account/${account.id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (accountResp.ok) {
+                        const accountData = await accountResp.json();
+                        results.innerHTML += '<p class="success">✓ Account details loaded</p>';
+                        results.innerHTML += `<pre>${JSON.stringify(accountData, null, 2)}</pre>`;
+                    } else {
+                        results.innerHTML += `<p class="error">✗ Account details failed: ${accountResp.status}</p>`;
+                    }
+
+                    // Test holdings endpoint
+                    results.innerHTML += '<p class="info">Step 4: Fetching account holdings...</p>';
+                    const holdingsResp = await fetch(`http://localhost:5011/api/account/${account.id}/holdings`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (holdingsResp.ok) {
+                        const holdingsData = await holdingsResp.json();
+                        results.innerHTML += '<p class="success">✓ Account holdings loaded</p>';
+                        results.innerHTML += `<p>Holdings count: ${holdingsData.count}</p>`;
+                        results.innerHTML += `<pre>${JSON.stringify(holdingsData, null, 2).substring(0, 500)}...</pre>`;
+                    } else {
+                        results.innerHTML += `<p class="error">✗ Holdings failed: ${holdingsResp.status}</p>`;
+                    }
+
+                    // Test TWR endpoint
+                    results.innerHTML += '<p class="info">Step 5: Calculating TWR...</p>';
+                    const end = new Date().toISOString().split('T')[0];
+                    const start = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+                    const twrResp = await fetch(`http://localhost:5011/api/account/${account.id}/twr?from=${start}&to=${end}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (twrResp.ok) {
+                        const twrData = await twrResp.json();
+                        results.innerHTML += '<p class="success">✓ TWR calculated</p>';
+                        results.innerHTML += `<pre>${JSON.stringify(twrData, null, 2)}</pre>`;
+                    } else {
+                        results.innerHTML += `<p class="error">✗ TWR failed: ${twrResp.status}</p>`;
+                        const errorText = await twrResp.text();
+                        results.innerHTML += `<pre>${errorText}</pre>`;
+                    }
+
+                } else {
+                    results.innerHTML += '<p class="error">✗ No accounts found in portfolio tree</p>';
+                }
+
+            } catch (error) {
+                results.innerHTML += `<p class="error">✗ Error: ${error.message}</p>`;
+            }
+        }
+
+        testAPI();
+    </script>
+</body>
+</html>

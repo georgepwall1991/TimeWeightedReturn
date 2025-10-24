@@ -7,6 +7,7 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { AuthInitializer } from './components/auth/AuthInitializer';
 import { AuthErrorBoundary } from './components/auth/AuthErrorBoundary';
 import { ToastProvider } from './contexts/ToastContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastContainer } from './components/common/Toast';
 import { errorService } from './services/errorService';
 import './index.css';
@@ -18,16 +19,17 @@ const Register = lazy(() => import('./components/auth/Register').then(module => 
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail').then(module => ({ default: module.VerifyEmail })));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword').then(module => ({ default: module.ForgotPassword })));
 const ResetPassword = lazy(() => import('./pages/ResetPassword').then(module => ({ default: module.ResetPassword })));
+const Admin = lazy(() => import('./pages/Admin'));
 
 // Set up global error handlers
 errorService.setupGlobalErrorHandlers();
 
 // Loading fallback component
 const LoadingFallback = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gray-50">
+  <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
     <div className="text-center">
-      <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600 mb-4"></div>
-      <p className="text-gray-600">Loading...</p>
+      <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600 dark:border-indigo-400 mb-4"></div>
+      <p className="text-gray-600 dark:text-gray-400">Loading...</p>
     </div>
   </div>
 );
@@ -37,30 +39,40 @@ function App() {
     <ErrorBoundary>
       <Provider store={store}>
         <ToastProvider>
-          <AuthErrorBoundary>
-            <BrowserRouter>
-              <AuthInitializer />
-              <ToastContainer />
-              <Suspense fallback={<LoadingFallback />}>
-                <Routes>
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/verify-email" element={<VerifyEmail />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
-                  <Route
-                    path="/*"
-                    element={
-                      <ProtectedRoute>
-                        <AppLayout />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="*" element={<Navigate to="/login" replace />} />
-                </Routes>
-              </Suspense>
-            </BrowserRouter>
-          </AuthErrorBoundary>
+          <ThemeProvider>
+            <AuthErrorBoundary>
+              <BrowserRouter>
+                <AuthInitializer />
+                <ToastContainer />
+                <Suspense fallback={<LoadingFallback />}>
+                  <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/verify-email" element={<VerifyEmail />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route
+                      path="/admin"
+                      element={
+                        <ProtectedRoute>
+                          <Admin />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/*"
+                      element={
+                        <ProtectedRoute>
+                          <AppLayout />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route path="*" element={<Navigate to="/login" replace />} />
+                  </Routes>
+                </Suspense>
+              </BrowserRouter>
+            </AuthErrorBoundary>
+          </ThemeProvider>
         </ToastProvider>
       </Provider>
     </ErrorBoundary>

@@ -15,6 +15,42 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "src\Infra
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+		.gitignore = .gitignore
+		.editorconfig = .editorconfig
+		Makefile = Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker", "Docker", "{B2C3D4E5-F6A7-8901-BCDE-F12345678901}"
+	ProjectSection(SolutionItems) = preProject
+		Dockerfile = Dockerfile
+		.dockerignore = .dockerignore
+		docker-compose.yml = docker-compose.yml
+		docker-compose.override.yml.example = docker-compose.override.yml.example
+		.env.example = .env.example
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker Scripts", "Docker Scripts", "{C3D4E5F6-A7B8-9012-CDEF-123456789012}"
+	ProjectSection(SolutionItems) = preProject
+		scripts\docker-dev.sh = scripts\docker-dev.sh
+		scripts\docker-dev.ps1 = scripts\docker-dev.ps1
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{D4E5F6A7-B8C9-0123-DEF1-234567890123}"
+	ProjectSection(SolutionItems) = preProject
+		DOCKER.md = DOCKER.md
+		DOCKER_QUICK_REFERENCE.md = DOCKER_QUICK_REFERENCE.md
+		SECURITY_SETUP.md = SECURITY_SETUP.md
+		docs\Current-System-State.md = docs\Current-System-State.md
+		docs\DOCKER_SETUP_SUMMARY.md = docs\DOCKER_SETUP_SUMMARY.md
+		docs\RESIZABLE_SIDEBAR_FEATURE.md = docs\RESIZABLE_SIDEBAR_FEATURE.md
+		docs\Sprint4-Summary.md = docs\Sprint4-Summary.md
+		docs\Sprint4.5-CashFlow-Enhancement.md = docs\Sprint4.5-CashFlow-Enhancement.md
+		docs\SPRINT_STATUS.md = docs\SPRINT_STATUS.md
+	EndProjectSection
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain.Tests", "tests\Domain.Tests\Domain.Tests.csproj", "{8C444A98-A3D7-462E-83F5-98982674E80E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application.Tests", "tests\Application.Tests\Application.Tests.csproj", "{EF4CB649-2CE0-4A01-B514-0F7616753752}"
@@ -127,5 +163,6 @@ Global
 		{8C444A98-A3D7-462E-83F5-98982674E80E} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{EF4CB649-2CE0-4A01-B514-0F7616753752} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{BF9462FD-7618-4EE2-B653-C5D74AE38057} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{C3D4E5F6-A7B8-9012-CDEF-123456789012} = {B2C3D4E5-F6A7-8901-BCDE-F12345678901}
 	EndGlobalSection
 EndGlobal

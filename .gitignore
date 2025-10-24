@@ -103,3 +103,9 @@ coverage/
 *.db
 *.db-shm
 *.db-wal
+
+# Docker
+.env
+!.env.example
+data/
+!data/.gitkeep

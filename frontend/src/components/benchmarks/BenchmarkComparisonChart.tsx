@@ -74,21 +74,21 @@ export const BenchmarkComparisonChart: React.FC<BenchmarkComparisonChartProps> =
     <div className="space-y-4">
       {/* Summary Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <h4 className="text-xs font-medium text-gray-500 uppercase">Portfolio Return</h4>
           <p className={`text-2xl font-bold mt-1 ${data.portfolioReturn >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {formatPercent(data.portfolioReturn)}
           </p>
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <h4 className="text-xs font-medium text-gray-500 uppercase">Benchmark Return</h4>
           <p className={`text-2xl font-bold mt-1 ${data.benchmarkReturn >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {formatPercent(data.benchmarkReturn)}
           </p>
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <h4 className="text-xs font-medium text-gray-500 uppercase">Active Return</h4>
           <p className={`text-2xl font-bold mt-1 ${data.activeReturn >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {formatPercent(data.activeReturn)}
@@ -98,7 +98,7 @@ export const BenchmarkComparisonChart: React.FC<BenchmarkComparisonChartProps> =
           </p>
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <h4 className="text-xs font-medium text-gray-500 uppercase">Tracking Error</h4>
           <p className="text-2xl font-bold mt-1 text-gray-700">
             {formatPercent(data.trackingError)}
@@ -108,7 +108,7 @@ export const BenchmarkComparisonChart: React.FC<BenchmarkComparisonChartProps> =
       </div>
 
       {/* Performance Chart */}
-      <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
         <h3 className="text-lg font-semibold mb-4">
           Cumulative Performance Comparison
         </h3>

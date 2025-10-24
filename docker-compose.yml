@@ -1,0 +1,99 @@
+services:
+  # Frontend Development Server
+  frontend:
+    image: node:20-alpine
+    container_name: twr-frontend
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules  # Use container's node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:8080/api
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    networks:
+      - twr-network
+    restart: unless-stopped
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: twr-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=portfolioanalytics
+      - POSTGRES_USER=portfoliouser
+      - POSTGRES_PASSWORD=portfoliopass
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - twr-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portfoliouser -d portfolioanalytics"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  # Backend API (Production-like build)
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: twr-api
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=portfolioanalytics;Username=portfoliouser;Password=portfoliopass;
+      - Jwt__SecretKey=docker-dev-secret-key-change-in-production-min-32-chars
+      - AdminSeed__Email=admin@portfolioanalytics.com
+      - AdminSeed__Password=Admin123!@#
+      - MarketData__AlphaVantage__ApiKey=${ALPHA_VANTAGE_API_KEY}
+      - MarketData__Finnhub__ApiKey=${FINNHUB_API_KEY}
+      - MarketData__EnableAutoUpdate=${MARKET_DATA_ENABLE_AUTO_UPDATE:-true}
+      - MarketData__ScheduleCron=${MARKET_DATA_SCHEDULE_CRON:-0 2 * * *}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - twr-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health/ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  # Redis (for future caching)
+  redis:
+    image: redis:7-alpine
+    container_name: twr-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - twr-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+networks:
+  twr-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local

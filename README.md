@@ -3,9 +3,10 @@
 > **A comprehensive portfolio analytics platform for private wealth management, built with .NET Core and React**
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]
-[![.NET Version](https://img.shields.io/badge/.NET-8.0-blue.svg)]
-[![React](https://img.shields.io/badge/React-18-61dafb.svg)]
+[![.NET Version](https://img.shields.io/badge/.NET-9.0-blue.svg)]
+[![React](https://img.shields.io/badge/React-19-61dafb.svg)]
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)]
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED.svg)]
 [![License](https://img.shields.io/badge/license-MIT-green.svg)]
 
 ## 🌟 Features Overview
@@ -41,13 +42,43 @@
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Option 1: 🐳 Docker (Recommended)
 
-- **.NET 8 SDK** - [Download here](https://dotnet.microsoft.com/download)
-- **Node.js 18+** - [Download here](https://nodejs.org/)
-- **SQL Server** (LocalDB or full instance)
+**Prerequisites:** Docker Desktop ([Download](https://www.docker.com/products/docker-desktop))
 
-### 🔧 **Development Setup**
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/TimeWeightedReturn.git
+cd TimeWeightedReturn
+
+# Start all services with one command
+./scripts/docker-dev.sh start        # Linux/macOS
+.\scripts\docker-dev.ps1 -Command start  # Windows PowerShell
+
+# Or use docker-compose directly
+docker-compose up -d
+```
+
+**🎯 That's it!** Access:
+- **Frontend:** http://localhost:5173
+- **API:** http://localhost:8080
+- **Swagger:** http://localhost:8080/swagger
+
+**Default Login:**
+```
+Email: admin@portfolioanalytics.com
+Password: Admin123!@#
+```
+
+📖 **Full Docker Guide:** See [DOCKER.md](DOCKER.md) for complete documentation.
+
+---
+
+### Option 2: 🔧 Local Development Setup
+
+**Prerequisites:**
+- **.NET 9 SDK** - [Download here](https://dotnet.microsoft.com/download)
+- **Node.js 20+** - [Download here](https://nodejs.org/)
 
 ```bash
 # Clone the repository
@@ -68,7 +99,7 @@ cd ..
 dotnet run --project src/Api
 ```
 
-**🎯 That's it!** Open `http://localhost:5174` to see the application.
+**🎯 That's it!** Open `http://localhost:5173` to see the application.
 
 ---
 

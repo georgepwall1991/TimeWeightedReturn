@@ -36,7 +36,7 @@ export const BenchmarkSelector: React.FC<BenchmarkSelectorProps> = ({
         value={value || ''}
         onChange={(e) => onChange(e.target.value || null)}
         disabled={disabled || isLoading}
-        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+        className="mt-1 block w-full rounded-md border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
       >
         <option value="">No benchmark</option>
         {isLoading ? (

@@ -502,6 +502,11 @@ public class DataSeeder
             },
             new
             {
+                Base = "GBP", Quote = "INR", BaseRate = 105.00m, MinRate = 95.00m, MaxRate = 115.00m,
+                Volatility = 0.007m
+            },
+            new
+            {
                 Base = "EUR", Quote = "USD", BaseRate = 1.08m, MinRate = 0.95m, MaxRate = 1.20m, Volatility = 0.005m
             },
             new
@@ -517,6 +522,11 @@ public class DataSeeder
             {
                 Base = "EUR", Quote = "JPY", BaseRate = 171.00m, MinRate = 150.00m, MaxRate = 190.00m,
                 Volatility = 0.006m
+            },
+            new
+            {
+                Base = "USD", Quote = "INR", BaseRate = 83.00m, MinRate = 75.00m, MaxRate = 90.00m,
+                Volatility = 0.007m
             }
         };
 

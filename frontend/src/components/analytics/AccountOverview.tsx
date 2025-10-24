@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { TrendingUp, TrendingDown, DollarSign, Calendar, BarChart3, PieChart } from 'lucide-react';
 import { api } from '../../services/api';
 import { formatCurrency, formatPercentage } from '../../utils/formatters';
-import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, type PieLabelRenderProps } from 'recharts';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip } from 'recharts';
 import { AnalyticsDashboardSkeleton } from '../common/Skeleton';
 
@@ -26,12 +26,12 @@ const AccountOverview: React.FC<AccountOverviewProps> = ({ accountId, accountNam
   }, []);
 
   // Fetch account data
-  const { data: accountData } = api.useGetAccountQuery({ accountId });
-  const { data: currentHoldings } = api.useGetAccountHoldingsQuery({
+  const { data: accountData, isLoading: accountLoading, error: accountError } = api.useGetAccountQuery({ accountId });
+  const { data: currentHoldings, isLoading: holdingsLoading, error: holdingsError } = api.useGetAccountHoldingsQuery({
     accountId,
     date: dateRange.end,
   });
-  const { data: twrData } = api.useCalculateTWRQuery({
+  const { data: twrData, isLoading: twrLoading, error: twrError } = api.useCalculateTWRQuery({
     accountId,
     from: dateRange.start,
     to: dateRange.end,
@@ -73,11 +73,27 @@ const AccountOverview: React.FC<AccountOverviewProps> = ({ accountId, accountNam
     }));
   }, [historyData]);
 
-  const isLoading = !accountData || !currentHoldings || !twrData;
+  // Only require account and holdings data - TWR and history are optional
+  const isLoading = accountLoading || holdingsLoading || twrLoading;
+  const hasRequiredData = accountData && currentHoldings;
   const isPositiveReturn = twrData && twrData.timeWeightedReturn >= 0;
 
   if (isLoading) {
     return <AnalyticsDashboardSkeleton />;
+  }
+
+  // If critical data failed to load, show error
+  if (!hasRequiredData || accountError || holdingsError) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-600 dark:text-red-400 mb-2">Failed to load account data</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {accountError ? 'Could not fetch account details' : 'Could not fetch holdings data'}
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -85,7 +101,7 @@ const AccountOverview: React.FC<AccountOverviewProps> = ({ accountId, accountNam
       {/* Key Performance Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Current Value */}
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+        <div className="bg-linear-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-blue-700">Current Value</span>
             <DollarSign className="w-5 h-5 text-blue-600" />
@@ -99,37 +115,41 @@ const AccountOverview: React.FC<AccountOverviewProps> = ({ accountId, accountNam
         </div>
 
         {/* 90-Day Return */}
-        <div className={`bg-gradient-to-br ${
-          isPositiveReturn ? 'from-green-50 to-green-100' : 'from-red-50 to-red-100'
+        <div className={`bg-linear-to-br ${
+          twrData && isPositiveReturn ? 'from-green-50 to-green-100' : twrData && !isPositiveReturn ? 'from-red-50 to-red-100' : 'from-gray-50 to-gray-100'
         } rounded-lg p-4 border ${
-          isPositiveReturn ? 'border-green-200' : 'border-red-200'
+          twrData && isPositiveReturn ? 'border-green-200' : twrData && !isPositiveReturn ? 'border-red-200' : 'border-gray-200'
         }`}>
           <div className="flex items-center justify-between mb-2">
             <span className={`text-sm font-medium ${
-              isPositiveReturn ? 'text-green-700' : 'text-red-700'
+              twrData && isPositiveReturn ? 'text-green-700' : twrData && !isPositiveReturn ? 'text-red-700' : 'text-gray-700'
             }`}>
               90-Day Return
             </span>
-            {isPositiveReturn ? (
-              <TrendingUp className="w-5 h-5 text-green-600" />
+            {twrData ? (
+              isPositiveReturn ? (
+                <TrendingUp className="w-5 h-5 text-green-600" />
+              ) : (
+                <TrendingDown className="w-5 h-5 text-red-600" />
+              )
             ) : (
-              <TrendingDown className="w-5 h-5 text-red-600" />
+              <TrendingUp className="w-5 h-5 text-gray-400" />
             )}
           </div>
           <div className={`text-2xl font-bold ${
-            isPositiveReturn ? 'text-green-900' : 'text-red-900'
+            twrData && isPositiveReturn ? 'text-green-900' : twrData && !isPositiveReturn ? 'text-red-900' : 'text-gray-500'
           }`}>
-            {formatPercentage(twrData.timeWeightedReturn)}
+            {twrData ? formatPercentage(twrData.timeWeightedReturn) : 'N/A'}
           </div>
           <div className={`text-xs ${
-            isPositiveReturn ? 'text-green-600' : 'text-red-600'
+            twrData && isPositiveReturn ? 'text-green-600' : twrData && !isPositiveReturn ? 'text-red-600' : 'text-gray-500'
           } mt-1`}>
-            {new Date(dateRange.start).toLocaleDateString('en-GB')} - {new Date(dateRange.end).toLocaleDateString('en-GB')}
+            {twrError ? 'Insufficient data' : `${new Date(dateRange.start).toLocaleDateString('en-GB')} - ${new Date(dateRange.end).toLocaleDateString('en-GB')}`}
           </div>
         </div>
 
         {/* Account Info */}
-        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
+        <div className="bg-linear-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-purple-700">Account</span>
             <Calendar className="w-5 h-5 text-purple-600" />
@@ -159,7 +179,7 @@ const AccountOverview: React.FC<AccountOverviewProps> = ({ accountId, accountNam
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percentage }) => `${name}: ${percentage.toFixed(1)}%`}
+                  label={(props: PieLabelRenderProps) => `${props.name}: ${(props.percentage as number).toFixed(1)}%`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
@@ -212,7 +232,7 @@ const AccountOverview: React.FC<AccountOverviewProps> = ({ accountId, accountNam
                 <Line
                   type="monotone"
                   dataKey="value"
-                  stroke={isPositiveReturn ? '#10B981' : '#EF4444'}
+                  stroke={twrData && isPositiveReturn ? '#10B981' : '#6B7280'}
                   strokeWidth={2}
                   dot={false}
                   activeDot={{ r: 4 }}
@@ -289,7 +309,7 @@ const AccountOverview: React.FC<AccountOverviewProps> = ({ accountId, accountNam
       )}
 
       {/* Summary Stats */}
-      <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 p-4">
+      <div className="bg-linear-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 p-4">
         <h3 className="text-sm font-semibold text-gray-700 mb-3">Summary</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>

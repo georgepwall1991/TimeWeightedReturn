@@ -56,9 +56,15 @@ const ContributionDashboard: React.FC<ContributionDashboardProps> = ({
     const holdings = holdingsData.holdings;
     const totalValue = holdings.reduce((sum, h) => sum + h.valueGBP, 0);
 
-    return holdings.map((holding): ContributionData => {
+    // Seeded random for consistent renders
+    const seededRandom = (index: number) => {
+      const x = Math.sin(index * 12345) * 10000;
+      return x - Math.floor(x);
+    };
+
+    return holdings.map((holding, index): ContributionData => {
       // Mock historical data for demonstration
-      const startValue = holding.valueGBP * (0.9 + Math.random() * 0.2); // ±10% variation
+      const startValue = holding.valueGBP * (0.9 + seededRandom(index) * 0.2); // ±10% variation
       const endValue = holding.valueGBP;
       const valueChange = endValue - startValue;
 
@@ -168,12 +174,12 @@ const ContributionDashboard: React.FC<ContributionDashboardProps> = ({
       <div className="space-y-6">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="animate-pulse">
-            <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
+            <div className="h-6 bg-gray-200 rounded-sm w-1/3 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded-sm w-1/2 mb-6"></div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="bg-gray-50 rounded-lg p-4">
-                  <div className="h-16 bg-gray-200 rounded"></div>
+                  <div className="h-16 bg-gray-200 rounded-sm"></div>
                 </div>
               ))}
             </div>

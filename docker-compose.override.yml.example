@@ -1,0 +1,46 @@
+# Docker Compose Override Example
+# Copy this file to docker-compose.override.yml and customize as needed
+# docker-compose.override.yml is automatically loaded and not tracked in git
+
+services:
+  # Example: Run API with hot reload for development
+  # api:
+  #   volumes:
+  #     - ./src:/app/src:ro
+  #   environment:
+  #     - ASPNETCORE_ENVIRONMENT=Development
+
+  # Example: Add PostgreSQL instead of SQLite
+  # postgres:
+  #   image: postgres:15
+  #   container_name: twr-postgres
+  #   environment:
+  #     POSTGRES_DB: twr_dev
+  #     POSTGRES_USER: twr_user
+  #     POSTGRES_PASSWORD: dev_password
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   networks:
+  #     - twr-network
+
+  # Example: Customize frontend port
+  # frontend:
+  #   ports:
+  #     - "3000:5173"
+
+  # Example: Add pgAdmin for PostgreSQL management
+  # pgadmin:
+  #   image: dpage/pgadmin4
+  #   container_name: twr-pgadmin
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: admin@admin.com
+  #     PGADMIN_DEFAULT_PASSWORD: admin
+  #   ports:
+  #     - "5050:80"
+  #   networks:
+  #     - twr-network
+
+# volumes:
+#   postgres-data:

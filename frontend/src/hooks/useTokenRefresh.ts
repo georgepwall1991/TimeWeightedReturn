@@ -14,6 +14,7 @@ export const useTokenRefresh = () => {
   const refreshToken = useSelector(selectRefreshToken);
   const [refreshTokenMutation] = useRefreshTokenMutation();
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const scheduleTokenRefreshRef = useRef<((token: string) => void) | null>(null);
 
   const parseJwt = (token: string) => {
     try {
@@ -71,8 +72,8 @@ export const useTokenRefresh = () => {
           })
         );
 
-        // Schedule next refresh
-        scheduleTokenRefresh(response.accessToken);
+        // Schedule next refresh using ref to avoid circular dependency
+        scheduleTokenRefreshRef.current?.(response.accessToken);
       } catch (error) {
         logger.error('Token refresh failed', error);
         // If refresh fails, log the user out
@@ -80,6 +81,11 @@ export const useTokenRefresh = () => {
       }
     }, delay);
   }, [accessToken, refreshToken, refreshTokenMutation, dispatch]);
+
+  useEffect(() => {
+    // Update ref when callback changes
+    scheduleTokenRefreshRef.current = scheduleTokenRefresh;
+  }, [scheduleTokenRefresh]);
 
   useEffect(() => {
     if (accessToken) {

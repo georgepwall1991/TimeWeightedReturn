@@ -181,21 +181,21 @@ const AppLayout: React.FC = () => {
   }, [showSidebarMenu]);
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
       {/* Sidebar */}
       <div
         ref={sidebarRef}
-        className="relative bg-white border-r border-gray-200 overflow-hidden transition-all duration-300 ease-in-out"
+        className="relative bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300 ease-in-out"
         style={{
           width: sidebarOpen ? `${sidebarWidth}px` : '0px',
         }}
       >
         <div className="h-full flex flex-col">
           {/* Sidebar Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center min-w-0">
-              <TrendingUp className="w-6 h-6 text-primary mr-2 flex-shrink-0" />
-              <h1 className="text-lg font-semibold text-gray-900 truncate">
+              <TrendingUp className="w-6 h-6 text-primary dark:text-indigo-400 mr-2 shrink-0" />
+              <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
                 Portfolio Analytics
               </h1>
             </div>
@@ -204,23 +204,23 @@ const AppLayout: React.FC = () => {
               <div className="relative" ref={menuRef}>
                 <button
                   onClick={() => setShowSidebarMenu(!showSidebarMenu)}
-                  className="p-1 hover:bg-gray-100 rounded transition-colors"
+                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-sm transition-colors"
                   title="Sidebar options"
                 >
-                  <MoreVertical className="w-4 h-4" />
+                  <MoreVertical className="w-4 h-4 dark:text-gray-300" />
                 </button>
 
                 {showSidebarMenu && (
-                  <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                  <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50">
                     <div className="py-1">
                       <button
                         onClick={resetSidebarWidth}
-                        className="w-full px-3 py-2 text-sm text-left hover:bg-gray-50 flex items-center"
+                        className="w-full px-3 py-2 text-sm text-left hover:bg-gray-50 dark:hover:bg-gray-600 flex items-center dark:text-gray-200"
                       >
                         <RotateCcw className="w-4 h-4 mr-2" />
                         Reset Width
                       </button>
-                      <div className="px-3 py-2 text-xs text-gray-500 border-t border-gray-100">
+                      <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-600">
                         <div>Ctrl+B: Toggle sidebar</div>
                         <div>Ctrl+Shift+R: Reset width</div>
                       </div>
@@ -231,9 +231,9 @@ const AppLayout: React.FC = () => {
 
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="p-1 hover:bg-gray-100 rounded transition-colors lg:hidden flex-shrink-0"
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-sm transition-colors lg:hidden shrink-0"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5 dark:text-gray-300" />
               </button>
             </div>
           </div>
@@ -276,33 +276,33 @@ const AppLayout: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar */}
-        <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center">
             {!sidebarOpen && (
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="p-2 hover:bg-gray-100 rounded transition-colors mr-3"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-sm transition-colors mr-3"
               >
-                <Menu className="w-5 h-5" />
+                <Menu className="w-5 h-5 dark:text-gray-300" />
               </button>
             )}
 
             <div>
               {selectedNode ? (
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {selectedNode.name}
                   </h2>
-                  <p className="text-sm text-gray-500 capitalize">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">
                     {selectedNode.type} Analytics
                   </p>
                 </div>
               ) : (
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     Portfolio Analytics
                   </h2>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     Select a client, portfolio, or account to view details
                   </p>
                 </div>
@@ -317,7 +317,7 @@ const AppLayout: React.FC = () => {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-hidden bg-gray-50">
+        <div className="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900">
           <DetailPanel
             selectedNode={selectedNode}
             nodeData={selectedNodeData}

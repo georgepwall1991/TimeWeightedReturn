@@ -153,7 +153,7 @@ const HoldingsCompositionChart: React.FC<HoldingsCompositionChartProps> = ({
         </div>
 
         {showLegend && (
-          <div className="lg:w-80 lg:flex-shrink-0">
+          <div className="lg:w-80 lg:shrink-0">
             <div className="mt-4 max-h-48 overflow-y-auto">
               <div className="grid grid-cols-1 gap-2">
                 {chartData.map((item, index) => (
@@ -163,7 +163,7 @@ const HoldingsCompositionChart: React.FC<HoldingsCompositionChartProps> = ({
                   >
                     <div className="flex items-center">
                       <div
-                        className="w-3 h-3 rounded-full mr-2 flex-shrink-0"
+                        className="w-3 h-3 rounded-full mr-2 shrink-0"
                         style={{ backgroundColor: item.color }}
                       />
                       <span className="text-gray-700 truncate">

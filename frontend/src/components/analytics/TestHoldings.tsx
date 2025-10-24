@@ -56,7 +56,7 @@ const TestHoldings: React.FC = () => {
               Select Account
             </label>
             {treeLoading ? (
-              <div className="animate-pulse bg-gray-200 h-10 rounded"></div>
+              <div className="animate-pulse bg-gray-200 h-10 rounded-sm"></div>
             ) : (
               <select
                 value={selectedAccountId}
@@ -91,11 +91,11 @@ const TestHoldings: React.FC = () => {
           <div className="space-y-6">
             {holdingsLoading && (
               <div className="animate-pulse space-y-4">
-                <div className="h-6 bg-gray-200 rounded w-1/3"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-6 bg-gray-200 rounded-sm w-1/3"></div>
+                <div className="h-4 bg-gray-200 rounded-sm w-1/2"></div>
                 <div className="space-y-3">
                   {[...Array(5)].map((_, i) => (
-                    <div key={i} className="h-12 bg-gray-100 rounded"></div>
+                    <div key={i} className="h-12 bg-gray-100 rounded-sm"></div>
                   ))}
                 </div>
               </div>

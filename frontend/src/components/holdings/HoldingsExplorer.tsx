@@ -292,7 +292,7 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
         onClick={() => setSelectedAssetType("all")}
         className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
           selectedAssetType === "all"
-            ? "bg-white text-gray-900 shadow-sm"
+            ? "bg-white text-gray-900 shadow-xs"
             : "text-gray-600 hover:text-gray-900"
         }`}
       >
@@ -302,7 +302,7 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
         onClick={() => setSelectedAssetType("Cash")}
         className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center space-x-1 ${
           selectedAssetType === "Cash"
-            ? "bg-green-100 text-green-700 shadow-sm"
+            ? "bg-green-100 text-green-700 shadow-xs"
             : "text-gray-600 hover:text-gray-900"
         }`}
       >
@@ -313,7 +313,7 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
         onClick={() => setSelectedAssetType("Security")}
         className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center space-x-1 ${
           selectedAssetType === "Security"
-            ? "bg-blue-100 text-blue-700 shadow-sm"
+            ? "bg-blue-100 text-blue-700 shadow-xs"
             : "text-gray-600 hover:text-gray-900"
         }`}
       >
@@ -346,10 +346,10 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
 
   if (isLoadingDates || isLoadingHoldings) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xs border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-3 text-gray-600">Loading holdings...</span>
+          <span className="ml-3 text-gray-600 dark:text-gray-400">Loading holdings...</span>
         </div>
       </div>
     );
@@ -357,7 +357,7 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xs border border-gray-200 dark:border-gray-700 p-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex items-center">
             <div className="text-red-600">
@@ -378,7 +378,7 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xs border border-gray-200 dark:border-gray-700">
       {/* Header */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
@@ -387,8 +387,8 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
               <BarChart3 className="w-5 h-5 text-purple-600" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">{accountName}</h2>
-              <p className="text-sm text-gray-500">Holdings Explorer</p>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{accountName}</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Holdings Explorer</p>
             </div>
           </div>
 
@@ -397,7 +397,7 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
             <div className="flex items-center gap-2">
               <button
                 onClick={handleLatestData}
-                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 disabled={isLoadingDates}
               >
                 <RefreshCw className="w-4 h-4" />
@@ -467,7 +467,7 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
 
             {/* Expanded Data Info */}
             {showDataInfo && holdingsData && (
-              <div className="mt-2 p-3 bg-gray-50 rounded-lg text-sm text-gray-600">
+              <div className="mt-2 p-3 bg-gray-50 rounded-lg text-sm text-gray-600 dark:text-gray-400">
                 <h4 className="font-medium mb-2">Data Information</h4>
                 <ul className="space-y-1">
                   <li>Total available dates: {holdingsData.availableDateRange?.totalDates}</li>
@@ -513,7 +513,7 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
           <div className="relative">
             <button
               onClick={() => setShowExportOptions(!showExportOptions)}
-              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-50 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-50 rounded-md hover:bg-gray-100 focus:outline-hidden focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
             >
               <Download className="w-4 h-4" />
               Export
@@ -585,7 +585,7 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
         <div className="flex justify-between items-center mt-4">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-50 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-50 rounded-md hover:bg-gray-100 focus:outline-hidden focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
           >
             <Filter className="w-4 h-4" />
             Filters
@@ -626,7 +626,7 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-gray-500">Total Value</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Total Value</span>
               </div>
               <p className="text-lg font-semibold text-gray-900 mt-1">
                 {formatCurrency(summary.totalValue)}
@@ -635,7 +635,7 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-gray-500">Holdings</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Holdings</span>
               </div>
               <p className="text-lg font-semibold text-gray-900 mt-1">
                 {summary.totalHoldings}
@@ -644,7 +644,7 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-gray-500">Average Value</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Average Value</span>
               </div>
               <p className="text-lg font-semibold text-gray-900 mt-1">
                 {formatCurrency(summary.avgValue)}
@@ -654,12 +654,12 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
               <div className="bg-gray-50 rounded-lg p-4">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm text-gray-500">Largest Holding</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Largest Holding</span>
                 </div>
                 <p className="text-lg font-semibold text-gray-900 mt-1">
                   {summary.largestHolding.name}
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   {formatCurrency(summary.largestHolding.valueGBP)}
                 </p>
               </div>
@@ -738,17 +738,17 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-gray-200 dark:divide-gray-700">
                   {processedHoldings.map((holding) => {
                     const performance = getPerformanceIndicator(holding);
                     const assetTypeDisplay = getAssetTypeDisplay(holding.instrumentType);
                     return (
-                      <tr key={holding.instrumentId} className="hover:bg-gray-50">
+                      <tr key={holding.instrumentId} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div>
-                              <div className="text-sm font-medium text-gray-900">{holding.name}</div>
-                              <div className="text-sm text-gray-500">{holding.ticker}</div>
+                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{holding.name}</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">{holding.ticker}</div>
                             </div>
                           </div>
                         </td>
@@ -758,13 +758,13 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
                             <span className="ml-1">{holding.instrumentType}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-gray-100">
                           {formatCurrency(holding.valueGBP)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-gray-100">
                           {holding.units.toLocaleString()}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-gray-100">
                           {formatCurrency(holding.price)} {holding.currency}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
@@ -798,7 +798,7 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
             </div>
           ) : (
             <div className="p-6 text-center">
-              <p className="text-gray-500">No holdings data available for the selected date</p>
+              <p className="text-gray-500 dark:text-gray-400">No holdings data available for the selected date</p>
             </div>
           )}
         </>

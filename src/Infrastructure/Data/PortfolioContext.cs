@@ -212,6 +212,17 @@ public class PortfolioContext : IdentityDbContext<ApplicationUser, IdentityRole<
             entity.HasIndex(e => e.Token).IsUnique();
             entity.HasIndex(e => e.UserId);
         });
+
+        // UserPreferences Configuration
+        modelBuilder.Entity<UserPreferences>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Theme).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.UpdatedAt).IsRequired();
+
+            entity.HasIndex(e => e.UserId).IsUnique();
+        });
     }
 
     // DbSets
@@ -225,4 +236,5 @@ public class PortfolioContext : IdentityDbContext<ApplicationUser, IdentityRole<
     public DbSet<CashFlow> CashFlows { get; set; }
     public DbSet<Benchmark> Benchmarks { get; set; }
     public DbSet<BenchmarkPrice> BenchmarkPrices { get; set; }
+    public DbSet<UserPreferences> UserPreferences { get; set; }
 }

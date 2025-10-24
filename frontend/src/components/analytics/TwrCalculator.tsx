@@ -89,9 +89,10 @@ const TwrCalculator: React.FC<TwrCalculatorProps> = ({
       const currentDate = new Date(startDate);
       currentDate.setDate(startDate.getDate() + i);
 
-      // Simulate some volatility around the final return
+      // Simulate some volatility around the final return using seeded variation
       const progress = i / days;
-      const randomVariation = (Math.random() - 0.5) * 0.02; // ±1% random variation
+      const x = Math.sin((startValue + totalReturn * 1000) * i) * 10000;
+      const randomVariation = ((x - Math.floor(x)) - 0.5) * 0.02; // ±1% seeded variation
       const currentReturn = totalReturn * progress + randomVariation;
       const currentValue = startValue * (1 + currentReturn);
 
@@ -106,7 +107,7 @@ const TwrCalculator: React.FC<TwrCalculatorProps> = ({
   }, [twrData, getCurrentRange]);
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">

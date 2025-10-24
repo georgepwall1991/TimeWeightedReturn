@@ -24,6 +24,11 @@ import type {
   CreateBenchmarkRequest,
   UpdateBenchmarkRequest,
 } from '../types/benchmark';
+import type {
+  InstrumentPriceStatus,
+  MarketDataStatus,
+  TickerValidationResult,
+} from '../types/marketData';
 
 // Account holdings response interface
 interface GetAccountHoldingsResponse {
@@ -91,7 +96,7 @@ const baseQuery = fetchBaseQuery({
   baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:5011/api',
   prepareHeaders: (headers, { getState }) => {
     // Get token from state
-    const token = (getState() as any).auth?.accessToken;
+    const token = (getState() as { auth?: { accessToken?: string } }).auth?.accessToken;
 
     if (token) {
       headers.set('authorization', `Bearer ${token}`);
@@ -113,7 +118,7 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 
   // If we get a 401 error, try to refresh the token
   if (result.error && result.error.status === 401) {
-    const state = api.getState() as any;
+    const state = api.getState() as { auth?: { refreshToken?: string; accessToken?: string } };
     const refreshToken = state.auth?.refreshToken;
     const accessToken = state.auth?.accessToken;
 
@@ -157,11 +162,20 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
   return result;
 };
 
+// User preferences types
+export interface UserPreferencesDto {
+  theme: string;
+}
+
+export interface UpdateUserPreferencesRequest {
+  theme: string;
+}
+
 // Base API configuration
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['PortfolioTree', 'Holdings', 'AccountHoldings', 'TWR', 'Contribution', 'RiskMetrics', 'Auth', 'Benchmark'],
+  tagTypes: ['PortfolioTree', 'Holdings', 'AccountHoldings', 'TWR', 'Contribution', 'RiskMetrics', 'Auth', 'Benchmark', 'UserPreferences', 'MarketData'],
   endpoints: (builder) => ({
     // Portfolio Tree Navigation
     getPortfolioTree: builder.query<PortfolioTreeResponse, { clientId?: string }>({
@@ -441,6 +455,54 @@ export const api = createApi({
       ],
       keepUnusedDataFor: 600, // Cache for 10 minutes
     }),
+
+    // User preferences endpoints
+    getUserPreferences: builder.query<UserPreferencesDto, void>({
+      query: () => 'user/preferences',
+      providesTags: ['UserPreferences'],
+      keepUnusedDataFor: 3600, // Cache for 1 hour
+    }),
+
+    updateUserPreferences: builder.mutation<UserPreferencesDto, UpdateUserPreferencesRequest>({
+      query: (body) => ({
+        url: 'user/preferences',
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: ['UserPreferences'],
+    }),
+
+    // Market Data endpoints
+    getMarketDataStatus: builder.query<InstrumentPriceStatus[], void>({
+      query: () => 'marketdata/status',
+      providesTags: ['MarketData'],
+      keepUnusedDataFor: 60, // Cache for 1 minute
+    }),
+
+    refreshAllPrices: builder.mutation<MarketDataStatus, { date?: string }>({
+      query: (params) => ({
+        url: 'marketdata/refresh',
+        method: 'POST',
+        params,
+      }),
+      invalidatesTags: ['MarketData', 'Holdings', 'AccountHoldings'],
+    }),
+
+    refreshInstrumentPrice: builder.mutation<{ message: string }, { instrumentId: string; date?: string }>({
+      query: ({ instrumentId, date }) => ({
+        url: `marketdata/refresh/${instrumentId}`,
+        method: 'POST',
+        params: date ? { date } : undefined,
+      }),
+      invalidatesTags: ['MarketData', 'Holdings', 'AccountHoldings'],
+    }),
+
+    validateTicker: builder.mutation<TickerValidationResult, { ticker: string }>({
+      query: ({ ticker }) => ({
+        url: `marketdata/validate/${ticker}`,
+        method: 'POST',
+      }),
+    }),
   }),
 });
 
@@ -471,6 +533,12 @@ export const {
   useUpdateBenchmarkMutation,
   useDeleteBenchmarkMutation,
   useCompareToBenchmarkQuery,
+  useGetUserPreferencesQuery,
+  useUpdateUserPreferencesMutation,
+  useGetMarketDataStatusQuery,
+  useRefreshAllPricesMutation,
+  useRefreshInstrumentPriceMutation,
+  useValidateTickerMutation,
 } = api;
 
 // Export types for convenience

@@ -29,25 +29,10 @@ export const AuthInitializer: React.FC = () => {
         return;
       }
 
-      // If we have a refresh token but no access token, try to refresh
-      if (refreshToken && accessToken) {
-        try {
-          // Use the stored (possibly expired) access token for the refresh request
-          // The backend needs it to extract the userId
-          const response = await refreshTokenMutation({
-            accessToken,
-            refreshToken,
-          }).unwrap();
-
-          dispatch(setCredentials(response));
-        } catch (error) {
-          console.error('Failed to refresh token on init:', error);
-          // If refresh fails, clear everything
-          dispatch(logout());
-        }
-      } else if (refreshToken && !accessToken) {
-        // Have refresh token but no access token (shouldn't happen with new storage)
-        // Clear the orphaned refresh token
+      // If we have a refresh token but no access token, clear orphaned token
+      // (This shouldn't happen with current storage logic)
+      if (refreshToken && !accessToken) {
+        console.warn('Found orphaned refresh token without access token, clearing auth state');
         dispatch(logout());
       }
 
@@ -61,16 +46,19 @@ export const AuthInitializer: React.FC = () => {
 
   // Update user data in state when fetched
   useEffect(() => {
-    if (userData && accessToken) {
-      // User data is already in the store from login/register
-      // This just ensures it's up-to-date if we refreshed the token
-      const currentState = (window as any).__REDUX_STORE__;
-      if (currentState?.auth?.user?.id !== userData.id) {
-        // User data changed, update it (shouldn't normally happen)
-        console.log('User data updated from server');
-      }
+    if (userData && accessToken && refreshToken) {
+      // Get the current expires at from localStorage
+      const expiresAt = localStorage.getItem('expiresAt') || '';
+
+      // Update Redux state with the fetched user data
+      dispatch(setCredentials({
+        accessToken,
+        refreshToken,
+        user: userData,
+        expiresAt,
+      }));
     }
-  }, [userData, accessToken]);
+  }, [userData, accessToken, refreshToken, dispatch]);
 
   // This component doesn't render anything
   return null;

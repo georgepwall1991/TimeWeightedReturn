@@ -21,31 +21,31 @@ export const ForgotPassword = () => {
       const result = await forgotPassword({ email }).unwrap();
       success(result.message);
       setEmailSent(true);
-    } catch (err: any) {
-      const message = err?.data?.message || 'Failed to send reset email. Please try again.';
+    } catch (err) {
+      const message = (err as { data?: { message?: string } })?.data?.message || 'Failed to send reset email. Please try again.';
       showError(message);
     }
   };
 
   if (emailSent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-gray-100">
               Check Your Email
             </h2>
           </div>
 
-          <div className="bg-white shadow-md rounded-lg p-8 text-center">
-            <svg className="mx-auto h-16 w-16 text-blue-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-8 text-center">
+            <svg className="mx-auto h-16 w-16 text-blue-500 dark:text-blue-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Email Sent!</h3>
-            <p className="text-gray-600 mb-6">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Email Sent!</h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
               If an account exists with the email <strong>{email}</strong>, you will receive a password reset link shortly.
             </p>
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               Check your inbox and spam folder. The link will expire in 1 hour.
             </p>
             <Link to="/login" className="btn-primary inline-block">
@@ -58,19 +58,19 @@ export const ForgotPassword = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-gray-100">
             Reset Your Password
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
             Enter your email address and we'll send you a link to reset your password.
           </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
+          <div className="rounded-md shadow-xs -space-y-px">
             <div>
               <label htmlFor="email" className="sr-only">
                 Email address
@@ -83,7 +83,7 @@ export const ForgotPassword = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 focus:outline-hidden focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="Email address"
                 disabled={isLoading}
               />
@@ -111,7 +111,7 @@ export const ForgotPassword = () => {
           </div>
 
           <div className="text-center">
-            <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
+            <Link to="/login" className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">
               Back to Login
             </Link>
           </div>

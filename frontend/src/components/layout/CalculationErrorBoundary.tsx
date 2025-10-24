@@ -39,7 +39,7 @@ const CalculationErrorFallback: React.FC<CalculationErrorFallbackProps> = ({
         {/* Warning message */}
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <div className="flex items-start">
-            <Info className="w-5 h-5 text-yellow-600 mr-3 mt-0.5 flex-shrink-0" />
+            <Info className="w-5 h-5 text-yellow-600 mr-3 mt-0.5 shrink-0" />
             <div className="flex-1">
               <h3 className="text-sm font-medium text-yellow-800">
                 {displayMessage.title}
@@ -116,7 +116,7 @@ const CalculationErrorFallback: React.FC<CalculationErrorFallbackProps> = ({
   return (
     <div className={`${colors.bg} ${colors.border} border rounded-lg p-6`}>
       <div className="flex items-start">
-        <div className="flex-shrink-0 mr-4">
+        <div className="shrink-0 mr-4">
           {getErrorIcon()}
         </div>
         <div className="flex-1">
@@ -158,7 +158,7 @@ const CalculationErrorFallback: React.FC<CalculationErrorFallbackProps> = ({
               <summary className={`text-xs ${colors.text} cursor-pointer hover:underline`}>
                 Technical Details
               </summary>
-              <pre className={`mt-2 text-xs ${colors.text} bg-white bg-opacity-50 p-2 rounded border overflow-auto`}>
+              <pre className={`mt-2 text-xs ${colors.text} bg-white bg-opacity-50 p-2 rounded-sm border overflow-auto`}>
                 {errorDetails.technicalDetails}
               </pre>
             </details>

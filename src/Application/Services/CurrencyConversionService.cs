@@ -29,10 +29,22 @@ public class CurrencyConversionService : ICurrencyConversionService
         if (fromCurrency == "GBP")
             return 1.0m;
 
+        // First try to get the exact date
         var fxRate = fxRates.FirstOrDefault(fx =>
             fx.BaseCurrency == "GBP" &&
             fx.QuoteCurrency == fromCurrency &&
             fx.Date == date);
+
+        if (fxRate != null)
+            return fxRate.Rate;
+
+        // If not found (e.g., weekend or holiday), use the most recent rate before the requested date
+        fxRate = fxRates
+            .Where(fx => fx.BaseCurrency == "GBP" &&
+                        fx.QuoteCurrency == fromCurrency &&
+                        fx.Date < date)
+            .OrderByDescending(fx => fx.Date)
+            .FirstOrDefault();
 
         return fxRate?.Rate;
     }

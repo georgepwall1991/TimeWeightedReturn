@@ -5,10 +5,15 @@ using Api.Middleware;
 using Application;
 using Application.Behaviors;
 using Application.Features.Common.Interfaces;
+using Application.Interfaces;
+using Application.Jobs;
 using Application.Services;
+using Application.Services.MarketData;
 using AspNetCoreRateLimit;
 using Domain.Services;
 using FluentValidation;
+using Hangfire;
+using Hangfire.MemoryStorage;
 using Infrastructure.Data;
 using Infrastructure.Identity;
 using Infrastructure.Repositories;
@@ -17,6 +22,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using JwtSettings = Application.Services.JwtSettings;
@@ -30,9 +36,14 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSett
 builder.Services.Configure<IdentitySettings>(builder.Configuration.GetSection(IdentitySettings.SectionName));
 builder.Services.Configure<AdminSeedSettings>(builder.Configuration.GetSection(AdminSeedSettings.SectionName));
 builder.Services.Configure<Application.Services.EmailSettings>(builder.Configuration.GetSection(Application.Services.EmailSettings.SectionName));
+builder.Services.Configure<MarketDataSettings>(builder.Configuration.GetSection(MarketDataSettings.SectionName));
 
 // Add services to the container.
 builder.Services.AddControllers();
+
+// Add Health Checks
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<PortfolioContext>();
 
 // Add Problem Details for standardized error responses (RFC 7807)
 builder.Services.AddProblemDetails();
@@ -47,7 +58,7 @@ builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>()
 
 // Configure Entity Framework
 builder.Services.AddDbContext<PortfolioContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Configure Identity
 var identitySettings = builder.Configuration.GetSection(IdentitySettings.SectionName).Get<IdentitySettings>() ?? new IdentitySettings();
@@ -135,12 +146,13 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddSingleton<IAuthorizationHandler, ClientAuthorizationHandler>();
 
 // Add repositories and services
-builder.Services.AddScoped<IPortfolioRepository, PortfolioRepository>();
+builder.Services.AddScoped<Application.Features.Common.Interfaces.IPortfolioRepository, PortfolioRepository>();
 builder.Services.AddScoped<Application.Interfaces.IClientRepository, ClientRepository>();
 builder.Services.AddScoped<Application.Interfaces.IPortfolioManagementRepository, PortfolioManagementRepository>();
 builder.Services.AddScoped<Application.Interfaces.IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<Application.Interfaces.ICashFlowRepository, CashFlowRepository>();
 builder.Services.AddScoped<Application.Interfaces.IBenchmarkRepository, BenchmarkRepository>();
+builder.Services.AddScoped<Application.Interfaces.IUserPreferencesRepository, UserPreferencesRepository>();
 builder.Services.AddScoped<ICurrencyConversionService, CurrencyConversionService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<Application.Services.IEmailService, Infrastructure.Services.EmailService>();
@@ -152,6 +164,23 @@ builder.Services.AddScoped<EnhancedTimeWeightedReturnService>();
 builder.Services.AddScoped<ContributionAnalysisService>();
 builder.Services.AddScoped<RiskMetricsService>();
 builder.Services.AddScoped<AttributionAnalysisService>();
+
+// Register market data providers and services
+builder.Services.AddHttpClient<IMarketDataProvider, AlphaVantageProvider>();
+builder.Services.AddHttpClient<IMarketDataProvider, FinnhubProvider>();
+builder.Services.AddHttpClient<IMarketDataProvider, YahooFinanceProvider>();
+builder.Services.AddScoped<IMarketDataService, MarketDataService>();
+builder.Services.AddScoped<IPriceUpdateService, Infrastructure.Services.MarketData.PriceUpdateService>();
+builder.Services.AddScoped<DailyPriceUpdateJob>();
+
+// Configure Hangfire for background jobs
+builder.Services.AddHangfire(configuration => configuration
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseMemoryStorage());
+
+builder.Services.AddHangfireServer();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -223,10 +252,25 @@ var app = builder.Build();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
-// Seed data in development (skip in testing environment)
-if (app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing"))
+// Seed data in development and Docker environments (skip in testing environment)
+if ((app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Docker")) && !app.Environment.IsEnvironment("Testing"))
 {
     using var scope = app.Services.CreateScope();
+
+    // Ensure database is created and migrated
+    var dbContext = scope.ServiceProvider.GetRequiredService<PortfolioContext>();
+    var contextLogger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        contextLogger.LogInformation("Applying database migrations...");
+        await dbContext.Database.MigrateAsync();
+        contextLogger.LogInformation("Database migrations applied successfully.");
+    }
+    catch (Exception ex)
+    {
+        contextLogger.LogError(ex, "An error occurred while migrating the database.");
+        throw;
+    }
 
     // Seed identity (roles and admin user)
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
@@ -258,6 +302,29 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowConfiguredOrigins");
+
+// Configure Hangfire Dashboard (requires authentication)
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[] { new HangfireAuthorizationFilter(app.Environment) }
+});
+
+// Configure recurring jobs
+var marketDataSettings = app.Services.GetRequiredService<IOptions<MarketDataSettings>>().Value;
+if (marketDataSettings.EnableAutoUpdate)
+{
+    RecurringJob.AddOrUpdate<DailyPriceUpdateJob>(
+        "daily-price-update",
+        job => job.ExecuteAsync(),
+        marketDataSettings.ScheduleCron,
+        new RecurringJobOptions
+        {
+            TimeZone = TimeZoneInfo.Utc
+        });
+}
+
+// Map health check endpoint
+app.MapHealthChecks("/health");
 
 // Use IP Rate Limiting
 app.UseIpRateLimiting();

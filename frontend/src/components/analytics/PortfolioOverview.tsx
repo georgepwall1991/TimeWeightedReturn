@@ -3,8 +3,9 @@ import { DollarSign, BarChart3, PieChart, Briefcase } from 'lucide-react';
 import { api } from '../../services/api';
 import { formatCurrency } from '../../utils/formatters';
 import type { PortfolioNodeDto } from '../../types/api';
-import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, type PieLabelRenderProps } from 'recharts';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip } from 'recharts';
+import RefreshPricesButton from '../marketdata/RefreshPricesButton';
 
 interface PortfolioOverviewProps {
   portfolioId: string;
@@ -54,8 +55,8 @@ const PortfolioOverview: React.FC<PortfolioOverviewProps> = ({ portfolioId, port
   if (!portfolioStats) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-        <span className="ml-3 text-gray-600">Loading portfolio overview...</span>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 dark:border-green-400"></div>
+        <span className="ml-3 text-gray-600 dark:text-gray-400">Loading portfolio overview...</span>
       </div>
     );
   }
@@ -63,25 +64,28 @@ const PortfolioOverview: React.FC<PortfolioOverviewProps> = ({ portfolioId, port
   return (
     <div className="space-y-6">
       {/* Header Card */}
-      <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg border border-green-200 p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <Briefcase className="w-8 h-8 text-green-600" />
-          <div>
-            <h2 className="text-2xl font-bold text-green-900">{portfolioData.name}</h2>
-            <p className="text-sm text-green-700">Portfolio Overview</p>
+      <div className="bg-linear-to-r from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 rounded-lg border border-green-200 dark:border-green-700 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Briefcase className="w-8 h-8 text-green-600 dark:text-green-400" />
+            <div>
+              <h2 className="text-2xl font-bold text-green-900 dark:text-green-300">{portfolioData.name}</h2>
+              <p className="text-sm text-green-700 dark:text-green-400">Portfolio Overview</p>
+            </div>
           </div>
+          <RefreshPricesButton size="sm" variant="secondary" />
         </div>
       </div>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Total Value */}
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+        <div className="bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-blue-700">Total Value</span>
-            <DollarSign className="w-5 h-5 text-blue-600" />
+            <span className="text-sm font-medium text-blue-700 dark:text-blue-400">Total Value</span>
+            <DollarSign className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           </div>
-          <div className="text-2xl font-bold text-blue-900">
+          <div className="text-2xl font-bold text-blue-900 dark:text-blue-300">
             {formatCurrency(portfolioStats.totalValue)}
           </div>
           <div className="text-xs text-blue-600 mt-1">
@@ -90,12 +94,12 @@ const PortfolioOverview: React.FC<PortfolioOverviewProps> = ({ portfolioId, port
         </div>
 
         {/* Total Holdings */}
-        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
+        <div className="bg-linear-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-purple-700">Total Holdings</span>
-            <BarChart3 className="w-5 h-5 text-purple-600" />
+            <span className="text-sm font-medium text-purple-700 dark:text-purple-400">Total Holdings</span>
+            <BarChart3 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
           </div>
-          <div className="text-2xl font-bold text-purple-900">
+          <div className="text-2xl font-bold text-purple-900 dark:text-purple-300">
             {portfolioStats.totalHoldings}
           </div>
           <div className="text-xs text-purple-600 mt-1">
@@ -104,12 +108,12 @@ const PortfolioOverview: React.FC<PortfolioOverviewProps> = ({ portfolioId, port
         </div>
 
         {/* Accounts Count */}
-        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
+        <div className="bg-linear-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 rounded-lg p-4 border border-green-200 dark:border-green-700">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-green-700">Accounts</span>
-            <Briefcase className="w-5 h-5 text-green-600" />
+            <span className="text-sm font-medium text-green-700 dark:text-green-400">Accounts</span>
+            <Briefcase className="w-5 h-5 text-green-600 dark:text-green-400" />
           </div>
-          <div className="text-2xl font-bold text-green-900">
+          <div className="text-2xl font-bold text-green-900 dark:text-green-300">
             {portfolioStats.accountsCount}
           </div>
           <div className="text-xs text-green-600 mt-1">
@@ -121,10 +125,10 @@ const PortfolioOverview: React.FC<PortfolioOverviewProps> = ({ portfolioId, port
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Account Value Distribution */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center gap-2 mb-4">
-            <PieChart className="w-5 h-5 text-gray-700" />
-            <h3 className="text-lg font-semibold text-gray-900">Value by Account</h3>
+            <PieChart className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Value by Account</h3>
           </div>
           {portfolioStats.accounts.length > 0 ? (
             <ResponsiveContainer width="100%" height={250}>
@@ -134,7 +138,7 @@ const PortfolioOverview: React.FC<PortfolioOverviewProps> = ({ portfolioId, port
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, value }) => `${name}: ${formatCurrency(value)}`}
+                  label={(props: PieLabelRenderProps) => `${props.name}: ${formatCurrency(props.value as number)}`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
@@ -148,17 +152,17 @@ const PortfolioOverview: React.FC<PortfolioOverviewProps> = ({ portfolioId, port
               </RechartsPieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex items-center justify-center h-64 text-gray-500">
+            <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400">
               No account data available
             </div>
           )}
         </div>
 
         {/* Account Comparison Bar Chart */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center gap-2 mb-4">
-            <BarChart3 className="w-5 h-5 text-gray-700" />
-            <h3 className="text-lg font-semibold text-gray-900">Account Comparison</h3>
+            <BarChart3 className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Account Comparison</h3>
           </div>
           {portfolioStats.accounts.length > 0 ? (
             <ResponsiveContainer width="100%" height={250}>
@@ -186,7 +190,7 @@ const PortfolioOverview: React.FC<PortfolioOverviewProps> = ({ portfolioId, port
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex items-center justify-center h-64 text-gray-500">
+            <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400">
               No account data available
             </div>
           )}
@@ -194,51 +198,51 @@ const PortfolioOverview: React.FC<PortfolioOverviewProps> = ({ portfolioId, port
       </div>
 
       {/* Accounts Table */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Details</h3>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-900">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Account
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Value
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Holdings
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Currency
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   % of Portfolio
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {portfolioStats.accounts.map((account, index) => (
-                <tr key={account.name} className="hover:bg-gray-50">
+                <tr key={account.name} className="hover:bg-gray-50 dark:bg-gray-900">
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex items-center">
                       <div
                         className="w-3 h-3 rounded-full mr-2"
                         style={{ backgroundColor: COLORS[index % COLORS.length] }}
                       />
-                      <span className="text-sm font-medium text-gray-900">{account.name}</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{account.name}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900">
+                  <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900 dark:text-gray-100">
                     {formatCurrency(account.value)}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900">
+                  <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900 dark:text-gray-100">
                     {account.holdings}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-900">
+                  <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-900 dark:text-gray-100">
                     {account.currency}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900">
+                  <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900 dark:text-gray-100">
                     {((account.value / portfolioStats.totalValue) * 100).toFixed(2)}%
                   </td>
                 </tr>
@@ -249,24 +253,24 @@ const PortfolioOverview: React.FC<PortfolioOverviewProps> = ({ portfolioId, port
       </div>
 
       {/* Summary */}
-      <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 p-4">
+      <div className="bg-linear-to-r from-gray-50 to-gray-100 dark:from-gray-800/50 dark:to-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600 p-4">
         <h3 className="text-sm font-semibold text-gray-700 mb-3">Portfolio Summary</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
-            <div className="text-xs text-gray-600">Portfolio Name</div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">Portfolio Name</div>
             <div className="text-sm font-medium text-gray-900 truncate">{portfolioData.name}</div>
           </div>
           <div>
-            <div className="text-xs text-gray-600">Total Accounts</div>
-            <div className="text-sm font-medium text-gray-900">{portfolioStats.accountsCount}</div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">Total Accounts</div>
+            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{portfolioStats.accountsCount}</div>
           </div>
           <div>
-            <div className="text-xs text-gray-600">Total Value</div>
-            <div className="text-sm font-medium text-gray-900">{formatCurrency(portfolioStats.totalValue)}</div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">Total Value</div>
+            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{formatCurrency(portfolioStats.totalValue)}</div>
           </div>
           <div>
-            <div className="text-xs text-gray-600">Total Holdings</div>
-            <div className="text-sm font-medium text-gray-900">{portfolioStats.totalHoldings}</div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">Total Holdings</div>
+            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{portfolioStats.totalHoldings}</div>
           </div>
         </div>
       </div>

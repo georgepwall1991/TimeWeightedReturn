@@ -121,11 +121,11 @@ export const BenchmarkManagement: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Benchmark Management</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Benchmark Management</h2>
         {!isCreating && !editingBenchmark && (
           <button
             onClick={() => setIsCreating(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
           >
             Add Benchmark
           </button>
@@ -134,13 +134,13 @@ export const BenchmarkManagement: React.FC = () => {
 
       {/* Create/Edit Form */}
       {(isCreating || editingBenchmark) && (
-        <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold mb-4">
             {editingBenchmark ? 'Edit Benchmark' : 'Create New Benchmark'}
           </h3>
           <form onSubmit={editingBenchmark ? handleUpdate : handleCreate} className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Name
               </label>
               <input
@@ -149,13 +149,13 @@ export const BenchmarkManagement: React.FC = () => {
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                 placeholder="e.g., S&P 500"
               />
             </div>
 
             <div>
-              <label htmlFor="indexSymbol" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="indexSymbol" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Index Symbol
               </label>
               <input
@@ -165,7 +165,7 @@ export const BenchmarkManagement: React.FC = () => {
                 value={formData.indexSymbol}
                 onChange={(e) => setFormData({ ...formData, indexSymbol: e.target.value })}
                 disabled={!!editingBenchmark}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm disabled:bg-gray-100"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500 sm:text-sm disabled:bg-gray-100"
                 placeholder="e.g., SPY"
               />
               {editingBenchmark && (
@@ -174,7 +174,7 @@ export const BenchmarkManagement: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="currency" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="currency" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Currency
               </label>
               <select
@@ -182,7 +182,7 @@ export const BenchmarkManagement: React.FC = () => {
                 value={formData.currency}
                 onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
                 disabled={!!editingBenchmark}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm disabled:bg-gray-100"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500 sm:text-sm disabled:bg-gray-100"
               >
                 <option value="USD">USD</option>
                 <option value="GBP">GBP</option>
@@ -194,7 +194,7 @@ export const BenchmarkManagement: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Description
               </label>
               <textarea
@@ -202,7 +202,7 @@ export const BenchmarkManagement: React.FC = () => {
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={3}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                 placeholder="Optional description"
               />
             </div>
@@ -210,14 +210,14 @@ export const BenchmarkManagement: React.FC = () => {
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
               >
                 {editingBenchmark ? 'Update' : 'Create'}
               </button>
               <button
                 type="button"
                 onClick={cancelEdit}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-hidden focus:ring-2 focus:ring-gray-500"
               >
                 Cancel
               </button>
@@ -227,24 +227,24 @@ export const BenchmarkManagement: React.FC = () => {
       )}
 
       {/* Benchmarks List */}
-      <div className="bg-white rounded-lg shadow border border-gray-200">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-semibold">Existing Benchmarks</h3>
         </div>
         {benchmarks && benchmarks.length > 0 ? (
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {benchmarks.map((benchmark) => (
               <div key={benchmark.id} className="px-6 py-4 hover:bg-gray-50">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
-                      <h4 className="text-lg font-medium text-gray-900">{benchmark.name}</h4>
-                      <span className="text-sm text-gray-500">({benchmark.indexSymbol})</span>
+                      <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100">{benchmark.name}</h4>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">({benchmark.indexSymbol})</span>
                       <span
                         className={`px-2 py-1 text-xs font-medium rounded-full ${
                           benchmark.isActive
                             ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                         }`}
                       >
                         {benchmark.isActive ? 'Active' : 'Inactive'}
@@ -267,7 +267,7 @@ export const BenchmarkManagement: React.FC = () => {
                     </button>
                     <button
                       onClick={() => startEdit(benchmark)}
-                      className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200"
+                      className="px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-md hover:bg-blue-200"
                     >
                       Edit
                     </button>
@@ -283,7 +283,7 @@ export const BenchmarkManagement: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="px-6 py-8 text-center text-gray-500">
+          <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
             <p>No benchmarks found. Create your first benchmark to get started.</p>
           </div>
         )}

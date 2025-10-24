@@ -94,10 +94,10 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
               {getIcon()}
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 {getTitle()}
               </h2>
-              <p className="text-sm text-gray-600">{selectedNode.name}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{selectedNode.name}</p>
             </div>
           </div>
           <button
@@ -114,26 +114,26 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
       <div className="flex-1 overflow-y-auto">
         <div className="p-6 space-y-6">
           {/* Basic Information */}
-          <div className="bg-gray-50 rounded-lg p-4">
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
             <h3 className="text-sm font-semibold text-gray-800 mb-3">
               Basic Information
             </h3>
             <div className="grid grid-cols-1 gap-3">
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Name:</span>
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Name:</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {nodeData.name}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Total Value:</span>
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Total Value:</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {formatCurrency(nodeData.totalValueGBP)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Holdings Count:</span>
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Holdings Count:</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {nodeData.holdingsCount}
                 </span>
               </div>
@@ -142,14 +142,14 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
               {selectedNode.type === "account" && (
                 <>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Account Number:</span>
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Account Number:</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       {(nodeData as AccountNodeDto).accountNumber}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Currency:</span>
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Currency:</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       {(nodeData as AccountNodeDto).currency}
                     </span>
                   </div>
@@ -159,8 +159,8 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
               {/* Portfolio-specific details */}
               {selectedNode.type === "portfolio" && (
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Accounts Count:</span>
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Accounts Count:</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     {(nodeData as PortfolioNodeDto).accountsCount}
                   </span>
                 </div>
@@ -169,8 +169,8 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
               {/* Client-specific details */}
               {selectedNode.type === "client" && (
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Portfolios Count:</span>
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Portfolios Count:</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     {(nodeData as ClientNodeDto).portfoliosCount}
                   </span>
                 </div>
@@ -181,58 +181,58 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           {/* Tab Navigation - Only for accounts */}
           {selectedNode.type === "account" && (
             <div>
-              <div className="border-b border-gray-200 mb-6">
-                <nav className="-mb-px flex space-x-8">
+              <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
+                <nav className="-mb-px flex space-x-2 sm:space-x-4 md:space-x-8 overflow-x-auto">
                   <button
                     onClick={() => setActiveTab("overview")}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                       activeTab === "overview"
-                        ? "border-purple-500 text-purple-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        ? "border-purple-500 text-purple-600 dark:text-purple-400"
+                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
                     }`}
                   >
                     <div className="flex items-center">
-                      <DollarSign className="w-4 h-4 mr-2" />
-                      Overview
+                      <DollarSign className="w-4 h-4 mr-1 sm:mr-2" />
+                      <span className="text-xs sm:text-sm">Overview</span>
                     </div>
                   </button>
                   <button
                     onClick={() => setActiveTab("holdings")}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                       activeTab === "holdings"
-                        ? "border-purple-500 text-purple-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        ? "border-purple-500 text-purple-600 dark:text-purple-400"
+                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
                     }`}
                   >
                     <div className="flex items-center">
-                      <BarChart3 className="w-4 h-4 mr-2" />
-                      Holdings
+                      <BarChart3 className="w-4 h-4 mr-1 sm:mr-2" />
+                      <span className="text-xs sm:text-sm">Holdings</span>
                     </div>
                   </button>
                   <button
                     onClick={() => setActiveTab("analytics")}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                       activeTab === "analytics"
-                        ? "border-purple-500 text-purple-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        ? "border-purple-500 text-purple-600 dark:text-purple-400"
+                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
                     }`}
                   >
                     <div className="flex items-center">
-                      <Calculator className="w-4 h-4 mr-2" />
-                      Analytics
+                      <Calculator className="w-4 h-4 mr-1 sm:mr-2" />
+                      <span className="text-xs sm:text-sm">Analytics</span>
                     </div>
                   </button>
                   <button
                     onClick={() => setActiveTab("risk")}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                       activeTab === "risk"
-                        ? "border-purple-500 text-purple-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        ? "border-purple-500 text-purple-600 dark:text-purple-400"
+                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
                     }`}
                   >
                     <div className="flex items-center">
-                      <TrendingUp className="w-4 h-4 mr-2" />
-                      Risk
+                      <TrendingUp className="w-4 h-4 mr-1 sm:mr-2" />
+                      <span className="text-xs sm:text-sm">Risk</span>
                     </div>
                   </button>
                 </nav>
@@ -286,7 +286,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
 
           {/* Current Metrics (if available) */}
           {nodeData.metrics && (
-            <div className="bg-green-50 rounded-lg p-4">
+            <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-4">
               <h3 className="text-sm font-semibold text-green-800 mb-3">
                 Current Performance Metrics
               </h3>

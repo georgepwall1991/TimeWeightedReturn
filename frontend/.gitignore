@@ -22,3 +22,13 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Playwright Test Results
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Audit Reports (keep structure, ignore generated reports)
+audit-reports/*.md
+audit-reports/screenshots/
+!audit-reports/.gitkeep

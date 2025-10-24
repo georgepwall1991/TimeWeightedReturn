@@ -131,7 +131,7 @@ const RiskMetricsChart: React.FC<RiskMetricsChartProps> = ({
 
       {/* Key Risk Metrics Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4">
+        <div className="bg-linear-to-r from-blue-50 to-blue-100 rounded-lg p-4">
           <div className="text-sm text-blue-600 font-medium mb-1">Volatility</div>
           <div className="text-xl font-bold text-blue-700">
             {formatPercentage(data.annualizedVolatility)}
@@ -139,7 +139,7 @@ const RiskMetricsChart: React.FC<RiskMetricsChartProps> = ({
           <div className="text-xs text-blue-500">Annualized</div>
         </div>
 
-        <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4">
+        <div className="bg-linear-to-r from-green-50 to-green-100 rounded-lg p-4">
           <div className="text-sm text-green-600 font-medium mb-1">Sharpe Ratio</div>
           <div className={`text-xl font-bold ${getSharpeColor(data.sharpeRatio) === '#10B981' ? 'text-green-700' :
             getSharpeColor(data.sharpeRatio) === '#84CC16' ? 'text-lime-700' :
@@ -149,7 +149,7 @@ const RiskMetricsChart: React.FC<RiskMetricsChartProps> = ({
           <div className="text-xs text-green-500">Risk-adjusted</div>
         </div>
 
-        <div className="bg-gradient-to-r from-red-50 to-red-100 rounded-lg p-4">
+        <div className="bg-linear-to-r from-red-50 to-red-100 rounded-lg p-4">
           <div className="text-sm text-red-600 font-medium mb-1">Max Drawdown</div>
           <div className="text-xl font-bold text-red-700">
             {formatPercentage(data.maximumDrawdown)}
@@ -157,7 +157,7 @@ const RiskMetricsChart: React.FC<RiskMetricsChartProps> = ({
           <div className="text-xs text-red-500">Worst decline</div>
         </div>
 
-        <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-4">
+        <div className="bg-linear-to-r from-purple-50 to-purple-100 rounded-lg p-4">
           <div className="text-sm text-purple-600 font-medium mb-1">VaR (95%)</div>
           <div className="text-xl font-bold text-purple-700">
             {formatPercentage(data.valueAtRisk95)}

@@ -58,14 +58,14 @@ const AssetTypeIndicators = memo<{
     <div className="flex items-center space-x-1 ml-2">
       {safeCashValue > 0 && (
         <div className="flex items-center">
-          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-          <span className="text-xs text-gray-500 ml-1">{percentages.cash}%</span>
+          <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full"></div>
+          <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">{percentages.cash}%</span>
         </div>
       )}
       {safeSecurityValue > 0 && (
         <div className="flex items-center">
-          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-          <span className="text-xs text-gray-500 ml-1">{percentages.security}%</span>
+          <div className="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
+          <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">{percentages.security}%</span>
         </div>
       )}
     </div>
@@ -103,10 +103,10 @@ const BaseNode = memo<TreeNodeProps & {
   return (
     <div>
       <div
-        className={`flex items-center py-2 px-3 cursor-pointer hover:bg-gray-50 transition-colors ${
-          isSelected ? "bg-blue-50 border-r-2 border-blue-500" : ""
+        className={`flex items-center py-2 px-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+          isSelected ? "bg-blue-50 dark:bg-blue-900/30 border-r-2 border-blue-500 dark:border-blue-400" : ""
         } ${
-          isKeyboardHighlighted ? "ring-2 ring-blue-300 bg-blue-50" : ""
+          isKeyboardHighlighted ? "ring-2 ring-blue-300 dark:ring-blue-600 bg-blue-50 dark:bg-blue-900/30" : ""
         }`}
         style={{ paddingLeft: `${12 + indentWidth}px` }}
         onClick={onSelect}
@@ -117,7 +117,7 @@ const BaseNode = memo<TreeNodeProps & {
             e.stopPropagation();
             onToggle();
           }}
-          className="w-4 h-4 flex items-center justify-center mr-2 text-gray-400 hover:text-gray-600"
+          className="w-4 h-4 flex items-center justify-center mr-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
           disabled={!hasChildren}
         >
           {hasChildren ? (
@@ -132,13 +132,13 @@ const BaseNode = memo<TreeNodeProps & {
         </button>
 
         {/* Icon */}
-        <div className="mr-3 text-gray-500">{icon}</div>
+        <div className="mr-3 text-gray-500 dark:text-gray-400">{icon}</div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium text-gray-900 truncate">
+              <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                 {searchTerm ? (
                   <HighlightText text={title} highlight={searchTerm} />
                 ) : (
@@ -146,7 +146,7 @@ const BaseNode = memo<TreeNodeProps & {
                 )}
               </div>
               {subtitle && (
-                <div className="text-xs text-gray-500 truncate">
+                <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                   {searchTerm ? (
                     <HighlightText text={subtitle} highlight={searchTerm} />
                   ) : (
@@ -167,7 +167,7 @@ const BaseNode = memo<TreeNodeProps & {
               {/* Value */}
               {value && (
                 <div className="text-right">
-                  <div className="text-sm font-medium text-gray-900">
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     {value}
                   </div>
                 </div>
