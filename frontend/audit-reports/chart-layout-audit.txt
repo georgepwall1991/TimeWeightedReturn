@@ -1,0 +1,7 @@
+=== Layout Audit Report ===
+
+Total Issues: 0
+Critical: 0
+Warnings: 0
+Info: 0
+

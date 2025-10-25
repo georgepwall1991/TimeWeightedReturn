@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { TrendingUp, TrendingDown, DollarSign, Calendar, BarChart3, PieChart } from 'lucide-react';
+import { TrendingUp, TrendingDown, PoundSterling, Calendar, BarChart3, PieChart } from 'lucide-react';
 import { api } from '../../services/api';
 import { formatCurrency, formatPercentage } from '../../utils/formatters';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, type PieLabelRenderProps } from 'recharts';
@@ -104,7 +104,7 @@ const AccountOverview: React.FC<AccountOverviewProps> = ({ accountId, accountNam
         <div className="bg-linear-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-blue-700">Current Value</span>
-            <DollarSign className="w-5 h-5 text-blue-600" />
+            <PoundSterling className="w-5 h-5 text-blue-600" />
           </div>
           <div className="text-2xl font-bold text-blue-900">
             {formatCurrency(currentHoldings.totalValueGBP)}
@@ -309,7 +309,7 @@ const AccountOverview: React.FC<AccountOverviewProps> = ({ accountId, accountNam
       )}
 
       {/* Summary Stats */}
-      <div className="bg-linear-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 p-4">
+      <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 p-4">
         <h3 className="text-sm font-semibold text-gray-700 mb-3">Summary</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>

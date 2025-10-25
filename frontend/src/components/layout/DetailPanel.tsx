@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, User, Briefcase, Building, Calculator, TrendingUp, BarChart3, DollarSign, Shield, Target, Sparkles, Home } from "lucide-react";
+import { X, User, Briefcase, Building, Calculator, TrendingUp, BarChart3, PoundSterling, Shield, Target, Sparkles, Home } from "lucide-react";
 import HoldingsExplorer from "../holdings/HoldingsExplorer";
 import AccountDashboard from "../analytics/AccountDashboard";
 import PerformanceDashboard from "../analytics/PerformanceDashboard";
@@ -173,7 +173,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
                     }`}
                   >
                     <div className="flex items-center">
-                      <DollarSign className={`w-4 h-4 mr-2 ${activeTab === "contributions" ? "text-emerald-600 dark:text-emerald-400" : ""}`} />
+                      <PoundSterling className={`w-4 h-4 mr-2 ${activeTab === "contributions" ? "text-emerald-600 dark:text-emerald-400" : ""}`} />
                       <span className="text-xs sm:text-sm">Contributions</span>
                     </div>
                   </button>

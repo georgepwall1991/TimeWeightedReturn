@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Search, TrendingUp, DollarSign, BarChart3, Filter, Calendar, Clock, RefreshCw, ChevronDown, ChevronUp, Info, Download, LineChart, CalendarRange, X, ArrowRight, Banknote, TrendingUpIcon } from "lucide-react";
+import { Search, TrendingUp, PoundSterling, BarChart3, Filter, Calendar, Clock, RefreshCw, ChevronDown, ChevronUp, Info, Download, LineChart, CalendarRange, X, ArrowRight, Banknote, TrendingUpIcon } from "lucide-react";
 import { api } from "../../services/api";
 import { formatCurrency, formatPercentage } from "../../utils/formatters";
 import type { HoldingDto } from "../../types/api";
@@ -625,7 +625,7 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-gray-400" />
+                <PoundSterling className="w-4 h-4 text-gray-400" />
                 <span className="text-sm text-gray-500 dark:text-gray-400">Total Value</span>
               </div>
               <p className="text-lg font-semibold text-gray-900 mt-1">
@@ -643,7 +643,7 @@ const HoldingsExplorer: React.FC<HoldingsExplorerProps> = ({
             </div>
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-gray-400" />
+                <PoundSterling className="w-4 h-4 text-gray-400" />
                 <span className="text-sm text-gray-500 dark:text-gray-400">Average Value</span>
               </div>
               <p className="text-lg font-semibold text-gray-900 mt-1">

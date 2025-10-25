@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { TrendingUp, TrendingDown, DollarSign, BarChart3, Shield, AlertCircle, ArrowRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, PoundSterling, BarChart3, Shield, AlertCircle, ArrowRight } from 'lucide-react';
 import { api } from '../../services/api';
 import { formatCurrency, formatPercentage } from '../../utils/formatters';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
@@ -102,7 +102,7 @@ const AccountDashboard: React.FC<AccountDashboardProps> = ({
         <div className="group bg-gradient-to-br from-white via-purple-50/30 to-indigo-50/50 dark:from-gray-800 dark:via-purple-950/20 dark:to-indigo-950/30 rounded-xl border border-purple-100 dark:border-purple-900/30 p-6 shadow-lg hover:shadow-glow-lg transition-all duration-300 hover:scale-105">
           <div className="flex items-center justify-between mb-3">
             <div className="p-3 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl shadow-lg group-hover:shadow-purple-500/50 transition-shadow duration-300">
-              <DollarSign className="w-5 h-5 text-white" />
+              <PoundSterling className="w-5 h-5 text-white" />
             </div>
           </div>
           <div className="text-3xl font-bold bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 bg-clip-text text-transparent">
@@ -226,25 +226,53 @@ const AccountDashboard: React.FC<AccountDashboardProps> = ({
             )}
           </div>
           {topHoldingsData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={200}>
-              <RechartsPieChart>
-                <Pie
-                  data={topHoldingsData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={(entry) => entry.name}
-                  outerRadius={70}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {topHoldingsData.map((_entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value: any) => formatCurrency(value)} />
-              </RechartsPieChart>
-            </ResponsiveContainer>
+            <div className="space-y-3">
+              <ResponsiveContainer width="100%" height={180}>
+                <RechartsPieChart>
+                  <Pie
+                    data={topHoldingsData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={false}
+                    outerRadius={65}
+                    innerRadius={30}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {topHoldingsData.map((_entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value: any, _name: string, props: any) => [formatCurrency(value), props.payload.name]}
+                    contentStyle={{
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '0.5rem',
+                      padding: '8px 12px',
+                    }}
+                  />
+                </RechartsPieChart>
+              </ResponsiveContainer>
+              {/* Custom Legend */}
+              <div className="grid grid-cols-1 gap-1.5 text-xs max-h-16 overflow-y-auto px-2">
+                {topHoldingsData.map((holding, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                      <div
+                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                      />
+                      <span className="text-gray-700 dark:text-gray-300 truncate font-medium">{holding.name}</span>
+                    </div>
+                    <span className="text-gray-600 dark:text-gray-400 ml-2 flex-shrink-0 text-xs">
+                      {formatCurrency(holding.value)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           ) : (
             <div className="flex items-center justify-center h-[200px]">
               <p className="text-gray-500 dark:text-gray-400">No holdings data available</p>
@@ -322,7 +350,7 @@ const AccountDashboard: React.FC<AccountDashboardProps> = ({
               className="group bg-gradient-to-br from-white to-emerald-50/50 dark:from-gray-800 dark:to-emerald-950/30 hover:shadow-lg rounded-xl p-3 text-center border border-emerald-200 dark:border-emerald-900/30 transition-all duration-300 hover:scale-105"
             >
               <div className="p-2 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg mx-auto mb-2 w-fit group-hover:shadow-emerald-500/50 transition-shadow">
-                <DollarSign className="w-4 h-4 text-white" />
+                <PoundSterling className="w-4 h-4 text-white" />
               </div>
               <div className="text-xs font-medium text-gray-900 dark:text-gray-100">Contributions</div>
             </button>

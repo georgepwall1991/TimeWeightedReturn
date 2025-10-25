@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { User, DollarSign, BarChart3, PieChart, Briefcase, Building } from 'lucide-react';
+import { User, PoundSterling, BarChart3, PieChart, Briefcase, Building } from 'lucide-react';
 import { api } from '../../services/api';
 import { formatCurrency } from '../../utils/formatters';
 import type { ClientNodeDto } from '../../types/api';
@@ -87,7 +87,7 @@ const ClientOverview: React.FC<ClientOverviewProps> = ({ clientId, clientData })
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold text-gray-600 dark:text-gray-300">Total Value</span>
             <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg shadow-lg">
-              <DollarSign className="w-5 h-5 text-white" />
+              <PoundSterling className="w-5 h-5 text-white" />
             </div>
           </div>
           <div className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
@@ -164,8 +164,11 @@ const ClientOverview: React.FC<ClientOverviewProps> = ({ clientId, clientData })
                   data={clientStats.portfolios}
                   cx="50%"
                   cy="50%"
-                  labelLine={false}
-                  label={(props: PieLabelRenderProps) => `${props.name}: ${formatCurrency(props.value as number)}`}
+                  labelLine={true}
+                  label={(props: PieLabelRenderProps) => {
+                    const percent = ((props.value as number / clientStats.totalValue) * 100).toFixed(1);
+                    return `${percent}%`;
+                  }}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
@@ -174,8 +177,22 @@ const ClientOverview: React.FC<ClientOverviewProps> = ({ clientId, clientData })
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                <Legend />
+                <Tooltip
+                  formatter={(value: number, name: string) => [formatCurrency(value), name]}
+                  contentStyle={{
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '0.5rem',
+                    padding: '8px 12px',
+                  }}
+                />
+                <Legend
+                  wrapperStyle={{ fontSize: '12px' }}
+                  formatter={(value: string, entry: any) => {
+                    const portfolioValue = entry.payload.value;
+                    return `${value} (${formatCurrency(portfolioValue)})`;
+                  }}
+                />
               </RechartsPieChart>
             </ResponsiveContainer>
           ) : (

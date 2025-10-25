@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import {
   TrendingUp,
   TrendingDown,
-  DollarSign,
+  PoundSterling,
   PieChart,
   Filter,
   Download,
@@ -240,7 +240,7 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
           </div>
           <div className="bg-green-50 rounded-lg p-4">
             <div className="flex items-center">
-              <DollarSign className="w-5 h-5 text-green-600 mr-2" />
+              <PoundSterling className="w-5 h-5 text-green-600 mr-2" />
               <div>
                 <p className="text-sm font-medium text-green-900">Cash</p>
                 <p className="text-lg font-bold text-green-900">

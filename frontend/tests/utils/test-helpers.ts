@@ -52,23 +52,50 @@ export async function isDarkMode(page: Page): Promise<boolean> {
 
 /**
  * Enable dark mode
+ * Sets localStorage and reloads to ensure ThemeProvider picks it up
  */
 export async function enableDarkMode(page: Page): Promise<void> {
-  await page.evaluate(() => {
-    document.documentElement.classList.add('dark');
+  // Set theme in localStorage before anything else
+  await page.addInitScript(() => {
     localStorage.setItem('theme', 'dark');
   });
+
+  // Also set it directly in case page is already loaded
+  await page.evaluate(() => {
+    localStorage.setItem('theme', 'dark');
+    // Manually add dark class to DOM for immediate effect
+    document.documentElement.classList.add('dark');
+  });
+
+  // Wait for theme to apply
   await page.waitForTimeout(500);
+
+  // Verify dark mode is active
+  const isDark = await page.evaluate(() => document.documentElement.classList.contains('dark'));
+  if (!isDark) {
+    // If not applied, reload the page to let ThemeProvider initialize with dark theme
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.waitForTimeout(1000);
+  }
 }
 
 /**
  * Disable dark mode
+ * Sets localStorage and reloads to ensure ThemeProvider picks it up
  */
 export async function disableDarkMode(page: Page): Promise<void> {
-  await page.evaluate(() => {
-    document.documentElement.classList.remove('dark');
+  // Set theme in localStorage
+  await page.addInitScript(() => {
     localStorage.setItem('theme', 'light');
   });
+
+  await page.evaluate(() => {
+    localStorage.setItem('theme', 'light');
+    // Manually remove dark class from DOM
+    document.documentElement.classList.remove('dark');
+  });
+
+  // Wait for theme to apply
   await page.waitForTimeout(500);
 }
 

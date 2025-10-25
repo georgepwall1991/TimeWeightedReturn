@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { DollarSign, BarChart3, PieChart, Briefcase } from 'lucide-react';
+import { PoundSterling, BarChart3, PieChart, Briefcase } from 'lucide-react';
 import { api } from '../../services/api';
 import { formatCurrency } from '../../utils/formatters';
 import type { PortfolioNodeDto } from '../../types/api';
@@ -88,7 +88,7 @@ const PortfolioOverview: React.FC<PortfolioOverviewProps> = ({ portfolioId, port
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold text-gray-600 dark:text-gray-300">Total Value</span>
             <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-lg">
-              <DollarSign className="w-5 h-5 text-white" />
+              <PoundSterling className="w-5 h-5 text-white" />
             </div>
           </div>
           <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">

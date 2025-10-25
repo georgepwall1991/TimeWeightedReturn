@@ -1,0 +1,11 @@
+=== Layout Audit Report ===
+
+Total Issues: 2
+Critical: 0
+Warnings: 2
+Info: 0
+
+--- WARNINGS ---
+[OVERFLOW] text-center: Text overflow detected: "Portfolio AnalyticsLoading..." (scrollWidth: 168, clientWidth: 168)
+[OVERFLOW] mt-4 flex justify-center: Text overflow detected: "" (scrollWidth: 168, clientWidth: 168)
+
