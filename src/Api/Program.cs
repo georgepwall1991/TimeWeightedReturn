@@ -4,12 +4,15 @@ using Api.Configuration;
 using Api.Middleware;
 using Application;
 using Application.Behaviors;
+using Application.Configuration;
 using Application.Features.Common.Interfaces;
 using Application.Interfaces;
 using Application.Jobs;
 using Application.Services;
+using Application.Services.FxRates;
 using Application.Services.MarketData;
 using AspNetCoreRateLimit;
+using Infrastructure.Services.FxRates;
 using Domain.Services;
 using FluentValidation;
 using Hangfire;
@@ -25,6 +28,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Polly;
 using JwtSettings = Application.Services.JwtSettings;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -37,6 +41,8 @@ builder.Services.Configure<IdentitySettings>(builder.Configuration.GetSection(Id
 builder.Services.Configure<AdminSeedSettings>(builder.Configuration.GetSection(AdminSeedSettings.SectionName));
 builder.Services.Configure<Application.Services.EmailSettings>(builder.Configuration.GetSection(Application.Services.EmailSettings.SectionName));
 builder.Services.Configure<MarketDataSettings>(builder.Configuration.GetSection(MarketDataSettings.SectionName));
+builder.Services.Configure<FxRateSettings>(builder.Configuration.GetSection(FxRateSettings.SectionName));
+builder.Services.Configure<DataFreshnessSettings>(builder.Configuration.GetSection(DataFreshnessSettings.SectionName));
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -56,9 +62,23 @@ builder.Services.Configure<IpRateLimitPolicies>(builder.Configuration.GetSection
 builder.Services.AddInMemoryRateLimiting();
 builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
 
-// Configure Entity Framework
+// Configure Entity Framework with connection resilience
 builder.Services.AddDbContext<PortfolioContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions =>
+        {
+            // Enable automatic retry on transient failures (network issues, deadlocks, timeouts)
+            npgsqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 3,
+                maxRetryDelay: TimeSpan.FromSeconds(5),
+                errorCodesToAdd: null);
+
+            // Set command timeout (30 seconds for long-running queries)
+            npgsqlOptions.CommandTimeout(30);
+        })
+    .EnableDetailedErrors(builder.Environment.IsDevelopment())
+    .EnableSensitiveDataLogging(builder.Environment.IsDevelopment()));
 
 // Configure Identity
 var identitySettings = builder.Configuration.GetSection(IdentitySettings.SectionName).Get<IdentitySettings>() ?? new IdentitySettings();
@@ -165,13 +185,53 @@ builder.Services.AddScoped<ContributionAnalysisService>();
 builder.Services.AddScoped<RiskMetricsService>();
 builder.Services.AddScoped<AttributionAnalysisService>();
 
-// Register market data providers and services
-builder.Services.AddHttpClient<IMarketDataProvider, AlphaVantageProvider>();
-builder.Services.AddHttpClient<IMarketDataProvider, FinnhubProvider>();
-builder.Services.AddHttpClient<IMarketDataProvider, YahooFinanceProvider>();
+// Register market data providers with resilience policies (retry, circuit breaker, timeout)
+builder.Services.AddHttpClient<IMarketDataProvider, AlphaVantageProvider>()
+    .AddPolicyHandler((services, request) =>
+    {
+        var logger = services.GetRequiredService<ILogger<AlphaVantageProvider>>();
+        var context = new Context { ["Logger"] = logger };
+        return ResiliencePolicies.GetCombinedHttpPolicy();
+    });
+
+builder.Services.AddHttpClient<IMarketDataProvider, FinnhubProvider>()
+    .AddPolicyHandler((services, request) =>
+    {
+        var logger = services.GetRequiredService<ILogger<FinnhubProvider>>();
+        var context = new Context { ["Logger"] = logger };
+        return ResiliencePolicies.GetCombinedHttpPolicy();
+    });
+
+builder.Services.AddHttpClient<IMarketDataProvider, YahooFinanceProvider>()
+    .AddPolicyHandler((services, request) =>
+    {
+        var logger = services.GetRequiredService<ILogger<YahooFinanceProvider>>();
+        var context = new Context { ["Logger"] = logger };
+        return ResiliencePolicies.GetCombinedHttpPolicy();
+    });
+
 builder.Services.AddScoped<IMarketDataService, MarketDataService>();
 builder.Services.AddScoped<IPriceUpdateService, Infrastructure.Services.MarketData.PriceUpdateService>();
 builder.Services.AddScoped<DailyPriceUpdateJob>();
+
+// Register FX rate providers with resilience policies
+builder.Services.AddHttpClient<IFxRateProvider, ExchangeRateApiProvider>()
+    .AddPolicyHandler((services, request) =>
+    {
+        var logger = services.GetRequiredService<ILogger<ExchangeRateApiProvider>>();
+        var context = new Context { ["Logger"] = logger };
+        return ResiliencePolicies.GetCombinedHttpPolicy();
+    });
+
+builder.Services.AddScoped<IFxRateService, FxRateService>();
+builder.Services.AddScoped<IFxRateUpdateService, Infrastructure.Services.FxRates.FxRateUpdateService>();
+
+// Register data health service
+builder.Services.AddScoped<IDataHealthService, Infrastructure.Services.DataHealth.DataHealthService>();
+
+// Register initialization services
+builder.Services.AddScoped<Infrastructure.Services.Initialization.FxRateInitializationService>();
+builder.Services.AddHostedService<Infrastructure.Services.Initialization.DataInitializationHostedService>();
 
 // Configure Hangfire for background jobs
 builder.Services.AddHangfire(configuration => configuration

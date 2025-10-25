@@ -137,7 +137,7 @@ public class PortfolioRepository : IPortfolioRepository
         // Get FX rates for the specified date
         var currencies = holdings.Select(h => h.Instrument.Currency).Distinct().ToList();
         var fxRates = await _context.FxRates
-            .Where(fx => currencies.Contains(fx.QuoteCurrency) && fx.Date == date)
+            .Where(fx => fx.BaseCurrency == "GBP" && currencies.Contains(fx.QuoteCurrency) && fx.Date == date)
             .AsNoTracking()
             .ToListAsync();
 
@@ -147,7 +147,7 @@ public class PortfolioRepository : IPortfolioRepository
         if (missingFxCurrencies.Any())
         {
             var latestFxRates = await _context.FxRates
-                .Where(fx => missingFxCurrencies.Contains(fx.QuoteCurrency) && fx.Date <= date)
+                .Where(fx => fx.BaseCurrency == "GBP" && missingFxCurrencies.Contains(fx.QuoteCurrency) && fx.Date <= date)
                 .GroupBy(fx => fx.QuoteCurrency)
                 .Select(g => g.OrderByDescending(fx => fx.Date).First())
                 .AsNoTracking()
@@ -178,7 +178,7 @@ public class PortfolioRepository : IPortfolioRepository
             {
                 // Try to get the latest available FX rate on or before the date for this currency
                 var latestFx = await _context.FxRates
-                    .Where(fx => fx.QuoteCurrency == holding.Instrument.Currency && fx.Date <= date)
+                    .Where(fx => fx.BaseCurrency == "GBP" && fx.QuoteCurrency == holding.Instrument.Currency && fx.Date <= date)
                     .OrderByDescending(fx => fx.Date)
                     .FirstOrDefaultAsync();
                 if (latestFx != null) fxRate = latestFx.Rate;

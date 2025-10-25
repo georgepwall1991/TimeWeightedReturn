@@ -9,8 +9,8 @@ export type AuthUser = {
 };
 
 export const ADMIN_USER: AuthUser = {
-  email: 'admin@timeweightedreturn.com',
-  password: 'Admin@123',
+  email: 'admin@portfolioanalytics.com',
+  password: 'Admin123!@#',
 };
 
 /**
@@ -39,11 +39,11 @@ export const test = base.extend<{ authenticatedPage: Page }>({
     await page.click('button[type="submit"]');
 
     // Wait for successful login (redirected away from login page)
-    await page.waitForURL(url => !url.pathname.includes('/login'), { timeout: 10000 });
+    await page.waitForURL(url => !url.pathname.includes('/login'), { timeout: 20000 });
 
     // Wait for user menu to be visible (indicates auth state is fully initialized)
     // This implicitly waits for AuthInitializer to fetch user data and update Redux
-    await expect(page.locator('button[aria-label*="User menu"]')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('button[aria-label*="User menu"]')).toBeVisible({ timeout: 20000 });
 
     // Ensure light mode is active after login and wait for it to apply
     await page.evaluate(() => {
@@ -68,7 +68,7 @@ export const test = base.extend<{ authenticatedPage: Page }>({
  * This is faster than UI-based login and can be used in beforeEach hooks
  */
 export async function loginViaAPI(page: Page, user: AuthUser = ADMIN_USER): Promise<void> {
-  const response = await page.request.post('http://localhost:5011/api/auth/login', {
+  const response = await page.request.post('http://localhost:8080/api/auth/login', {
     data: {
       email: user.email,
       password: user.password,

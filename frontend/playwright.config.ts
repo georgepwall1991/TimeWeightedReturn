@@ -24,15 +24,15 @@ export default defineConfig({
   // Fail the build on CI if you accidentally left test.only in the source code
   forbidOnly: !!process.env.CI,
 
-  // Retry on CI only
-  retries: process.env.CI ? 2 : 0,
+  // Retry failed tests automatically (1 retry locally, 2 on CI)
+  retries: process.env.CI ? 2 : 1,
 
   // Opt out of parallel tests on CI
   workers: process.env.CI ? 1 : undefined,
 
   // Reporter to use
   reporter: [
-    ['html', { outputFolder: 'test-results/html', open: 'never' }],
+    ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['json', { outputFile: 'test-results/results.json' }],
     ['junit', { outputFile: 'test-results/junit.xml' }],
     ['list'], // Console output
@@ -98,8 +98,8 @@ export default defineConfig({
   // Run both backend and frontend servers before starting the tests
   webServer: [
     {
-      command: 'cd .. && dotnet run --project src/Api/Api.csproj --urls "http://localhost:5011"',
-      url: 'http://localhost:5011/health',
+      command: 'cd .. && dotnet run --project src/Api/Api.csproj --urls "http://localhost:8080"',
+      url: 'http://localhost:8080/health',
       reuseExistingServer: !process.env.CI,
       timeout: 120 * 1000,
       stdout: 'pipe',

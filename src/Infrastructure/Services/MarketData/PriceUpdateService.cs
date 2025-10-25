@@ -221,4 +221,184 @@ public class PriceUpdateService : IPriceUpdateService
 
         return true;
     }
+
+    public async Task<MarketDataStatus> RefreshAllBenchmarkPricesAsync(
+        DateOnly? date = null,
+        CancellationToken cancellationToken = default)
+    {
+        var targetDate = date ?? DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1)); // Default to yesterday
+        var startTime = DateTime.UtcNow;
+
+        _logger.LogInformation("Starting benchmark price refresh for all benchmarks on {Date}", targetDate);
+
+        // Get all active benchmarks
+        var benchmarks = await _context.Benchmarks
+            .Where(b => b.IsActive)
+            .ToListAsync(cancellationToken);
+
+        var totalBenchmarks = benchmarks.Count;
+        var updatedBenchmarks = 0;
+        var failedBenchmarks = 0;
+        var errors = new Dictionary<string, string>();
+
+        foreach (var benchmark in benchmarks)
+        {
+            try
+            {
+                var success = await RefreshBenchmarkPriceInternalAsync(
+                    benchmark,
+                    targetDate,
+                    cancellationToken);
+
+                if (success)
+                {
+                    updatedBenchmarks++;
+                }
+                else
+                {
+                    failedBenchmarks++;
+                    errors[benchmark.IndexSymbol] = "No price data available";
+                }
+            }
+            catch (Exception ex)
+            {
+                failedBenchmarks++;
+                errors[benchmark.IndexSymbol] = ex.Message;
+                _logger.LogError(ex, "Failed to refresh price for benchmark {Symbol}", benchmark.IndexSymbol);
+            }
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "Completed benchmark price refresh. Total: {Total}, Updated: {Updated}, Failed: {Failed}",
+            totalBenchmarks, updatedBenchmarks, failedBenchmarks);
+
+        // Get provider status
+        var providerStatus = await _marketDataService.GetProviderStatusAsync(cancellationToken);
+        var primaryProvider = providerStatus.FirstOrDefault(p => p.Value).Key;
+
+        return new MarketDataStatus(
+            primaryProvider,
+            providerStatus.Any(p => p.Value),
+            startTime,
+            totalBenchmarks,
+            updatedBenchmarks,
+            failedBenchmarks,
+            errors);
+    }
+
+    public async Task<bool> RefreshBenchmarkPriceAsync(
+        Guid benchmarkId,
+        DateOnly? date = null,
+        CancellationToken cancellationToken = default)
+    {
+        var benchmark = await _context.Benchmarks
+            .FirstOrDefaultAsync(b => b.Id == benchmarkId, cancellationToken);
+
+        if (benchmark == null)
+        {
+            _logger.LogWarning("Benchmark {BenchmarkId} not found", benchmarkId);
+            return false;
+        }
+
+        var targetDate = date ?? DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1));
+
+        var success = await RefreshBenchmarkPriceInternalAsync(benchmark, targetDate, cancellationToken);
+
+        if (success)
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+
+        return success;
+    }
+
+    public async Task<IEnumerable<BenchmarkPriceStatus>> GetBenchmarkPriceStatusAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var benchmarks = await _context.Benchmarks
+            .Where(b => b.IsActive)
+            .Include(b => b.Prices)
+            .ToListAsync(cancellationToken);
+
+        var statusList = new List<BenchmarkPriceStatus>();
+
+        foreach (var benchmark in benchmarks)
+        {
+            var lastPrice = benchmark.Prices
+                .OrderByDescending(p => p.Date)
+                .FirstOrDefault();
+
+            var needsUpdate = lastPrice == null ||
+                              lastPrice.Date < DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-7));
+
+            statusList.Add(new BenchmarkPriceStatus(
+                benchmark.Id,
+                benchmark.IndexSymbol,
+                benchmark.Name,
+                lastPrice?.Date.ToDateTime(TimeOnly.MinValue),
+                needsUpdate));
+        }
+
+        return statusList;
+    }
+
+    private async Task<bool> RefreshBenchmarkPriceInternalAsync(
+        Domain.Entities.Benchmark benchmark,
+        DateOnly date,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Refreshing price for benchmark {Symbol} on {Date}", benchmark.IndexSymbol, date);
+
+        // Check if price already exists
+        var existingPrice = await _context.BenchmarkPrices
+            .FirstOrDefaultAsync(
+                p => p.BenchmarkId == benchmark.Id && p.Date == date,
+                cancellationToken);
+
+        // Fetch price from market data service
+        var marketPrice = await _marketDataService.GetPriceAsync(
+            benchmark.IndexSymbol,
+            date,
+            cancellationToken: cancellationToken);
+
+        if (marketPrice == null)
+        {
+            _logger.LogWarning("No market data found for benchmark {Symbol} on {Date}", benchmark.IndexSymbol, date);
+            return false;
+        }
+
+        if (existingPrice != null)
+        {
+            // Update existing price
+            existingPrice.Value = marketPrice.Price;
+            existingPrice.UpdatedAt = DateTime.UtcNow;
+
+            _logger.LogInformation(
+                "Updated price for benchmark {Symbol} on {Date}: {Price}",
+                benchmark.IndexSymbol, date, marketPrice.Price);
+        }
+        else
+        {
+            // Create new price entry
+            var newPrice = new Domain.Entities.BenchmarkPrice
+            {
+                Id = Guid.NewGuid(),
+                BenchmarkId = benchmark.Id,
+                Date = date,
+                Value = marketPrice.Price,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.BenchmarkPrices.Add(newPrice);
+
+            _logger.LogInformation(
+                "Created price for benchmark {Symbol} on {Date}: {Price}",
+                benchmark.IndexSymbol, date, marketPrice.Price);
+        }
+
+        return true;
+    }
 }

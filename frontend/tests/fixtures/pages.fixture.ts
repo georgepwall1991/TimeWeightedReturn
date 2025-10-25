@@ -63,8 +63,9 @@ export class AppPage {
 
   async openUserMenu() {
     // Wait for user menu to be fully ready before clicking
-    await this.userMenu.waitFor({ state: 'visible', timeout: 15000 });
-    await this.userMenu.waitFor({ state: 'attached', timeout: 15000 });
+    // Increased timeout for mobile browsers which are slower
+    await this.userMenu.waitFor({ state: 'visible', timeout: 20000 });
+    await this.userMenu.waitFor({ state: 'attached', timeout: 20000 });
     await this.page.waitForLoadState('networkidle');
     await this.userMenu.click();
   }
@@ -73,24 +74,31 @@ export class AppPage {
     await this.openUserMenu();
 
     // Wait for menu to be visible and theme buttons to be present
-    await this.page.waitForTimeout(200);
+    await this.page.waitForTimeout(1000);
 
     // Click the theme button - look for button containing the theme text within the dropdown menu
-    // Use a more specific selector to avoid matching user info
-    const themeButton = this.page.locator('.absolute.right-0').locator('button', { hasText: theme }).first();
+    const themeButton = this.page.locator('.absolute.right-0 button').filter({ hasText: theme }).first();
     await themeButton.click();
 
+    // Wait for theme change to propagate (mobile browsers need more time)
+    await this.page.waitForTimeout(1000);
+
     // Wait for theme to actually apply by checking DOM state
+    // Increased timeout for mobile browsers which have slower JavaScript execution
     if (theme === 'Dark') {
-      await this.page.waitForSelector('html.dark', { timeout: 5000 });
+      await this.page.waitForSelector('html.dark', { timeout: 10000 });
     } else if (theme === 'Light') {
       // Wait for dark class to be removed
-      await this.page.waitForFunction(() => !document.documentElement.classList.contains('dark'), { timeout: 5000 });
+      await this.page.waitForFunction(() => !document.documentElement.classList.contains('dark'), { timeout: 10000 });
     }
     // For System theme, just wait a bit for the change to register
     else {
-      await this.page.waitForTimeout(500);
+      await this.page.waitForTimeout(1000);
     }
+
+    // Close menu after selection by clicking outside or pressing Escape
+    await this.page.keyboard.press('Escape');
+    await this.page.waitForTimeout(500);
   }
 
   async logout() {

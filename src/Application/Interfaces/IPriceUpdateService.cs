@@ -15,4 +15,16 @@ public interface IPriceUpdateService
 
     Task<IEnumerable<InstrumentPriceStatus>> GetInstrumentPriceStatusAsync(
         CancellationToken cancellationToken = default);
+
+    Task<MarketDataStatus> RefreshAllBenchmarkPricesAsync(
+        DateOnly? date = null,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> RefreshBenchmarkPriceAsync(
+        Guid benchmarkId,
+        DateOnly? date = null,
+        CancellationToken cancellationToken = default);
+
+    Task<IEnumerable<BenchmarkPriceStatus>> GetBenchmarkPriceStatusAsync(
+        CancellationToken cancellationToken = default);
 }

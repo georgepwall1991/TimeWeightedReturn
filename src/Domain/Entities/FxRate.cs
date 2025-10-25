@@ -8,4 +8,5 @@ public class FxRate
     public DateOnly Date { get; set; }
     public decimal Rate { get; set; } // How many quote currency per 1 base currency
     public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }

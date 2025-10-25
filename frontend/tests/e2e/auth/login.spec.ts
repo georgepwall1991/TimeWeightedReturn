@@ -22,11 +22,11 @@ test.describe('Login Flow', () => {
   test('should successfully login with valid credentials', async ({ page }) => {
     await loginPage.login(ADMIN_USER.email, ADMIN_USER.password);
 
-    // Should redirect to main app
-    await expect(page).toHaveURL('/', { timeout: 10000 });
+    // Wait for user menu to appear (indicates successful auth and redirect)
+    await expect(page.locator('button[aria-label*="User menu"]')).toBeVisible({ timeout: 15000 });
 
-    // Should show user menu
-    await expect(page.locator('button[aria-label*="User menu"]')).toBeVisible();
+    // Should redirect to main app
+    await expect(page).toHaveURL('/', { timeout: 5000 });
   });
 
   test('should show error with invalid email', async ({ page }) => {
