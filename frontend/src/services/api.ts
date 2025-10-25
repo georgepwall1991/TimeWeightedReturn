@@ -29,6 +29,46 @@ import type {
   MarketDataStatus,
   TickerValidationResult,
 } from '../types/marketData';
+import type {
+  ReconciliationBatchDto,
+  ReconciliationBreakDto,
+  ReconciliationDashboard,
+  ImportFileResponse,
+  RunReconciliationRequest,
+  ReconciliationResult,
+  ApproveBatchRequest,
+  RejectBatchRequest,
+  ResolveBreakRequest,
+  GetBatchesFilters,
+  GetBreaksFilters,
+} from '../types/reconciliation';
+import type {
+  ClientDto,
+  CreateClientRequest,
+  CreateClientResponse,
+  UpdateClientRequest,
+  DeleteClientResponse,
+  PortfolioDto,
+  CreatePortfolioRequest,
+  CreatePortfolioResponse,
+  UpdatePortfolioRequest,
+  DeletePortfolioResponse,
+  AccountDto,
+  CreateAccountRequest,
+  CreateAccountResponse,
+  UpdateAccountRequest,
+  DeleteAccountResponse,
+} from '../types/management';
+import type {
+  TransactionDto,
+  CreateTransactionRequest,
+  UpdateTransactionRequest,
+} from '../types/transaction';
+import type {
+  InstrumentDto,
+  CreateInstrumentRequest,
+  UpdateInstrumentRequest,
+} from '../types/instrument';
 
 // Account holdings response interface
 interface GetAccountHoldingsResponse {
@@ -175,7 +215,7 @@ export interface UpdateUserPreferencesRequest {
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['PortfolioTree', 'Holdings', 'AccountHoldings', 'TWR', 'Contribution', 'RiskMetrics', 'Auth', 'Benchmark', 'UserPreferences', 'MarketData'],
+  tagTypes: ['PortfolioTree', 'Holdings', 'AccountHoldings', 'TWR', 'Contribution', 'RiskMetrics', 'Auth', 'Benchmark', 'UserPreferences', 'MarketData', 'ReconciliationBatch', 'ReconciliationBreak', 'Client', 'Portfolio', 'Account', 'Transaction', 'Instrument'],
   endpoints: (builder) => ({
     // Portfolio Tree Navigation
     getPortfolioTree: builder.query<PortfolioTreeResponse, { clientId?: string }>({
@@ -503,6 +543,334 @@ export const api = createApi({
         method: 'POST',
       }),
     }),
+
+    // Reconciliation endpoints
+    importFile: builder.mutation<ImportFileResponse, FormData>({
+      query: (formData) => ({
+        url: 'reconciliation/import',
+        method: 'POST',
+        body: formData,
+      }),
+      invalidatesTags: ['ReconciliationBatch'],
+    }),
+
+    runReconciliation: builder.mutation<ReconciliationResult, RunReconciliationRequest>({
+      query: (request) => ({
+        url: 'reconciliation/run',
+        method: 'POST',
+        body: request,
+      }),
+      invalidatesTags: ['ReconciliationBatch', 'ReconciliationBreak'],
+    }),
+
+    getReconciliationBatches: builder.query<ReconciliationBatchDto[], GetBatchesFilters | void>({
+      query: (filters) => {
+        const params = new URLSearchParams();
+        if (filters) {
+          if (filters.fromDate) params.append('fromDate', filters.fromDate);
+          if (filters.toDate) params.append('toDate', filters.toDate);
+          if (filters.status !== undefined) params.append('status', filters.status.toString());
+        }
+        return `reconciliation/batches${params.toString() ? `?${params.toString()}` : ''}`;
+      },
+      providesTags: ['ReconciliationBatch'],
+    }),
+
+    getReconciliationBreaks: builder.query<ReconciliationBreakDto[], GetBreaksFilters | void>({
+      query: (filters) => {
+        const params = new URLSearchParams();
+        if (filters) {
+          if (filters.batchId) params.append('batchId', filters.batchId);
+          if (filters.status !== undefined) params.append('status', filters.status.toString());
+          if (filters.breakType !== undefined) params.append('breakType', filters.breakType.toString());
+        }
+        return `reconciliation/breaks${params.toString() ? `?${params.toString()}` : ''}`;
+      },
+      providesTags: ['ReconciliationBreak'],
+    }),
+
+    approveBatch: builder.mutation<{ message: string }, { batchId: string; request: ApproveBatchRequest }>({
+      query: ({ batchId, request }) => ({
+        url: `reconciliation/batches/${batchId}/approve`,
+        method: 'POST',
+        body: request,
+      }),
+      invalidatesTags: ['ReconciliationBatch', 'ReconciliationBreak'],
+    }),
+
+    rejectBatch: builder.mutation<{ message: string }, { batchId: string; request: RejectBatchRequest }>({
+      query: ({ batchId, request }) => ({
+        url: `reconciliation/batches/${batchId}/reject`,
+        method: 'POST',
+        body: request,
+      }),
+      invalidatesTags: ['ReconciliationBatch'],
+    }),
+
+    resolveBreak: builder.mutation<{ message: string }, { breakId: string; request: ResolveBreakRequest }>({
+      query: ({ breakId, request }) => ({
+        url: `reconciliation/breaks/${breakId}/resolve`,
+        method: 'POST',
+        body: request,
+      }),
+      invalidatesTags: ['ReconciliationBreak', 'ReconciliationBatch'],
+    }),
+
+    getReconciliationDashboard: builder.query<ReconciliationDashboard, void>({
+      query: () => 'reconciliation/dashboard',
+      providesTags: ['ReconciliationBatch', 'ReconciliationBreak'],
+    }),
+
+    // Client management endpoints
+    getClients: builder.query<ClientDto[], void>({
+      query: () => 'client',
+      providesTags: ['Client'],
+      transformResponse: (response: { clients: ClientDto[] }) => response.clients,
+      keepUnusedDataFor: 300, // Cache for 5 minutes
+    }),
+
+    getClientById: builder.query<ClientDto, { clientId: string }>({
+      query: ({ clientId }) => `client/${clientId}`,
+      providesTags: (_result, _error, { clientId }) => [
+        { type: 'Client', id: clientId },
+        'Client',
+      ],
+      keepUnusedDataFor: 300, // Cache for 5 minutes
+    }),
+
+    createClient: builder.mutation<CreateClientResponse, CreateClientRequest>({
+      query: (body) => ({
+        url: 'client',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Client', 'PortfolioTree'],
+    }),
+
+    updateClient: builder.mutation<ClientDto, { clientId: string; body: UpdateClientRequest }>({
+      query: ({ clientId, body }) => ({
+        url: `client/${clientId}`,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: (_result, _error, { clientId }) => [
+        { type: 'Client', id: clientId },
+        'Client',
+        'PortfolioTree',
+      ],
+    }),
+
+    deleteClient: builder.mutation<DeleteClientResponse, { clientId: string }>({
+      query: ({ clientId }) => ({
+        url: `client/${clientId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Client', 'PortfolioTree'],
+    }),
+
+    // Portfolio management endpoints
+    getPortfolios: builder.query<PortfolioDto[], { clientId?: string } | void>({
+      query: (params) => ({
+        url: 'portfolio',
+        params: params && 'clientId' in params ? { clientId: params.clientId } : undefined,
+      }),
+      providesTags: ['Portfolio'],
+      transformResponse: (response: { portfolios: PortfolioDto[] }) => response.portfolios,
+      keepUnusedDataFor: 300, // Cache for 5 minutes
+    }),
+
+    getPortfolioById: builder.query<PortfolioDto, { portfolioId: string }>({
+      query: ({ portfolioId }) => `portfolio/${portfolioId}`,
+      providesTags: (_result, _error, { portfolioId }) => [
+        { type: 'Portfolio', id: portfolioId },
+        'Portfolio',
+      ],
+      keepUnusedDataFor: 300, // Cache for 5 minutes
+    }),
+
+    createPortfolio: builder.mutation<CreatePortfolioResponse, CreatePortfolioRequest>({
+      query: (body) => ({
+        url: 'portfolio',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Portfolio', 'PortfolioTree', 'Client'],
+    }),
+
+    updatePortfolio: builder.mutation<PortfolioDto, { portfolioId: string; body: UpdatePortfolioRequest }>({
+      query: ({ portfolioId, body }) => ({
+        url: `portfolio/${portfolioId}`,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: (_result, _error, { portfolioId }) => [
+        { type: 'Portfolio', id: portfolioId },
+        'Portfolio',
+        'PortfolioTree',
+        'Client',
+      ],
+    }),
+
+    deletePortfolio: builder.mutation<DeletePortfolioResponse, { portfolioId: string }>({
+      query: ({ portfolioId }) => ({
+        url: `portfolio/${portfolioId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Portfolio', 'PortfolioTree', 'Client'],
+    }),
+
+    // Account management endpoints
+    getAccounts: builder.query<AccountDto[], { portfolioId?: string } | void>({
+      query: (params) => ({
+        url: 'account',
+        params: params && 'portfolioId' in params ? { portfolioId: params.portfolioId } : undefined,
+      }),
+      providesTags: ['Account'],
+      transformResponse: (response: { accounts: AccountDto[] }) => response.accounts,
+      keepUnusedDataFor: 300, // Cache for 5 minutes
+    }),
+
+    getAccountById: builder.query<AccountDto, { accountId: string }>({
+      query: ({ accountId }) => `account/${accountId}`,
+      providesTags: (_result, _error, { accountId }) => [
+        { type: 'Account', id: accountId },
+        'Account',
+      ],
+      keepUnusedDataFor: 300, // Cache for 5 minutes
+    }),
+
+    createAccount: builder.mutation<CreateAccountResponse, CreateAccountRequest>({
+      query: (body) => ({
+        url: 'account',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Account', 'PortfolioTree', 'Portfolio'],
+    }),
+
+    updateAccount: builder.mutation<AccountDto, { accountId: string; body: UpdateAccountRequest }>({
+      query: ({ accountId, body }) => ({
+        url: `account/${accountId}`,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: (_result, _error, { accountId }) => [
+        { type: 'Account', id: accountId },
+        'Account',
+        'PortfolioTree',
+        'Portfolio',
+      ],
+    }),
+
+    deleteAccount: builder.mutation<DeleteAccountResponse, { accountId: string }>({
+      query: ({ accountId }) => ({
+        url: `account/${accountId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Account', 'PortfolioTree', 'Portfolio'],
+    }),
+
+    // Transaction management endpoints
+    getTransactions: builder.query<TransactionDto[], { accountId: string; startDate?: string; endDate?: string }>({
+      query: ({ accountId, startDate, endDate }) => ({
+        url: `transaction/account/${accountId}`,
+        params: {
+          ...(startDate && { startDate }),
+          ...(endDate && { endDate }),
+        },
+      }),
+      providesTags: (_result, _error, { accountId }) => [
+        { type: 'Transaction', id: accountId },
+        'Transaction',
+      ],
+      keepUnusedDataFor: 300, // Cache for 5 minutes
+    }),
+
+    createTransaction: builder.mutation<TransactionDto, CreateTransactionRequest>({
+      query: (body) => ({
+        url: 'transaction',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: (_result, _error, { accountId }) => [
+        { type: 'Transaction', id: accountId },
+        'Transaction',
+        { type: 'Account', id: accountId },
+        'Account',
+      ],
+    }),
+
+    updateTransaction: builder.mutation<TransactionDto, { transactionId: string; body: UpdateTransactionRequest }>({
+      query: ({ transactionId, body }) => ({
+        url: `transaction/${transactionId}`,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: (result) => [
+        { type: 'Transaction', id: result?.accountId },
+        'Transaction',
+        { type: 'Account', id: result?.accountId },
+        'Account',
+      ],
+    }),
+
+    deleteTransaction: builder.mutation<void, { transactionId: string; accountId: string }>({
+      query: ({ transactionId }) => ({
+        url: `transaction/${transactionId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _error, { accountId }) => [
+        { type: 'Transaction', id: accountId },
+        'Transaction',
+        { type: 'Account', id: accountId },
+        'Account',
+      ],
+    }),
+
+    // Instrument management endpoints
+    getInstruments: builder.query<InstrumentDto[], void>({
+      query: () => 'instrument',
+      providesTags: ['Instrument'],
+      keepUnusedDataFor: 300, // Cache for 5 minutes
+    }),
+
+    getInstrumentById: builder.query<InstrumentDto, { instrumentId: string }>({
+      query: ({ instrumentId }) => `instrument/${instrumentId}`,
+      providesTags: (_result, _error, { instrumentId }) => [
+        { type: 'Instrument', id: instrumentId },
+        'Instrument',
+      ],
+      keepUnusedDataFor: 300, // Cache for 5 minutes
+    }),
+
+    createInstrument: builder.mutation<InstrumentDto, CreateInstrumentRequest>({
+      query: (body) => ({
+        url: 'instrument',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Instrument'],
+    }),
+
+    updateInstrument: builder.mutation<InstrumentDto, { instrumentId: string; body: UpdateInstrumentRequest }>({
+      query: ({ instrumentId, body }) => ({
+        url: `instrument/${instrumentId}`,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: (_result, _error, { instrumentId }) => [
+        { type: 'Instrument', id: instrumentId },
+        'Instrument',
+      ],
+    }),
+
+    deleteInstrument: builder.mutation<void, { instrumentId: string }>({
+      query: ({ instrumentId }) => ({
+        url: `instrument/${instrumentId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Instrument', 'Holdings', 'AccountHoldings'],
+    }),
   }),
 });
 
@@ -539,6 +907,38 @@ export const {
   useRefreshAllPricesMutation,
   useRefreshInstrumentPriceMutation,
   useValidateTickerMutation,
+  useImportFileMutation,
+  useRunReconciliationMutation,
+  useGetReconciliationBatchesQuery,
+  useGetReconciliationBreaksQuery,
+  useApproveBatchMutation,
+  useRejectBatchMutation,
+  useResolveBreakMutation,
+  useGetReconciliationDashboardQuery,
+  useGetClientsQuery,
+  useGetClientByIdQuery,
+  useCreateClientMutation,
+  useUpdateClientMutation,
+  useDeleteClientMutation,
+  useGetPortfoliosQuery,
+  useGetPortfolioByIdQuery,
+  useCreatePortfolioMutation,
+  useUpdatePortfolioMutation,
+  useDeletePortfolioMutation,
+  useGetAccountsQuery,
+  useGetAccountByIdQuery,
+  useCreateAccountMutation,
+  useUpdateAccountMutation,
+  useDeleteAccountMutation,
+  useGetTransactionsQuery,
+  useCreateTransactionMutation,
+  useUpdateTransactionMutation,
+  useDeleteTransactionMutation,
+  useGetInstrumentsQuery,
+  useGetInstrumentByIdQuery,
+  useCreateInstrumentMutation,
+  useUpdateInstrumentMutation,
+  useDeleteInstrumentMutation,
 } = api;
 
 // Export types for convenience

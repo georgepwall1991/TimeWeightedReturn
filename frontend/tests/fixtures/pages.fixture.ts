@@ -180,3 +180,151 @@ export class AnalyticsDashboard {
     await this.page.waitForLoadState('networkidle');
   }
 }
+
+/**
+ * Page Object Model for Management Page
+ */
+export class ManagementPage {
+  readonly page: Page;
+  readonly managementNav: Locator;
+  readonly portfolioTree: Locator;
+  readonly overviewTab: Locator;
+  readonly holdingsTab: Locator;
+  readonly transactionsTab: Locator;
+  readonly datePickerInput: Locator;
+
+  constructor(page: Page) {
+    this.page = page;
+    this.managementNav = page.locator('a[href="/management"]').first();
+    this.portfolioTree = page.locator('text=Portfolio Hierarchy');
+    this.overviewTab = page.locator('button:has-text("Overview")');
+    this.holdingsTab = page.locator('button:has-text("Holdings")');
+    this.transactionsTab = page.locator('button:has-text("Transactions")');
+    this.datePickerInput = page.locator('input[type="date"]');
+  }
+
+  async goto() {
+    await this.managementNav.click();
+    await this.page.waitForLoadState('networkidle');
+  }
+
+  async selectClient(clientName: string) {
+    await this.page.locator(`text=${clientName}`).first().click();
+    await this.page.waitForTimeout(500);
+  }
+
+  async selectAccount(accountName: string) {
+    await this.page.locator(`text=${accountName}`).first().click();
+    await this.page.waitForTimeout(500);
+  }
+
+  async expandAccountHoldings(accountName: string) {
+    const accountButton = this.page.locator(`button:has-text("${accountName}")`).first();
+    await accountButton.click();
+    await this.page.waitForTimeout(300);
+  }
+
+  async switchToHoldingsTab() {
+    await this.holdingsTab.click();
+    await this.page.waitForTimeout(500);
+  }
+
+  async switchToOverviewTab() {
+    await this.overviewTab.click();
+    await this.page.waitForTimeout(500);
+  }
+
+  async switchToTransactionsTab() {
+    await this.transactionsTab.click();
+    await this.page.waitForTimeout(500);
+  }
+
+  async setHoldingsDate(date: string) {
+    await this.datePickerInput.fill(date);
+    await this.page.waitForTimeout(500);
+  }
+}
+
+/**
+ * Page Object Model for Static Data Page
+ */
+export class StaticDataPage {
+  readonly page: Page;
+  readonly staticDataNav: Locator;
+  readonly securitiesTab: Locator;
+  readonly benchmarksTab: Locator;
+  readonly newSecurityButton: Locator;
+  readonly newBenchmarkButton: Locator;
+  readonly searchInput: Locator;
+
+  constructor(page: Page) {
+    this.page = page;
+    this.staticDataNav = page.locator('a[href="/static-data"]').first();
+    this.securitiesTab = page.locator('button:has-text("Securities")');
+    this.benchmarksTab = page.locator('button:has-text("Benchmarks")');
+    this.newSecurityButton = page.locator('button:has-text("New Security")');
+    this.newBenchmarkButton = page.locator('button:has-text("New Benchmark")');
+    this.searchInput = page.locator('input[placeholder*="Search"]');
+  }
+
+  async goto() {
+    await this.staticDataNav.click();
+    await this.page.waitForLoadState('networkidle');
+  }
+
+  async switchToSecurities() {
+    await this.securitiesTab.click();
+    await this.page.waitForTimeout(500);
+  }
+
+  async switchToBenchmarks() {
+    await this.benchmarksTab.click();
+    await this.page.waitForTimeout(500);
+  }
+
+  async createSecurity(data: {
+    ticker: string;
+    name: string;
+    currency: string;
+    isin?: string;
+    assetClass?: string;
+  }) {
+    await this.newSecurityButton.click();
+    await this.page.waitForTimeout(300);
+
+    // Fill form - use exact placeholders
+    await this.page.locator('input[placeholder="AAPL"]').fill(data.ticker);
+    await this.page.locator('input[placeholder="Apple Inc."]').fill(data.name);
+
+    // Currency field - there are multiple, get the one in basic info section (first one)
+    const currencyInputs = this.page.locator('input[placeholder="USD"]');
+    await currencyInputs.first().fill(data.currency);
+
+    if (data.isin) {
+      await this.page.locator('input[placeholder="US0378331005"]').fill(data.isin);
+    }
+
+    if (data.assetClass) {
+      // Select the asset class dropdown
+      await this.page.locator('select').first().selectOption(data.assetClass);
+    }
+
+    // Submit
+    await this.page.locator('button[type="submit"]:has-text("Create Security")').click();
+    await this.page.waitForLoadState('networkidle');
+  }
+
+  async searchSecurities(term: string) {
+    await this.searchInput.fill(term);
+    await this.page.waitForTimeout(500);
+  }
+
+  async deleteSecurity(ticker: string) {
+    const row = this.page.locator(`tr:has-text("${ticker}")`).first();
+    await row.getByRole('button').last().click(); // Delete button (trash icon)
+
+    // Confirm deletion
+    this.page.once('dialog', dialog => dialog.accept());
+    await this.page.waitForTimeout(500);
+  }
+}

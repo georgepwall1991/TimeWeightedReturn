@@ -24,6 +24,9 @@ public class PortfolioContext : IdentityDbContext<ApplicationUser, IdentityRole<
     {
         base.OnModelCreating(modelBuilder);
 
+        // Apply all entity configurations from the assembly
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(PortfolioContext).Assembly);
+
         // Configure decimal precision for all decimal properties
         foreach (var property in modelBuilder.Model
             .GetEntityTypes()
@@ -223,6 +226,75 @@ public class PortfolioContext : IdentityDbContext<ApplicationUser, IdentityRole<
 
             entity.HasIndex(e => e.UserId).IsUnique();
         });
+
+        // ReconciliationBatch Configuration
+        modelBuilder.Entity<ReconciliationBatch>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Source).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.SourceFileName).HasMaxLength(500);
+            entity.Property(e => e.Status).HasConversion<int>().IsRequired();
+            entity.Property(e => e.SubmittedBy).HasMaxLength(255);
+            entity.Property(e => e.ApprovedBy).HasMaxLength(255);
+            entity.Property(e => e.Comments).HasMaxLength(2000);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.UpdatedAt).IsRequired();
+
+            entity.HasIndex(e => e.BatchDate);
+            entity.HasIndex(e => e.Status);
+        });
+
+        // ReconciliationBreak Configuration
+        modelBuilder.Entity<ReconciliationBreak>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.BreakType).HasConversion<int>().IsRequired();
+            entity.Property(e => e.EntityType).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Description).IsRequired().HasMaxLength(1000);
+            entity.Property(e => e.ExpectedValue).HasMaxLength(500);
+            entity.Property(e => e.ActualValue).HasMaxLength(500);
+            entity.Property(e => e.Variance).HasPrecision(18, 6);
+            entity.Property(e => e.Status).HasConversion<int>().IsRequired();
+            entity.Property(e => e.ResolvedBy).HasMaxLength(255);
+            entity.Property(e => e.ResolutionAction).HasMaxLength(500);
+            entity.Property(e => e.Comments).HasMaxLength(2000);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.UpdatedAt).IsRequired();
+
+            entity.HasOne(e => e.Batch)
+                .WithMany(b => b.Breaks)
+                .HasForeignKey(e => e.BatchId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Account)
+                .WithMany()
+                .HasForeignKey(e => e.AccountId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.Instrument)
+                .WithMany()
+                .HasForeignKey(e => e.InstrumentId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(e => e.BatchId);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.BreakType);
+        });
+
+        // AuditLog Configuration
+        modelBuilder.Entity<AuditLog>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.EntityType).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Action).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.PerformedBy).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.PerformedAt).IsRequired();
+            entity.Property(e => e.IpAddress).HasMaxLength(45);
+
+            entity.HasIndex(e => new { e.EntityType, e.EntityId });
+            entity.HasIndex(e => e.PerformedAt);
+            entity.HasIndex(e => e.PerformedBy);
+        });
     }
 
     // DbSets
@@ -237,4 +309,9 @@ public class PortfolioContext : IdentityDbContext<ApplicationUser, IdentityRole<
     public DbSet<Benchmark> Benchmarks { get; set; }
     public DbSet<BenchmarkPrice> BenchmarkPrices { get; set; }
     public DbSet<UserPreferences> UserPreferences { get; set; }
+
+    // ABoR/IBoR Reconciliation
+    public DbSet<ReconciliationBatch> ReconciliationBatches { get; set; }
+    public DbSet<ReconciliationBreak> ReconciliationBreaks { get; set; }
+    public DbSet<AuditLog> AuditLogs { get; set; }
 }

@@ -1,5 +1,6 @@
 using Application.Features.MarketData.DTOs;
 using Domain.Entities;
+using Domain.Enums;
 
 namespace Application.Interfaces;
 

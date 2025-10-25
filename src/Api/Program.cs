@@ -172,6 +172,7 @@ builder.Services.AddScoped<Application.Interfaces.IPortfolioManagementRepository
 builder.Services.AddScoped<Application.Interfaces.IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<Application.Interfaces.ICashFlowRepository, CashFlowRepository>();
 builder.Services.AddScoped<Application.Interfaces.IBenchmarkRepository, BenchmarkRepository>();
+builder.Services.AddScoped<Application.Interfaces.IInstrumentRepository, InstrumentRepository>();
 builder.Services.AddScoped<Application.Interfaces.IUserPreferencesRepository, UserPreferencesRepository>();
 builder.Services.AddScoped<ICurrencyConversionService, CurrencyConversionService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
@@ -184,6 +185,11 @@ builder.Services.AddScoped<EnhancedTimeWeightedReturnService>();
 builder.Services.AddScoped<ContributionAnalysisService>();
 builder.Services.AddScoped<RiskMetricsService>();
 builder.Services.AddScoped<AttributionAnalysisService>();
+
+// Register ABoR/IBoR reconciliation services
+builder.Services.AddScoped<IReconciliationService, Infrastructure.Services.ReconciliationService>();
+builder.Services.AddScoped<ITransactionImporter, Infrastructure.Services.CsvTransactionImporter>();
+builder.Services.AddScoped<Infrastructure.Services.TransactionMatchingEngine>();
 
 // Register market data providers with resilience policies (retry, circuit breaker, timeout)
 builder.Services.AddHttpClient<IMarketDataProvider, AlphaVantageProvider>()

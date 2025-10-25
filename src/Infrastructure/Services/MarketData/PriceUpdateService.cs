@@ -2,6 +2,7 @@ using Application.Features.MarketData.DTOs;
 using Application.Interfaces;
 using Application.Services.MarketData;
 using Domain.Entities;
+using Domain.Enums;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;

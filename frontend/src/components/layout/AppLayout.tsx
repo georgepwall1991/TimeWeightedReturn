@@ -1,7 +1,11 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Menu, X, TrendingUp, GripVertical, MoreVertical, RotateCcw } from 'lucide-react';
+import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import { Menu, X, TrendingUp, GripVertical, MoreVertical, RotateCcw, GitCompare, Settings, Database } from 'lucide-react';
 import PortfolioTree from '../tree/PortfolioTree';
 import DetailPanel from './DetailPanel';
+import ReconciliationDashboard from '../reconciliation/ReconciliationDashboard';
+import Management from '../../pages/Management';
+import StaticData from '../../pages/StaticData';
 import { UserMenu } from './UserMenu';
 import { useTokenRefresh } from '../../hooks/useTokenRefresh';
 import { api } from '../../services/api';
@@ -16,6 +20,12 @@ interface NodeSelection {
 const AppLayout: React.FC = () => {
   // Set up automatic token refresh
   useTokenRefresh();
+
+  const location = useLocation();
+  const isPortfolioView = location.pathname === '/' || location.pathname.startsWith('/portfolio');
+  const isReconciliationView = location.pathname.startsWith('/reconciliation');
+  const isManagementView = location.pathname.startsWith('/management');
+  const isStaticDataView = location.pathname.startsWith('/static-data');
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sidebarWidth, setSidebarWidth] = useState(() => {
@@ -181,29 +191,85 @@ const AppLayout: React.FC = () => {
   }, [showSidebarMenu]);
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-gray-50 via-purple-50/30 to-indigo-50/50 dark:from-gray-900 dark:via-purple-950/20 dark:to-indigo-950/30">
-      {/* Sidebar */}
-      <div
-        ref={sidebarRef}
-        className="relative bg-gradient-to-b from-white via-purple-50/10 to-indigo-50/20 dark:from-gray-800 dark:via-purple-950/10 dark:to-indigo-950/20 border-r-2 border-purple-200 dark:border-purple-900/30 overflow-hidden transition-all duration-300 ease-in-out shadow-lg"
-        style={{
-          width: sidebarOpen ? `${sidebarWidth}px` : '0px',
-        }}
-      >
-        <div className="h-full flex flex-col">
-          {/* Sidebar Header */}
-          <div className="flex items-center justify-between p-4 border-b-2 border-gradient-to-r from-purple-200 via-indigo-200 to-blue-200 dark:from-purple-800/30 dark:via-indigo-800/30 dark:to-blue-800/30 bg-gradient-to-r from-purple-50/50 via-indigo-50/50 to-blue-50/50 dark:from-purple-950/30 dark:via-indigo-950/30 dark:to-blue-950/30">
-            <div className="flex items-center min-w-0">
-              <div className="p-2 bg-gradient-to-br from-purple-500 via-indigo-600 to-blue-600 rounded-lg shadow-lg mr-3 shrink-0">
-                <TrendingUp className="w-5 h-5 text-white" />
-              </div>
-              <h1 className="text-lg font-bold bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 bg-clip-text text-transparent truncate">
-                Portfolio Analytics
-              </h1>
-            </div>
-            <div className="flex items-center space-x-1">
-              {/* Sidebar Options Menu */}
-              <div className="relative" ref={menuRef}>
+    <div className="flex h-screen flex-col bg-gradient-to-br from-gray-50 via-purple-50/30 to-indigo-50/50 dark:from-gray-900 dark:via-purple-950/20 dark:to-indigo-950/30">
+      {/* Navigation Tabs */}
+      <div className="bg-gradient-to-r from-white via-purple-50/20 to-indigo-50/30 dark:from-gray-800 dark:via-purple-950/20 dark:to-indigo-950/30 border-b-2 border-purple-200 dark:border-purple-900/30 shadow-md">
+        <div className="flex items-center justify-between px-4">
+          <nav className="flex space-x-1">
+            <Link
+              to="/"
+              className={`flex items-center px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+                isPortfolioView
+                  ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              }`}
+            >
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Portfolio Analytics
+            </Link>
+            <Link
+              to="/reconciliation"
+              className={`flex items-center px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+                isReconciliationView
+                  ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              }`}
+            >
+              <GitCompare className="w-4 h-4 mr-2" />
+              Reconciliation
+            </Link>
+            <Link
+              to="/management"
+              className={`flex items-center px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+                isManagementView
+                  ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              }`}
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Management
+            </Link>
+            <Link
+              to="/static-data"
+              className={`flex items-center px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+                isStaticDataView
+                  ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              }`}
+            >
+              <Database className="w-4 h-4 mr-2" />
+              Static Data
+            </Link>
+          </nav>
+          <UserMenu />
+        </div>
+      </div>
+
+      {/* Main Layout */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar - Only show on portfolio view */}
+        {isPortfolioView && (
+          <div
+            ref={sidebarRef}
+            className="relative bg-gradient-to-b from-white via-purple-50/10 to-indigo-50/20 dark:from-gray-800 dark:via-purple-950/10 dark:to-indigo-950/20 border-r-2 border-purple-200 dark:border-purple-900/30 overflow-hidden transition-all duration-300 ease-in-out shadow-lg"
+            style={{
+              width: sidebarOpen ? `${sidebarWidth}px` : '0px',
+            }}
+          >
+            <div className="h-full flex flex-col">
+              {/* Sidebar Header */}
+              <div className="flex items-center justify-between p-4 border-b-2 border-gradient-to-r from-purple-200 via-indigo-200 to-blue-200 dark:from-purple-800/30 dark:via-indigo-800/30 dark:to-blue-800/30 bg-gradient-to-r from-purple-50/50 via-indigo-50/50 to-blue-50/50 dark:from-purple-950/30 dark:via-indigo-950/30 dark:to-blue-950/30">
+                <div className="flex items-center min-w-0">
+                  <div className="p-2 bg-gradient-to-br from-purple-500 via-indigo-600 to-blue-600 rounded-lg shadow-lg mr-3 shrink-0">
+                    <TrendingUp className="w-5 h-5 text-white" />
+                  </div>
+                  <h1 className="text-lg font-bold bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 bg-clip-text text-transparent truncate">
+                    Portfolio Analytics
+                  </h1>
+                </div>
+                <div className="flex items-center space-x-1">
+                  {/* Sidebar Options Menu */}
+                  <div className="relative" ref={menuRef}>
                 <button
                   onClick={() => setShowSidebarMenu(!showSidebarMenu)}
                   className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-sm transition-colors"
@@ -277,58 +343,90 @@ const AppLayout: React.FC = () => {
             )}
           </div>
         )}
-      </div>
+          </div>
+        )}
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Bar */}
-        <div className="bg-gradient-to-r from-white via-purple-50/20 to-indigo-50/30 dark:from-gray-800 dark:via-purple-950/20 dark:to-indigo-950/30 border-b-2 border-purple-200 dark:border-purple-900/30 px-4 py-3 flex items-center justify-between shadow-md">
-          <div className="flex items-center">
-            {!sidebarOpen && (
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="p-2 bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 hover:from-purple-200 hover:to-indigo-200 dark:hover:from-purple-800/40 dark:hover:to-indigo-800/40 rounded-lg transition-all duration-300 mr-3 border border-purple-200 dark:border-purple-800/50"
-              >
-                <Menu className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              </button>
-            )}
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Top Bar - Only show on portfolio view */}
+          {isPortfolioView && (
+            <div className="bg-gradient-to-r from-white via-purple-50/20 to-indigo-50/30 dark:from-gray-800 dark:via-purple-950/20 dark:to-indigo-950/30 border-b-2 border-purple-200 dark:border-purple-900/30 px-4 py-3 flex items-center justify-between shadow-md">
+              <div className="flex items-center">
+                {!sidebarOpen && (
+                  <button
+                    onClick={() => setSidebarOpen(true)}
+                    className="p-2 bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 hover:from-purple-200 hover:to-indigo-200 dark:hover:from-purple-800/40 dark:hover:to-indigo-800/40 rounded-lg transition-all duration-300 mr-3 border border-purple-200 dark:border-purple-800/50"
+                  >
+                    <Menu className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  </button>
+                )}
 
-            <div>
-              {selectedNode ? (
                 <div>
-                  <h2 className="text-lg font-bold bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 bg-clip-text text-transparent">
-                    {selectedNode.name}
-                  </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 capitalize font-medium">
-                    {selectedNode.type} Analytics
-                  </p>
+                  {selectedNode ? (
+                    <div>
+                      <h2 className="text-lg font-bold bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 bg-clip-text text-transparent">
+                        {selectedNode.name}
+                      </h2>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 capitalize font-medium">
+                        {selectedNode.type} Analytics
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <h2 className="text-lg font-bold bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 bg-clip-text text-transparent">
+                        Portfolio Analytics
+                      </h2>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">
+                        Select a client, portfolio, or account to view details
+                      </p>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div>
-                  <h2 className="text-lg font-bold bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 bg-clip-text text-transparent">
-                    Portfolio Analytics
-                  </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">
-                    Select a client, portfolio, or account to view details
-                  </p>
-                </div>
-              )}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Actions */}
-          <div className="flex items-center space-x-2">
-            <UserMenu />
+          {/* Content Area */}
+          <div className="flex-1 overflow-hidden">
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <div className="h-full bg-gray-50 dark:bg-gray-900">
+                    <DetailPanel
+                      selectedNode={selectedNode}
+                      nodeData={selectedNodeData}
+                      onClose={() => setSelectedNode(null)}
+                    />
+                  </div>
+                }
+              />
+              <Route
+                path="/reconciliation"
+                element={
+                  <div className="h-full overflow-auto bg-gray-50 dark:bg-gray-900 p-6">
+                    <ReconciliationDashboard />
+                  </div>
+                }
+              />
+              <Route
+                path="/management"
+                element={
+                  <div className="h-full overflow-auto bg-gray-50 dark:bg-gray-900">
+                    <Management />
+                  </div>
+                }
+              />
+              <Route
+                path="/static-data"
+                element={
+                  <div className="h-full overflow-auto bg-gray-50 dark:bg-gray-900">
+                    <StaticData />
+                  </div>
+                }
+              />
+            </Routes>
           </div>
-        </div>
-
-        {/* Content Area */}
-        <div className="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900">
-          <DetailPanel
-            selectedNode={selectedNode}
-            nodeData={selectedNodeData}
-            onClose={() => setSelectedNode(null)}
-          />
         </div>
       </div>
 

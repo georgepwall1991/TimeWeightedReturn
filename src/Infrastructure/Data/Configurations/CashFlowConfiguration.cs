@@ -29,6 +29,21 @@ public class CashFlowConfiguration : IEntityTypeConfiguration<CashFlow>
             .HasConversion<int>()
             .IsRequired();
 
+        // ABoR/IBoR Workflow fields
+        builder.Property(cf => cf.BookOfRecord)
+            .HasConversion<int>()
+            .IsRequired();
+
+        builder.Property(cf => cf.Status)
+            .HasConversion<int>()
+            .IsRequired();
+
+        builder.Property(cf => cf.SubmittedBy)
+            .HasMaxLength(255);
+
+        builder.Property(cf => cf.ApprovedBy)
+            .HasMaxLength(255);
+
         // Indexes for performance
         builder.HasIndex(cf => new { cf.AccountId, cf.Date })
             .HasDatabaseName("IX_CashFlow_Account_Date");
@@ -39,17 +54,28 @@ public class CashFlowConfiguration : IEntityTypeConfiguration<CashFlow>
         builder.HasIndex(cf => cf.Type)
             .HasDatabaseName("IX_CashFlow_Type");
 
-        // Foreign key relationship
+        builder.HasIndex(cf => new { cf.BookOfRecord, cf.Status })
+            .HasDatabaseName("IX_CashFlow_BookOfRecord_Status");
+
+        builder.HasIndex(cf => cf.BatchId)
+            .HasDatabaseName("IX_CashFlow_BatchId");
+
+        // Foreign key relationships
         builder.HasOne(cf => cf.Account)
             .WithMany(a => a.CashFlows)
             .HasForeignKey(cf => cf.AccountId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Default values
+        builder.HasOne(cf => cf.Batch)
+            .WithMany()
+            .HasForeignKey(cf => cf.BatchId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Default values - PostgreSQL syntax
         builder.Property(cf => cf.CreatedAt)
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("NOW()");
 
         builder.Property(cf => cf.UpdatedAt)
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("NOW()");
     }
 }

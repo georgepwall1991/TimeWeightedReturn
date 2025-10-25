@@ -1,6 +1,7 @@
 using Application.Features.DataHealth.DTOs;
 using Application.Interfaces;
 using Application.Services;
+using Domain.Enums;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -115,7 +116,7 @@ public class DataHealthService : IDataHealthService
         var instruments = account.Holdings.Select(h => h.Instrument).Distinct();
         foreach (var instrument in instruments)
         {
-            if (instrument.Type == Domain.Entities.InstrumentType.Cash)
+            if (instrument.Type == InstrumentType.Cash)
                 continue;
 
             var latestPrice = instrument.Prices.OrderByDescending(p => p.Date).FirstOrDefault();
@@ -161,7 +162,7 @@ public class DataHealthService : IDataHealthService
         // Check all instrument prices
         var instruments = await _context.Instruments
             .Include(i => i.Prices)
-            .Where(i => i.Type == Domain.Entities.InstrumentType.Security)
+            .Where(i => i.Type == InstrumentType.Security)
             .ToListAsync(cancellationToken);
 
         foreach (var instrument in instruments)
@@ -277,7 +278,7 @@ public class DataHealthService : IDataHealthService
     {
         var instruments = await _context.Instruments
             .Include(i => i.Prices)
-            .Where(i => i.Type == Domain.Entities.InstrumentType.Security)
+            .Where(i => i.Type == InstrumentType.Security)
             .ToListAsync(cancellationToken);
 
         var total = instruments.Count;

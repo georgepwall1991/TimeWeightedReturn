@@ -1,6 +1,7 @@
 using Application.Features.MarketData.DTOs;
 using Application.Interfaces;
 using Domain.Entities;
+using Domain.Enums;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
